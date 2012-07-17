@@ -4,14 +4,17 @@ An extensible general purpose expression evaluator in Java.
 
 ## Features
 
-- Lightweight and fast expression parser
-- Designed around an abstract grammar object that can be expanded as desired
-- Symbols defining grammar are easily customizable
-- New functions can easily be added
-- Supports result types of STRING, NUMBER, DATE, and BOOLEAN
-- Parameter type validation supported
-- Supports user properties, enviornment variables, and data sets
-- Two grammars supplied, a 4 function calculator grammar and an extended grammar with string and math functions
+ - Lightweight and fast expression parser
+ - Designed around an abstract grammar object that can be expanded as desired
+ - Symbols defining grammar are easily customizable
+ - New functions can easily be added
+ - Compiled expressions can be cached for performance
+ - Result types of STRING, NUMBER, DATE, and BOOLEAN
+ - Parameter type validation 
+ - Variables
+ - Single call to parse() can contain multiple expressions
+ - User properties, environment variables, and data sets
+ - Two grammars supplied, a simple 4 function calculator grammar with a few functions and an extended grammar with many string and math functions
 
 ## Requirements
 
@@ -37,40 +40,57 @@ If you're using Maven for your project, add the following to your project's pom.
     <dependency>
       <groupId>com.creativewidgetworks</groupId>
       <artifactId>expression-evaluator</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0</version>
     </dependency>
 
-## Functions supported by basic calcuator
+## Basic evaluator (GrammarBasicCalc.java)
 
-Coming soon. For now, examine GrammarBasicCalc.java
+    Assignment  =
+    Operators   + - * / DIV MOD % ^ 
+    Logical     < <= == != >= > AND OR NOT XOR
+    Ternary     ? :  
+    Shift       << >>
+    DataSource  ${<id>}
+    Constants   NULL PI
+    Functions   ABS NOW SQR SQRT
 
-## Functions supported by extended calcuator
 
-Coming soon. For now, examine GrammarExtendedCalc.java 
+## Extended evaluator (GrammarExtendedCalc.java)
+
+    Assignment  =
+    Operators   + - * / DIV MOD % ^ 
+    Logical     < <= == != >= > AND OR NOT XOR
+    Ternary     ? :  
+    Shift       << >>
+    DataSource  ${<id>}
+    Constants   NULL PI
+    Functions   ABS ARCCOS ARCSIN ARCTAN ARRAYLEN AVERAGE CEILING CONTAINS CONTAINSALL CONTAINSANY
+                COS ENDSWITH EXP FACTORIAL FIND FLOOR HEX ISBLANK ISBOOLEAN ISDATE ISNULL LEFT LEN
+                LOG LOG10 LOWER MAKEBOOLEAN MATCH MATCHBYLEN MAX MID MIN NAMECASE NOW RANDOM REPLACE
+                REPLACEFIRST RIGHT SIN SPLIT SQR SQRT STARTSWITH STR STRING TAN TRIM TRIMLEFT TRIMRIGHT
+                UPPER VAL
 
 ##    
     
-## Demo
+## Usage
 
 The jar contains a small console program that exercises the extended grammar parser as well as displaying the tokens and RPN stream.
 
 Examples:
 
-    java -cp expression-parser "(1+4)/3"
-    java -cp expression-parser "(1+4)/3" -verbose
-    java -cp expression-parser "upper('AbC' + 'def')"
+    java -cp expression-parser.jar Eval "(1+4)/3"
+    java -cp expression-parser.jar Eval "(1+4)/3" -verbose
+    java -cp expression-parser.jar Eval "upper('AbC' + 'def')"
 
     
 ## Version History
  
- - 1.0.0-SNAPSHOT Initial pre-release
-
+ - 1.0.0 Initial release to GitHub
     
 ## License
 
 expression-parser is licensed under the [Modified BSD][1] license. Permission is granted to anyone to use this software for any purpose, including commercial applications.
 
-Enjoy.
-
 
   [1]: http://www.opensource.org/licenses/BSD-3-Clause
+

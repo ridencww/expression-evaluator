@@ -78,9 +78,9 @@ The jar contains a small console program that exercises the extended grammar par
 
 Examples:
 
-    java -cp expression-parser.jar Eval "(1+4)/3"
-    java -cp expression-parser.jar Eval "(1+4)/3" -verbose
-    java -cp expression-parser.jar Eval "upper('AbC' + 'def')"
+    java -cp expression-parser.jar Demo "(1+4)/3"
+    java -cp expression-parser.jar Demo "(1+4)/3" -verbose
+    java -cp expression-parser.jar Demo "upper('AbC' + 'def')"
 
     
 ## Version History

@@ -1,40 +1,40 @@
-import java.util.List;
-
-import com.creativewidgetworks.expressionparser.Grammar;
-import com.creativewidgetworks.expressionparser.GrammarExtendedCalc;
 import com.creativewidgetworks.expressionparser.Parser;
 import com.creativewidgetworks.expressionparser.ParserException;
-import com.creativewidgetworks.expressionparser.Symbol;
+import com.creativewidgetworks.expressionparser.Token;
 import com.creativewidgetworks.expressionparser.Value;
+import java.util.List;
 
 public class Demo {
 
     /* The only reason that this program is using DemoParser is to expose the tokenize
      * and RPN methods which normally aren't called directly outside of a demo like this.
      */
-    public class DemoParser extends Parser {
-        public DemoParser(Grammar grammar) {
-            super(grammar);
+    class DemoParser extends Parser {
+        private List<Token> infix;
+        private List<Token> rpn;
+
+        DemoParser() {
+            super();
+        }
+
+        List<Token> getInfix() {
+            return infix;
+        }
+
+        List<Token> getPostfix() {
+            return rpn;
         }
 
         @Override
-        public List<Symbol> tokenize(String source) {
-            return super.tokenize(source);
-        }
-
-        @Override
-        public List<Symbol> infixToRPN(List<Symbol> inputTokens) throws ParserException {
-            return super.infixToRPN(inputTokens);
-        }
-
-        @Override
-        public Value RPNtoValue(List<Symbol> tokens) throws ParserException {
-            return super.RPNtoValue(tokens);
+        public List<Token> infixToRPN(List<Token> inputTokens) throws ParserException {
+            infix = inputTokens;
+            rpn = super.infixToRPN(inputTokens);
+            return rpn;
         }
     }
     
     private static void usage() {
-        System.out.println("usage: Eval expression [-verbose]");
+        System.out.println("usage: Demo \"expression\" [-verbose]");
         System.exit(0);
     }
     
@@ -47,31 +47,36 @@ public class Demo {
             expression = args[0];
             verbose = args.length > 1 && args[1].toLowerCase().startsWith("-v");
         }
-        
-        Value value;
-        DemoParser parser = new Demo().new DemoParser(new GrammarExtendedCalc());
-        
+
+        DemoParser parser = new Demo().new DemoParser();
+
+        Value value = parser.eval(expression);
+
+        System.out.println();
+        System.out.println("EVALUATING " + expression);
+
         if (verbose) {
+            System.out.println();
+
             // Tokenize
-            List<Symbol> tokens = parser.tokenize(expression);
-            for (Symbol token : tokens) {
+            List<Token> tokens = parser.getInfix();
+            System.out.println("INPUT (INFIX)");
+            for (Token token : tokens) {
                 System.out.println(token);
             }
             System.out.println();
             
             // Convert infix (left to right) to RPN
-            List<Symbol> rpn = parser.infixToRPN(tokens);
-            for (Symbol token : rpn) {
+            List<Token> rpn = parser.getPostfix();
+            System.out.println("RPN (POSTFIX)");
+            for (Token token : rpn) {
                 System.out.println(token);
             }
             System.out.println();        
-            
-            // Execute the grammar
-            value = parser.RPNtoValue(rpn);
-        } else {
-            value = parser.eval(expression);
         }
-        
+
+        System.out.print("RESULT: ");
+
         if (value != null) {
             switch (value.getType()) {
                 case BOOLEAN:

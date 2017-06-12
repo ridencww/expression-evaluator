@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.creativewidgetworks.expressionparser.enums.ValueType;
-
+@SuppressWarnings("unused")
 public class Value {
 
     private String name;
@@ -21,6 +20,21 @@ public class Value {
 
     public Value(String name) {
         this.name = name;
+    }
+
+    public Value(String name, Object var) {
+        this(name);
+        if (var instanceof String) {
+            setValue((String)var);
+        } else if (var instanceof BigDecimal) {
+            setValue((BigDecimal)var);
+        } else if (var instanceof  Boolean) {
+            setValue((Boolean)var);
+        } else if (var instanceof Date) {
+            setValue((Date)var);
+        } else {
+            setValue(var);
+        }
     }
 
     public Value(Value var) {
@@ -42,14 +56,14 @@ public class Value {
 
     public final void set(Value var) {
         if (var != null) {
-            this.name = var.name == null ? null : new String(var.name);
+            this.name = var.name;
             this.type = var.type;
-            this.valueObj = var.valueObj == null ? null : var.valueStr;  // WARNING: shallow copy
-            this.valueStr = var.valueStr == null ? null : new String(var.valueStr);
+            this.valueObj = var.valueStr;
+            this.valueStr = var.valueStr;
             this.valueNum = var.valueNum == null ? null : new BigDecimal(var.valueNum.toPlainString());
             this.valueDate = var.valueDate == null ? null : new Date(var.valueDate.getTime());
             if (var.array != null) {
-                this.array = new ArrayList<Value>(var.array.size());
+                this.array = new ArrayList<>(var.array.size());
                 for (Value v : var.array) {
                     this.array.add(new Value(v));
                 }
@@ -64,7 +78,7 @@ public class Value {
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
@@ -75,19 +89,19 @@ public class Value {
         return type;
     }
 
-    public void setType(ValueType type) {
+    private void setType(ValueType type) {
         this.type = type;
     }
 
     /*----------------------------------------------------------------------------*/
-    
+
     public void addValueToArray(Value value) {
         if (array == null) {
-            array = new ArrayList<Value>();
+            array = new ArrayList<>();
         }
         array.add(value);
     }
-    
+
     public List<Value> getArray() {
         return array;
     }
@@ -102,13 +116,13 @@ public class Value {
     /*----------------------------------------------------------------------------*/
 
     public Boolean asBoolean() {
-        return Boolean.valueOf(BigDecimal.ONE.equals(valueNum));
+        return BigDecimal.ONE.equals(valueNum);
     }
 
     public Date asDate() {
         return valueDate;
-    }    
-    
+    }
+
     public BigDecimal asNumber() {
         return valueNum;
     }
@@ -116,11 +130,11 @@ public class Value {
     public Object asObject() {
         return valueObj;
     }
-    
+
     public String asString() {
         return valueStr;
     }
-    
+
     public Value setValue(BigDecimal value) {
         this.valueObj = value;
         this.valueNum = value;
@@ -128,15 +142,16 @@ public class Value {
         this.valueDate = (value == null) ? null : new Date(value.longValue());
         setType(ValueType.NUMBER);
         return this;
-    }    
-    
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
     public Value setValue(Boolean value) {
         this.valueObj = value;
-        boolean val = (value == null) ? false : value.booleanValue();
+        boolean val = value != null && value;
         this.valueStr = val ? "1" : "0";
         this.valueNum = val ? BigDecimal.ONE : BigDecimal.ZERO;
         this.valueDate = null;
-        setType(ValueType.BOOLEAN);        
+        setType(ValueType.BOOLEAN);
         return this;
     }
 
@@ -152,17 +167,18 @@ public class Value {
         }
         setType(ValueType.DATE);
         return this;
-    }    
-    
+    }
+
     public Value setValue(Object value) {
         this.valueObj = value;
         this.valueStr = value == null ? null : value.toString();
-        this.valueNum =  (value != null && value instanceof BigDecimal) ? (BigDecimal)value : null;
-        this.valueDate = (value != null && value instanceof Date) ? (Date)value : null;
+        this.valueNum = (value != null && value instanceof BigDecimal) ? (BigDecimal) value : null;
+        this.valueDate = (value != null && value instanceof Date) ? (Date) value : null;
         setType(ValueType.OBJECT);
         return this;
     }
-    
+
+    @SuppressWarnings("UnusedReturnValue")
     public Value setValue(String value) {
         this.valueObj = value;
         this.valueStr = value;
@@ -172,25 +188,25 @@ public class Value {
         return this;
     }
 
-    /*----------------------------------------------------------------------------*/    
-    
+    /*----------------------------------------------------------------------------*/
+
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("name=").append(name == null ? "n/a" : name).append(" type=");
         switch (type) {
-            case BOOLEAN :
+            case BOOLEAN:
                 sb.append("BOOLEAN (");
-                sb.append(asBoolean().booleanValue() ? "TRUE" : "FALSE");
+                sb.append(asBoolean() ? "TRUE" : "FALSE");
                 sb.append(")");
                 break;
-            case NUMBER :
+            case NUMBER:
             case OBJECT:
-            case STRING :
-            case DATE :
+            case STRING:
+            case DATE:
                 sb.append(type.name());
                 break;
-            default :
+            default:
                 sb.append("UNDEFINED");
                 break;
         }
@@ -198,5 +214,5 @@ public class Value {
         sb.append(" num=").append(valueNum);
         return sb.toString();
     }
-    
+
 }

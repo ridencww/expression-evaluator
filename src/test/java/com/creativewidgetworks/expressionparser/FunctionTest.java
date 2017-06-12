@@ -1,9 +1,5 @@
 package com.creativewidgetworks.expressionparser;
 
-import com.creativewidgetworks.expressionparser.Function;
-import com.creativewidgetworks.expressionparser.Token;
-import com.creativewidgetworks.expressionparser.TokenType;
-import com.creativewidgetworks.expressionparser.Value;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,12 +8,16 @@ import java.util.Stack;
 
 public class FunctionTest extends Assert {
 
+    private Parser parser;
+    
     @Before
     public void beforeEach() {
-        Function.clearFunctions();
+        parser = new Parser();
     }
 
     /*---------------------------------------------------------------------------------*/
+
+    // These are required to exercise the function tests. Do not remove.
 
     @SuppressWarnings("unused")
     public Value _ALPHA(Token function, Stack<Token> stack) {
@@ -33,73 +33,75 @@ public class FunctionTest extends Assert {
 
     @Test
     public void testGetFunctionRegex_no_functions() {
-        assertEquals("~~no-functions-defined~~", Function.getFunctionRegex());
+        assertEquals("precision|now", parser.getFunctionRegex());
     }
 
     @Test
     public void testGetFunctionRegEx_case_insensitive() {
-        Function.addFunction(new Function("alpha", this, "_ALPHA", 0, 0), false);
-        Function.addFunction(new Function("beta", this, "_BETA", 0, 0), false);
-        assertEquals("beta|alpha", Function.getFunctionRegex());
+        parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
+        parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
+        assertEquals("precision|now|beta|alpha", parser.getFunctionRegex());
     }
 
     @Test
     public void testGetFunctionRegEx_case_sensitive() {
-        Function.addFunction(new Function("alpha", this, "_ALPHA", 0, 0), true);
-        Function.addFunction(new Function("beta", this, "_BETA", 0, 0), true);
-        assertEquals("beta|alpha", Function.getFunctionRegex());
+        parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
+        parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
+        assertEquals("precision|now|beta|alpha", parser.getFunctionRegex());
     }
 
     @Test
     public void test_add_function_case_sensitive() {
-        Function.addFunction(new Function("alpha", this, "_ALPHA", 0, 0), true);
-        assertNull(Function.getFunctions().get("ALPHA"));
-        assertNotNull(Function.getFunctions().get("alpha"));
+        parser.setCaseSensitive(true);
+        parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
+        assertNull(parser.getFunctions().get("ALPHA"));
+        assertNotNull(parser.getFunctions().get("alpha"));
     }
 
    @Test
    public void test_add_function_case_insensitive() {
-       Function.addFunction(new Function("alpha", this, "_ALPHA", 0, 0), false);
-       assertNotNull(Function.getFunctions().get("ALPHA"));
-       assertNull(Function.getFunctions().get("alpha"));
+       parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
+       assertNotNull(parser.getFunctions().get("ALPHA"));
+       assertNull(parser.getFunctions().get("alpha"));
    }
 
     @Test
     public void test_add_invalidatss_tokenType_pattern() {
-        assertFalse("should not have function regex", TokenType.getPattern(false).pattern().contains("testme"));
-        Function.addFunction(new Function("testme", this, "_ALPHA", 0, 0), false);
-        assertTrue("should have function regex", TokenType.getPattern(false).pattern().contains("testme"));
+        assertFalse("should not have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
+        parser.addFunction(new Function("testme", this, "_ALPHA", 0, 0));
+        assertTrue("should have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
     }
 
     @Test
     public void testClearFunctions() {
-        assertEquals(0, Function.getFunctions().size());
-        Function.addFunction(new Function("alpha", this, "_ALPHA", 0, 0), false);
-        Function.addFunction(new Function("beta", this, "_BETA", 0, 0), false);
-        assertEquals(2, Function.getFunctions().size());
-        Function.clearFunctions();
-        assertEquals(0, Function.getFunctions().size());
+        assertEquals(2, parser.getFunctions().size());
+        parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
+        parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
+        assertEquals(4, parser.getFunctions().size());
+        parser.clearFunctions();
+        assertEquals(2, parser.getFunctions().size());
     }
 
     @Test
     public void test_clear_invalidatss_tokenType_pattern() {
-        Function.addFunction(new Function("testme", this, "_ALPHA", 0, 0), false);
-        assertTrue("should have function regex", TokenType.getPattern(false).pattern().contains("testme"));
-        Function.clearFunctions();
-        assertFalse("should not have function regex", TokenType.getPattern(false).pattern().contains("testme"));
+        parser.addFunction(new Function("testme", this, "_ALPHA", 0, 0));
+        assertTrue("should have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
+        parser.clearFunctions();
+        assertFalse("should not have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
     }
 
     @Test
     public void testGetFunction_case_sensitive() {
-        Function.addFunction(new Function("alpha", this, "_ALPHA", 0, 0), true);
-        assertNotNull(Function.get("alpha", true));
-        assertNull(Function.get("ALPHA", true));
+        parser.setCaseSensitive(true);
+        parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
+        assertNotNull(parser.getFunction("alpha"));
+        assertNull(parser.getFunction("ALPHA"));
     }
 
     @Test
     public void testGetFunction_case_insensitive() {
-        Function.addFunction(new Function("alpha", this, "_ALPHA", 0, 0), false);
-        assertNotNull(Function.get("alpha", false));
-        assertNotNull(Function.get("ALPHA", false));
+        parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
+        assertNotNull(parser.getFunction("alpha"));
+        assertNotNull(parser.getFunction("ALPHA"));
     }
 }

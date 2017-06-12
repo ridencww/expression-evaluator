@@ -15,11 +15,11 @@ public class ParserCoreTest extends UnitTestBase {
     @Before
     public void beforeEach() {
         parser = new Parser();
-        Constant.clearConstants();
-        Function.clearFunctions();
     }
 
     /*---------------------------------------------------------------------------------*/
+
+    // These are required to exercise the function tests. Do not remove.
 
     @SuppressWarnings("unused")
     public Value _ALPHA(Token function, Stack<Token> stack) {
@@ -30,6 +30,8 @@ public class ParserCoreTest extends UnitTestBase {
     public Value _BETA(Token function, Stack<Token> stack) {
         return new Value();
     }
+
+    /*---------------------------------------------------------------------------------*/
 
     @Test
     public void testResourcesAvailable() throws Exception {
@@ -61,9 +63,10 @@ public class ParserCoreTest extends UnitTestBase {
     @Test
     public void testSetPrecision() {
         assertEquals("default precision", Parser.DEFAULT_PRECISION, parser.getPrecision());
-
         assertEquals("badly formatted", "0.33333", parser.eval("1/3").asString());
-        parser.setPrecision(15);
+
+        int oldPrecision = parser.setPrecision(15);
+        assertEquals("old precision", Parser.DEFAULT_PRECISION, oldPrecision);
         assertEquals("badly formatted", "0.333333333333333", parser.eval("1/3").asString());
     }
 
@@ -109,6 +112,88 @@ public class ParserCoreTest extends UnitTestBase {
     /*----------------------------------------------------------------------------*/
 
     @Test
+    public void testRowColumn() {
+        List<Token> tokens = parser.tokenize("1 2\n 3  4", false);
+        validateTokens(tokens,
+                new Token(TokenType.NUMBER, "1", 1, 1),
+                new Token(TokenType.NUMBER, "2", 1, 3),
+                new Token(TokenType.NEWLINE, "\n", 1, 4),
+                new Token(TokenType.NUMBER, "3", 2, 2),
+                new Token(TokenType.NUMBER, "4", 2, 5));
+    }
+
+    @Test
+    public void testString() {
+        // Unclosed quotes
+        List<Token> tokens = parser.tokenize("'hello", false);
+        validateTokens(tokens,
+                new Token(TokenType.NOMATCH, "", 1, 1),
+                new Token(TokenType.IDENTIFIER, "hello", 1, 2));
+
+
+        tokens = parser.tokenize("\"hello", false);
+        validateTokens(tokens,
+                new Token(TokenType.NOMATCH, "", 1, 1),
+                new Token(TokenType.IDENTIFIER, "hello", 1, 2));
+
+        // Empty strings
+        tokens = parser.tokenize("\"\"", false);
+        validateTokens(tokens, new Token(TokenType.STRING, "", 1, 1));
+        // --
+        tokens = parser.tokenize("''", false);
+        validateTokens(tokens, new Token(TokenType.STRING, "", 1, 1));
+
+        // Whitespace only
+        tokens = parser.tokenize("' ' \" \"", false);
+        validateTokens(tokens, new Token(TokenType.STRING, " ", 1, 1), new Token(TokenType.STRING, " ", 1, 5));
+
+        tokens = parser.tokenize("'Hello' \"World\"", false);
+        validateTokens(tokens, new Token(TokenType.STRING, "Hello", 1, 1), new Token(TokenType.STRING, "World", 1, 9));
+    }
+
+    @Test
+    public void testWhitespace() {
+        List<Token> tokens = parser.tokenize("1 2", false);
+        validateTokens(tokens,
+                new Token(TokenType.NUMBER, "1", 1, 1),
+                new Token(TokenType.NUMBER, "2", 1, 3));
+
+        tokens = parser.tokenize("1 2", true);
+        validateTokens(tokens,
+                new Token(TokenType.NUMBER, "1", 1, 1),
+                new Token(TokenType.WHITESPACE, " ", 1, 2),
+                new Token(TokenType.NUMBER, "2", 1, 3));
+    }
+
+    @Test
+    public void testTokenize() throws Exception {
+        Token[] expected = new Token[] {
+                new Token(TokenType.OPERATOR, "(", 1, 1),
+                new Token(TokenType.NUMBER,    "1", 1, 3),
+                new Token(TokenType.OPERATOR,  "-", 1, 5),
+                new Token(TokenType.NUMBER,    "2", 1, 6),
+                new Token(TokenType.OPERATOR, ")", 1, 7),
+                new Token(TokenType.OPERATOR,  "*", 1, 9),
+                new Token(TokenType.OPERATOR, "(", 1, 11),
+                new Token(TokenType.NUMBER,    "3", 1, 12),
+                new Token(TokenType.OPERATOR,  "/", 1, 13),
+                new Token(TokenType.NUMBER,    "4", 1, 14),
+                new Token(TokenType.OPERATOR, ")", 1, 15),
+                new Token(TokenType.OPERATOR,  "-", 1, 16),
+                new Token(TokenType.OPERATOR, "(", 1, 17),
+                new Token(TokenType.NUMBER,    "5", 1, 20),
+                new Token(TokenType.OPERATOR,  "+", 1, 21),
+                new Token(TokenType.NUMBER,    "6", 1, 22),
+                new Token(TokenType.OPERATOR, ")", 1, 23),
+        };
+
+        String EXPRESSION = "( 1 -2) * (3/4)-(  5+6)";
+        validateTokens(parser.tokenize(EXPRESSION, false), expected);
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
     public void testInfixToRPN() throws Exception {
         Token[] expected = new Token[] {
                 new Token(TokenType.NUMBER,    "1", 1, 3),
@@ -124,7 +209,7 @@ public class ParserCoreTest extends UnitTestBase {
                 new Token(TokenType.OPERATOR,  "-", 1, 16),
         };
 
-        List<Token> tokens = Tokenizer.tokenize(EXPRESSION, false, false);
+        List<Token> tokens = parser.tokenize(EXPRESSION, false);
         List<Token> actual = new Parser().infixToRPN(tokens);
         validateTokens(actual, expected);
     }
@@ -133,7 +218,7 @@ public class ParserCoreTest extends UnitTestBase {
 
     @Test
     public void testRPNtoValue() throws Exception {
-        List<Token> tokens1 = Tokenizer.tokenize(EXPRESSION, false, false);
+        List<Token> tokens1 = parser.tokenize(EXPRESSION, false);
         List<Token> tokens2 = parser.infixToRPN(tokens1);
         Value result = parser.RPNtoValue(tokens2);
         assertEquals("wrong type", ValueType.NUMBER, result.getType());

@@ -12,16 +12,12 @@ public class Function {
     private final Method javaMethod;
     private final ValueType[] parameters;
 
-    // Map of function objects used by the parser
-    private static final Map<String, Function> functions = new HashMap<>();
-
     public Function(String functionName, Object instance, String methodName, int minArgs, int maxArgs, ValueType... types) {
         this.functionName = functionName;
 
         this.minArgs = minArgs;
         this.maxArgs = maxArgs;
         this.parameters = types;
-
 
         this.javaInstance = instance;
 
@@ -36,59 +32,13 @@ public class Function {
         }
     }
 
-   /*---------------------------------------------------------------------------------*/
+    /*---------------------------------------------------------------------------------*/
 
-    public static void addFunction(Function function, boolean caseSensitive) {
-        if (function != null) {
-            functions.put(caseSensitive ? function.getName() : function.getName().toUpperCase(), function);
-            TokenType.invalidatePattern();
-        }
-    }
-
-    public static void clearFunctions() {
-        functions.clear();
-        TokenType.invalidatePattern();
-    }
-
-    public static Function get(String functionName, boolean caseSensitive) {
-        return functionName == null ? null : functions.get(caseSensitive ? functionName : functionName.toUpperCase());
-    }
-
-    public static Map<String, Function> getFunctions() {
-        return functions;
-    }
-
-    public static String getFunctionRegex() {
-        List<String> regexs = new ArrayList<>();
-        for (Function function : functions.values()) {
-            regexs.add(function.getName());
-        }
-
-        // Sort in descending order to insure proper matching
-        Collections.sort(regexs, Collections.<String>reverseOrder());
-
-        StringBuilder sb = new StringBuilder();
-        for (String regex : regexs) {
-            if (sb.length() > 0) {
-                sb.append("|");
-            }
-            sb.append(regex);
-        }
-
-        if (sb.length() == 0) {
-            sb.append("~~no-functions-defined~~");
-        }
-
-        return sb.toString();
-    }
-
-   /*---------------------------------------------------------------------------------*/
-
-
-
-    private String getName() {
+    public String getName() {
         return functionName;
     }
+
+    /*---------------------------------------------------------------------------------*/
 
     public Value execute(Token function, Stack<Token> stack) throws ParserException {
         Value value;

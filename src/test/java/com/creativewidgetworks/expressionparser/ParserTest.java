@@ -3,7 +3,7 @@ package com.creativewidgetworks.expressionparser;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Stack;
 
@@ -13,27 +13,10 @@ public class ParserTest extends UnitTestBase {
 
     @Before
     public void beforeEach() {
-        parser = new Parser();
-        Constant.clearConstants();
-        Constant.addConstant("PI", BigDecimal.valueOf(Math.PI), false);
-
-        Function.clearFunctions();
         TestFunctions ourFunctions = new TestFunctions();
-        Function.addFunction(new Function("abs", ourFunctions, "_ABS", 1, 1), false);
-        Function.addFunction(new Function("now", ourFunctions, "_NOW", 0, 0), false);
-        Function.addFunction(new Function("sqrt", ourFunctions, "_SQRT", 1, 1), false);
-    }
-
-    /*---------------------------------------------------------------------------------*/
-
-    @SuppressWarnings("unused")
-    public Value _ALPHA(Token function, Stack<Token> stack) {
-        return new Value();
-    }
-
-    @SuppressWarnings("unused")
-    public Value _BETA(Token function, Stack<Token> stack) {
-        return new Value();
+        parser = new Parser();
+        parser.addFunction(new Function("abs", ourFunctions, "_ABS", 1, 1));
+        parser.addFunction(new Function("sqrt", ourFunctions, "_SQRT", 1, 1));
     }
 
     /*----------------------------------------------------------------------------*/
@@ -87,15 +70,53 @@ public class ParserTest extends UnitTestBase {
    /*----------------------------------------------------------------------------*/
 
     @Test
-    public void testConstants() {
-        Constant.clearConstants();
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), false);
-        Constant.addConstant("null", null, false);
-
+    public void testBuiltInConstants() {
         validateNumericResult(parser, "PI", "3.141592653589793");
         validateNumericResult(parser, "pi", "3.141592653589793");
         validateNumericResult(parser, "NULL", null);
         validateNumericResult(parser, "null", null);
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testBuiltInFunction_NOW() {
+        Calendar calendar = Calendar.getInstance();
+        long now = calendar.getTimeInMillis();
+
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        long bod = calendar.getTimeInMillis();
+
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 0);
+        long eod = calendar.getTimeInMillis();
+
+        validateDateResult(parser, "NOW()", String.valueOf(now));
+        validateDateResult(parser, "NOW(0)", String.valueOf(now));
+        validateDateResult(parser, "NOW(1)", String.valueOf(bod));
+        validateDateResult(parser, "NOW(2)", String.valueOf(eod));
+
+        validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2");
+        validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3");
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testBuiltInFunction_PRECISION() {
+        int oldPrecision = parser.getPrecision();
+        validateNumericResult(parser, "PRECISION(2)", "5");
+        assertEquals(2, parser.getPrecision());
+
+        validateExceptionThrown(parser, "PRECISION()", "PRECISION expected 1 parameter(s), but got 0");
+        validateExceptionThrown(parser, "PRECISION(0,1)", "PRECISION expected 1 parameter(s), but got 2");
+        validateExceptionThrown(parser, "PRECISION(-1)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was -1");
+        validateExceptionThrown(parser, "PRECISION(125)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was 125");
     }
 
     /*----------------------------------------------------------------------------*/
@@ -149,6 +170,8 @@ public class ParserTest extends UnitTestBase {
 
     @Test
     public void testAddition() throws Exception {
+        parser.setPrecision(15);
+
         // unary plus for things like plot(+1,-1)
         validateNumericResult(parser, "+2", "2");
 
@@ -170,6 +193,8 @@ public class ParserTest extends UnitTestBase {
 
     @Test
     public void testSubtraction() throws Exception {
+        parser.setPrecision(15);
+
         // unary minus (negation)
         validateNumericResult(parser, "-2", "-2");
         validateNumericResult(parser, "--2", "2");

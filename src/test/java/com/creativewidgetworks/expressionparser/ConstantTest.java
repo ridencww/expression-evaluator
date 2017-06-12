@@ -1,7 +1,5 @@
 package com.creativewidgetworks.expressionparser;
 
-import com.creativewidgetworks.expressionparser.Constant;
-import com.creativewidgetworks.expressionparser.TokenType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,84 +8,105 @@ import java.math.BigDecimal;
 
 public class ConstantTest extends Assert {
 
+    private Parser parser;
+    
     @Before
     public void beforeEach() {
-        Constant.clearConstants();
+        parser = new Parser();
     }
 
     @Test
-    public void testGetConstantRegex_no_constants() {
-        assertEquals("~~no-constants-defined~~", Constant.getConstantRegex());
+    public void testGetConstantRegex_default_constants() {
+        assertEquals("PI|NULL", parser.getConstantRegex());
     }
 
     @Test
     public void test_getConstantRegex_case_insensitive() {
-        Constant.addConstant("e", BigDecimal.valueOf(Math.E), false);
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), false);
-        assertEquals("PI|E", Constant.getConstantRegex());
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        assertEquals("PI|NULL|E", parser.getConstantRegex());
     }
 
     @Test
+    public void test_getConstantRegex_duplicated() {
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        parser.addConstant("pi", BigDecimal.valueOf(Math.E));
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        assertEquals("PI|NULL|E", parser.getConstantRegex());
+    }
+    
+    @Test
     public void test_getConstantRegex_case_sensitive() {
-        Constant.addConstant("e", BigDecimal.valueOf(Math.E), true);
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), true);
-        assertEquals("pi|e", Constant.getConstantRegex());
+        parser.setCaseSensitive(true);
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        assertEquals("e|PI|NULL", parser.getConstantRegex());
     }
 
     @Test
     public void test_add_constant_case_insensitive() {
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), false);
-        BigDecimal pi = Constant.getConstants().get("PI");
-        assertNotNull(pi);
-        assertEquals(Math.PI, pi.doubleValue(), 0.001);
-        assertNull(Constant.getConstants().get("pi"));
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        BigDecimal e = parser.getConstants().get("E");
+        assertNotNull(e);
+        assertEquals(Math.E, e.doubleValue(), 0.001);
+        assertNull(parser.getConstants().get("e"));
     }
 
     @Test
     public void test_add_constant_case_sensitive() {
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), true);
-        BigDecimal pi = Constant.getConstants().get("pi");
-        assertNotNull(pi);
-        assertEquals(Math.PI, pi.doubleValue(), 0.001);
-        assertNull(Constant.getConstants().get("PI"));
+        parser.setCaseSensitive(true);
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        BigDecimal e = parser.getConstants().get("e");
+        assertNotNull(e);
+        assertEquals(Math.E, e.doubleValue(), 0.001);
+        assertNull(parser.getConstants().get("E"));
     }
 
     @Test
-    public void test_add_invalidatss_tokenType_pattern() {
-        assertFalse("should not have constant", TokenType.getPattern(false).pattern().contains("PI"));
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), false);
-        assertTrue("should have constant regex", TokenType.getPattern(false).pattern().contains("PI"));
+    public void test_add_invalidates_tokenType_pattern() {
+        String pattern = TokenType.getPattern(parser).pattern();
+        parser.addConstant("my-constant", BigDecimal.valueOf(Math.E));
+        assertTrue("should have constant regex", TokenType.getPattern(parser).pattern().contains("MY-CONSTANT"));
     }
 
     @Test
     public void testClearConstants() {
-        assertEquals(0, Constant.getConstants().size());
-        Constant.addConstant("e", BigDecimal.valueOf(Math.E), false);
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), false);
-        assertEquals(2, Constant.getConstants().size());
-        Constant.clearConstants();
-        assertEquals(0, Constant.getConstants().size());
+        assertEquals(2, parser.getConstants().size());
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        assertEquals(3, parser.getConstants().size());
+        parser.clearConstants();
+        assertEquals(2, parser.getConstants().size());
+        assertNotNull(parser.getConstant("PI"));
     }
 
     @Test
-    public void test_clear_invalidatss_tokenType_pattern() {
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), false);
-        assertTrue("should have constant regex", TokenType.getPattern(false).pattern().contains("PI"));
-        Constant.clearConstants();
-        assertFalse("should not have constant regex", TokenType.getPattern(false).pattern().contains("PI"));
+    public void test_clear_invalidates_tokenType_pattern() {
+        parser.addConstant("my-constant", BigDecimal.valueOf(Math.E));
+        assertTrue("should have constant regex", TokenType.getPattern(parser).pattern().contains("MY-CONSTANT"));
+        parser.clearConstants();
+        assertFalse("should not have constant regex", TokenType.getPattern(parser).pattern().contains("MY-CONSTANT"));
     }
 
     @Test
     public void testGetConstant_case_insensitive() {
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), false);
-        assertNotNull(Constant.get("pi", false));
-        assertNotNull(Constant.get("PI", false));
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        assertNotNull(parser.getConstant("e"));
+        assertNotNull(parser.getConstant("E"));
     }
 
     @Test
     public void testGetConstant_case_sensitive() {
-        Constant.addConstant("pi", BigDecimal.valueOf(Math.PI), true);
-        assertNotNull(Constant.get("pi", true));
-        assertNull(Constant.get("PI", true));
+        parser.setCaseSensitive(true);
+        parser.addConstant("e", BigDecimal.valueOf(Math.E));
+        assertNotNull(parser.getConstant("e"));
+        assertNull(parser.getConstant("E"));
+    }
+
+    @Test
+    public void testGetDefaultConstants() {
+        BigDecimal nul = parser.getConstants().get("NULL");
+        assertNull(nul);
+
+        BigDecimal pi = parser.getConstants().get("PI");
+        assertNotNull(pi);
+        assertEquals(Math.PI, pi.doubleValue(), 0.001);
     }
 }

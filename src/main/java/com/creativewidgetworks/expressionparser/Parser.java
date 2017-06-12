@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.regex.Matcher;
 
 public class Parser {
     // Internal VO class to hold a function's argument count
@@ -27,14 +28,177 @@ public class Parser {
     private ParserException  lastException;
     private String lastExpression;
 
-    // Holds working variables, scope exists over multiple calls to eval()
+    // Containers for constants, functions, and variables
+    private final Map<String, BigDecimal> constants = new HashMap<>();
+    private final Map<String, Function> functions = new HashMap<>();
     private final Map<String, Value> variables = new TreeMap<>();
+
+    private FieldInterface fieldInterface;
 
     public Parser() {
         caseSensitive = false;
         expressionDelimiter = DEFAULT_SPLIT_CHARACTER;
+        clearConstants();
+        clearFunctions();
     }
 
+    /*----------------------------------------------------------------------------*/
+
+    public void addConstant(String name, BigDecimal value) {
+        if (name != null) {
+            constants.put(caseSensitive ? name : name.toUpperCase(), value);
+            TokenType.invalidatePattern();
+        }
+    }
+
+    public void clearConstant(String name) {
+        constants.remove(caseSensitive ? name : name.toUpperCase());
+        TokenType.invalidatePattern();
+    }
+
+    public void clearConstants() {
+        constants.clear();
+        addConstant("null", null);
+        addConstant("pi", BigDecimal.valueOf(Math.PI));
+        TokenType.invalidatePattern();
+    }
+
+    public BigDecimal getConstant(String name) {
+        return name == null ? null : constants.get(caseSensitive ? name : name.toUpperCase());
+    }
+
+    public Map<String, BigDecimal> getConstants() {
+        return constants;
+    }
+
+    public String getConstantRegex() {
+        List<String> names = new ArrayList<>();
+        names.addAll(constants.keySet());
+
+        // Sort in descending order to insure proper matching
+        Collections.sort(names, Collections.<String>reverseOrder());
+
+        StringBuilder sb = new StringBuilder();
+        for (String name : names) {
+            if (sb.length() > 0) {
+                sb.append("|");
+            }
+            sb.append(name);
+        }
+
+        if (sb.length() == 0) {
+            sb.append("~~no-constants-defined~~");
+        }
+
+        return sb.toString();
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    public Value getField(String name) {
+        if (fieldInterface != null) {
+            return fieldInterface.getField(name, getCaseSensitive());
+        } else {
+            return null;
+        }
+    }
+
+    public FieldInterface getFieldInterface() {
+        return fieldInterface;
+    }
+
+    public FieldInterface setFieldInterface(FieldInterface fieldInterface) {
+        FieldInterface oldValue = fieldInterface;
+        this.fieldInterface = fieldInterface;
+        return oldValue;
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    public void addFunction(Function function) {
+        if (function != null) {
+            functions.put(caseSensitive ? function.getName() : function.getName().toUpperCase(), function);
+            TokenType.invalidatePattern();
+        }
+    }
+
+    public void clearFunction(String name) {
+        functions.remove(caseSensitive ? name : name.toUpperCase());
+        TokenType.invalidatePattern();
+    }
+
+    public void clearFunctions() {
+        functions.clear();
+        addFunction(new Function("now", this, "_NOW", 0, 1));
+        addFunction(new Function("precision", this, "_PRECISION", 1, 1));
+        TokenType.invalidatePattern();
+    }
+
+    public Function getFunction(String functionName) {
+        return functionName == null ? null : functions.get(caseSensitive ? functionName : functionName.toUpperCase());
+    }
+
+    public Map<String, Function> getFunctions() {
+        return functions;
+    }
+
+    public String getFunctionRegex() {
+        List<String> regexs = new ArrayList<>();
+        for (Function function : functions.values()) {
+            regexs.add(function.getName());
+        }
+
+        // Sort in descending order to insure proper matching
+        Collections.sort(regexs, Collections.<String>reverseOrder());
+
+        StringBuilder sb = new StringBuilder();
+        for (String regex : regexs) {
+            if (sb.length() > 0) {
+                sb.append("|");
+            }
+            sb.append(regex);
+        }
+
+        if (sb.length() == 0) {
+            sb.append("~~no-functions-defined~~");
+        }
+
+        return sb.toString();
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    private Object getProperty(String name) {
+        Object obj = System.getenv(name);
+        return obj == null ? System.getProperty(name) : obj;
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    public void addVariable(String name, Value value) {
+        if (name != null) {
+            variables.put(caseSensitive ? name : name.toUpperCase(), value);
+        }
+    }
+
+    public void clearVariable(String name) {
+        variables.remove(caseSensitive ? name : name.toUpperCase());
+    }
+
+    public void clearVariables() {
+        variables.clear();
+    }
+
+    public BigDecimal getVariable(String name) {
+        return name == null ? null : constants.get(caseSensitive ? name : name.toUpperCase());
+    }
+
+    public Map<String, Value> getVariables() {
+        return variables;
+    }
+
+    /*----------------------------------------------------------------------------*/
+    /*----------------------------------------------------------------------------*/
     /*----------------------------------------------------------------------------*/
 
     private int compareTokens(Token token1, Token token2, boolean caseSensitive) throws ParserException {
@@ -82,10 +246,6 @@ public class Parser {
         tokenizedExpressions.clear();
     }
 
-    public void clearVariables() {
-        variables.clear();
-    }
-
     public ParserException getLastException() {
         return lastException;
     }
@@ -94,36 +254,27 @@ public class Parser {
         return lastExpression;
     }
 
-    public Map<String, Value> getVariables() {
-        return variables;
+    /*----------------------------------------------------------------------------*/
+
+    public boolean getCaseSensitive() {
+        return caseSensitive;
     }
+
+    public boolean setCaseSensitive(boolean caseSensitive) {
+        boolean oldValue = this.caseSensitive;
+        this.caseSensitive = caseSensitive;
+        return oldValue;
+    }
+
+    /*----------------------------------------------------------------------------*/
 
     public int getPrecision() {
         return precision;
     }
 
-    public void setPrecision(int precision) {
-        this.precision = precision;
-    }
-
-    /*----------------------------------------------------------------------------*/
-
-    private BigDecimal getConstant(String name) {
-        return Constant.get(name, caseSensitive);
-    }
-
-    /*----------------------------------------------------------------------------*/
-
-    private Object getProperty(String name) {
-        Object obj = System.getenv(name);
-        return obj == null ? System.getProperty(name) : obj;
-    }
-
-    /*----------------------------------------------------------------------------*/
-
-    public boolean setCaseSensitive(boolean caseSensitive) {
-        boolean oldValue = this.caseSensitive;
-        this.caseSensitive = caseSensitive;
+    public int setPrecision(int decimals) {
+        int oldValue = this.precision;
+        this.precision = decimals;
         return oldValue;
     }
 
@@ -165,7 +316,7 @@ public class Parser {
                 String[] expressions = source.split(expressionDelimiter + SPLIT_REGEX);
                 for (String expression : expressions) {
                     if (expression.trim().length() > 0) {
-                        List<Token> list = Tokenizer.tokenize(expression, caseSensitive, false);
+                        List<Token> list = tokenize(expression, false);
                         if (list.size() > 0) {
                             tokens.addAll(infixToRPN(list));
                         }
@@ -186,6 +337,44 @@ public class Parser {
         }
 
         return value;
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    public List<Token> tokenize(String input, boolean wantWhitespace) {
+        int offset = 0;
+        int row = 1;
+
+        List<Token> tokens = new ArrayList<>();
+
+        Matcher matcher = TokenType.getPattern(this).matcher(input);
+        while (matcher.find()) {
+            if (wantWhitespace || matcher.group(TokenType.WHITESPACE.name()) == null) {
+                for (TokenType tokenType : TokenType.values()) {
+                    if (matcher.group(tokenType.name()) != null) {
+                        String text = tokenType.resolve(matcher.group(tokenType.name()));
+                        tokens.add(new Token(tokenType, text, row, matcher.start() + 1 - offset));
+                        break;
+                    }
+                }
+            }
+
+            if (matcher.group(TokenType.NEWLINE.name()) != null) {
+                offset = matcher.start() + 1;
+                row++;
+            }
+        }
+
+        // Remove the NOMATCH signifying end-of-expression
+        if (tokens.size() > 1) {
+            int last = tokens.size() - 1;
+            Token token = tokens.get(last);
+            if (TokenType.NOMATCH.equals(token.getType())) {
+                tokens.remove(last);
+            }
+        }
+
+        return tokens;
     }
 
     /*----------------------------------------------------------------------------*/
@@ -235,7 +424,7 @@ public class Parser {
 
             lastToken = token;
 
-            if (token.isNumber() || token.isString() || token.isConstant() || token.isIdentifer() || token.isProperty()) {
+            if (token.isNumber() || token.isString() || token.isConstant() || token.isField() || token.isIdentifer() || token.isProperty()) {
                 outputTokens.add(token);
                 if (!argStack.isEmpty()) {
                     argStack.peek().haveArgs = true;
@@ -355,11 +544,13 @@ public class Parser {
                 } else {
                     assertBothNumbers(lhs, rhs);
                     BigDecimal bd = lhs.asNumber().add(rhs.asNumber());
+                    bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
                     result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
                 }
             } else if (op.equals(Operator.MINUS)) {
                 // Subtraction
                 BigDecimal bd = lhs.asNumber().subtract(rhs.asNumber());
+                bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.MULT)) {
                 // Multiplication
@@ -382,11 +573,13 @@ public class Parser {
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.PERCENT)) {
                 BigDecimal bd = lhs.asNumber().divide(new BigDecimal("100"), RoundingMode.UP);
+                bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.EXP)) {
                 // Exponentiation x^y
                 MathContext mc = rhs.asNumber().compareTo(BigDecimal.ZERO) < 0 ? MathContext.DECIMAL128 : MathContext.UNLIMITED;
                 BigDecimal bd = lhs.asNumber().pow(rhs.asNumber().intValue(), mc);
+                bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.ASSIGNMENT)) {
                 // Assignment
@@ -475,11 +668,16 @@ public class Parser {
         return isTrue;
     }
 
+    private Token processField(Token field, Stack<Token> stack) throws ParserException {
+        Value value = getField(field.getText());
+        return new Token().setValue(value);
+    }
+
     private Token processFunction(Token function, Stack<Token> stack) throws ParserException {
         Value value = null;
         String name = function.getText();
 
-        Function f = Function.get(name, caseSensitive);
+        Function f = getFunction(name);
         if (f != null) {
             try {
                 value = f.execute(function, stack);
@@ -515,6 +713,8 @@ public class Parser {
                 }
                 token.setValue(value);
                 stack.push(token);
+            } else if (token.isField()) {
+                stack.push(processField(token, stack));
             } else if (token.isFunction()) {
                 stack.push(processFunction(token, stack));
             } else if (token.isConstant()) {
@@ -574,6 +774,76 @@ public class Parser {
         }
 
         return stack.pop().getValue();
+    }
+
+    /*----------------------------------------------------------------------------*/
+    /*----------------------------------------------------------------------------*/
+    /*----------------------------------------------------------------------------*/
+
+    /*
+      * Returns the current date and time
+      * parameter_1: (no parameter = actual time)
+      *              0 = actual time
+      *              1 = beginning of today
+      *              2 = end of today
+      * date() ->   2009-08-31 13:32:02
+      * date(1) ->  2009-08-31 00:00:00
+      * date(2) ->  2009-08-31 23:59:59
+      * date("kdkdkd") -> expected number exception
+      *
+      */
+    public Value _NOW(Token function, Stack<Token> stack) throws ParserException {
+        Calendar calendar = Calendar.getInstance();
+        if (function.getArgc() > 0) {
+            int mode = stack.pop().asNumber().intValue();
+            switch (mode) {
+                case 0:
+                    break; // current time
+
+                case 1:    // beginning of day
+                    calendar.set(Calendar.HOUR_OF_DAY, 0);
+                    calendar.set(Calendar.MINUTE, 0);
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    break;
+
+                case 2:    // end of day
+                    calendar.set(Calendar.HOUR_OF_DAY, 23);
+                    calendar.set(Calendar.MINUTE, 59);
+                    calendar.set(Calendar.SECOND, 59);
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    break;
+
+                default:
+                    String msg = ParserException.formatMessage("error.function_value_out_of_range",
+                            function.getText(), "1", "0", "2", String.valueOf(mode));
+                    throw new ParserException(msg);
+            }
+        }
+
+        return new Value(function.getText()).setValue(new Date(calendar.getTimeInMillis()));
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    /*
+     * Sets the number of decimal places when working with numeric values
+     * parameter_1: number of decimal places (0>)
+     * returns previous precision value
+     */
+    public Value _PRECISION(Token function, Stack<Token> stack) throws ParserException {
+        int oldValue = precision;
+        if (function.getArgc() > 0) {
+            int decimals = stack.pop().asNumber().intValue();
+            if (decimals >= 0 && decimals <= 100) {
+                precision = decimals;
+            } else {
+                String msg = ParserException.formatMessage("error.function_value_out_of_range",
+                        function.getText(), "1", "0", "100", String.valueOf(decimals));
+                throw new ParserException(msg);
+            }
+        }
+        return new Value(function.getText()).setValue(BigDecimal.valueOf(oldValue));
     }
 
 }

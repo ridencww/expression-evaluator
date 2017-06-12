@@ -28,13 +28,13 @@ enum TokenType {
         this.pattern = resolutionNeeded ? Pattern.compile(regex) : null;
     }
 
-    String getRegex() {
+    String getRegex(Parser parser) {
         if (this.equals(OPERATOR)) {
             return Operator.getOperatorRegex();
         } else if (this.equals(CONSTANT)) {
-            return Constant.getConstantRegex();
+            return parser.getConstantRegex();
         } else if (this.equals(FUNCTION)) {
-            return Function.getFunctionRegex();
+            return parser.getFunctionRegex();
         } else {
             return regex;
         }
@@ -69,17 +69,17 @@ enum TokenType {
 
     /**
      * Returns a regex that will be used to parse OPERATOR tokens
-     * @param caseSensitive true if case is important else false
+     * @param parser instance using the TokenType
      * @return String, regex expression
      */
-    public static Pattern getPattern(boolean caseSensitive) {
+    public static Pattern getPattern(Parser parser) {
         if (combinedPattern == null) {
             StringBuilder sb = new StringBuilder();
             for (TokenType tokenType : TokenType.values()) {
-                sb.append(String.format("|(?<%s>%s)", tokenType.name(), tokenType.getRegex()));
+                sb.append(String.format("|(?<%s>%s)", tokenType.name(), tokenType.getRegex(parser)));
             }
 
-            int options = caseSensitive ? Pattern.UNICODE_CASE : Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE;
+            int options = parser.getCaseSensitive() ? Pattern.UNICODE_CASE : Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE;
             combinedPattern = Pattern.compile(sb.substring(1), options);
         }
         return combinedPattern;

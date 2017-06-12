@@ -63,8 +63,6 @@ public class UnitTestBase extends Assert {
         }
     }
 
-
-
     void validateTokens(List<Token> actual, Token... expected) {
         assertEquals("token count", expected.length, actual.size());
         int row = 0;

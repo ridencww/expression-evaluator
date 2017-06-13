@@ -157,8 +157,9 @@ public class Token {
     }
 
 
-    public void setArgc(int argc) {
+    public Token setArgc(int argc) {
         this.argc = argc;
+        return this;
     }
 
     public Token setText(String text) {

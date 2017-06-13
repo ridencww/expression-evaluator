@@ -775,6 +775,26 @@ public class Parser {
 
         return stack.pop().getValue();
     }
+    
+    /*----------------------------------------------------------------------------*/
+
+    /**
+     * Pops the arguments off of the stack and returns an array in reverse order
+     * (e.g., 1, 2, "RI" -> "RI", 2, 1).  This ensures optional arguments in
+     * function calls appear at the end of the array and not the beginning.
+     */
+    public Token[] popArguments(Token function, Stack<Token> stack) {
+        Token[] args = null;
+        if (function.getArgc() > 0 && stack.size() > 0) {
+            args = new Token[function.getArgc()];
+            for (int i = function.getArgc() - 1; i >= 0; i--) {
+                args[i] = stack.pop();
+            }
+        } else {
+            args = new Token[0];
+        }
+        return args;
+    }
 
     /*----------------------------------------------------------------------------*/
     /*----------------------------------------------------------------------------*/

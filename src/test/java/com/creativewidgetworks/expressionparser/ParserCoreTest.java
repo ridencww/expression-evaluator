@@ -165,6 +165,36 @@ public class ParserCoreTest extends UnitTestBase {
                 new Token(TokenType.NUMBER, "2", 1, 3));
     }
 
+    private void validatePoppedArgs(int numToPop, int expectedSize, String... expected) {
+        assertEquals("not enough expected arguments passed to match expected size (bad test setup)", expectedSize, expected.length);
+
+        Stack<Token> stack = new Stack<>();
+        stack.push(new Token(TokenType.NUMBER, "1"));
+        stack.push(new Token(TokenType.NUMBER, "2"));
+        stack.push(new Token(TokenType.STRING, "RI"));
+
+        Token function = new Token(TokenType.FUNCTION, "test").setArgc(numToPop);
+
+        Token[] args = parser.popArguments(function, stack);
+        assertEquals("argument count", expectedSize, args.length);
+
+        if (expectedSize > 0) {
+            for (int i = 0; i < expectedSize; i++) {
+                assertEquals(expected[i], args[i].asString());
+            }
+        }
+    }
+
+    @Test
+    public void testPopArguments() {
+        // TODO - inprogress
+        //   validatePoppedArgs(0, 0);
+     //   validatePoppedArgs(1, 1, "RI");
+     //   validatePoppedArgs(2, 2, "RI", "2");
+     //   validatePoppedArgs(3, 3, "RI", "2", "1");
+
+    }
+
     @Test
     public void testTokenize() throws Exception {
         Token[] expected = new Token[] {

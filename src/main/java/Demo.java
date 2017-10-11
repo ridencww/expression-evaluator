@@ -1,7 +1,5 @@
-import com.creativewidgetworks.expressionparser.Parser;
-import com.creativewidgetworks.expressionparser.ParserException;
-import com.creativewidgetworks.expressionparser.Token;
-import com.creativewidgetworks.expressionparser.Value;
+import com.creativewidgetworks.expressionparser.*;
+
 import java.util.List;
 
 public class Demo {
@@ -49,6 +47,8 @@ public class Demo {
         }
 
         DemoParser parser = new Demo().new DemoParser();
+
+        FunctionToolbox.register(parser);
 
         Value value = parser.eval(expression);
 

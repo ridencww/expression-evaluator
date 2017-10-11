@@ -5,8 +5,7 @@ An extensible general purpose expression evaluator in Java.
 ## Features
 
  - Lightweight and fast expression parser
- - Designed around a base Parser object that can be expanded as desired
- - Symbols defining grammar are easily customizable
+ - Designed around an extensible base Parser object
  - New functions can easily be added
  - Compiled expressions are cached for performance
  - Result types of STRING, NUMBER, DATE, and BOOLEAN
@@ -14,7 +13,7 @@ An extensible general purpose expression evaluator in Java.
  - Variables
  - Single call to eval() can contain multiple expressions
  - System properties, environment variables, and data sets
- - Supplied with an extended set of functions to extend basic expression parsing that 
+ - Supplied with a set of functions (FunctionToolbox) to extend basic expression parsing 
 
 ## Requirements
 
@@ -40,7 +39,7 @@ If you're using Maven for your project, add the following to your project's pom.
     <dependency>
       <groupId>com.creativewidgetworks</groupId>
       <artifactId>expression-evaluator</artifactId>
-      <version>2.0</version>
+      <version>2.0.0</version>
     </dependency>
 
 ## Data types
@@ -80,19 +79,19 @@ A string to be parsed can contain multiple expressions. In the example that foll
     Property    ${<id>}
     DataSource  @<id>
     Constants   NULL PI
-    Functions   NOW
+    Functions   NOW PRECISION
    
-## Optional functions that can be bound to Parser  
+## Optional functions supplied by FunctionToolbox that can be bound to Parser  
  
     Functions   ABS ARCCOS ARCSIN ARCTAN ARRAYLEN AVERAGE CEILING CONTAINS CONTAINSALL CONTAINSANY
-                COS ENDSWITH EXP FACTORIAL FIND FLOOR HEX ISBLANK ISBOOLEAN ISDATE ISNULL LEFT LEN
-                LOG LOG10 LOWER MAKEBOOLEAN MATCH MATCHBYLEN MAX MID MIN NAMECASE RANDOM REPLACE
-                REPLACEFIRST RIGHT SIN SPLIT SQR SQRT STARTSWITH STR STRING TAN TRIM TRIMLEFT TRIMRIGHT
-                UPPER VAL
+                COS ENDSWITH EXP FACTORIAL FIND FLOOR HEX ISBLANK ISBOOLEAN ISDATE ISNULL ISNUMBER
+                LEFT LEN LOG LOG10 LOWER MAKEBOOLEAN MATCH MATCHBYLEN MAX MID MIN NAMECASE RANDOM
+                REPLACE REPLACEFIRST RIGHT SIN SPLIT SQR SQRT STARTSWITH STR STRING TAN TRIM TRIMLEFT
+                TRIMRIGHT UPPER VAL
    
 ## Usage
 
-The jar contains a small console program that exercises the extended grammar parser as well as displaying the tokens and RPN stream.
+The jar contains a small console program that exercises the parser and FunctionToolbox as well as displaying the tokens and RPN stream.
 
 Examples:
 
@@ -127,7 +126,7 @@ Examples:
     
 ## Version History
  
-2.0  
+2.0.0  
 * Structural refactor
 * Provided a set of TokenType operators that most can use as-is.
 * Supplied a toolbox of functions that can be optionally used by the basic Parser. Users can continue to define their own custom functions.

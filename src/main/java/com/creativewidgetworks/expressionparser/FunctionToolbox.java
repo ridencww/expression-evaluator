@@ -24,6 +24,7 @@ public class FunctionToolbox {
 
         toolbox.parser = parser;
 
+        parser.addFunction(new Function("ABS", toolbox, "_ABS", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("ARCCOS", toolbox, "_ARCCOS", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("ARCSIN", toolbox, "_ARCSIN", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("ARCTAN", toolbox, "_ARCTAN", 1, 1, ValueType.NUMBER));
@@ -64,6 +65,8 @@ public class FunctionToolbox {
         parser.addFunction(new Function("RIGHT", toolbox, "_RIGHT", 2, 2, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("SIN", toolbox, "_SIN", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("SPLIT", toolbox, "_SPLIT", 1, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("SQR", toolbox, "_SQR", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("SQRT", toolbox, "_SQRT", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("STARTSWITH", toolbox, "_STARTSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("STR", toolbox, "_STR", 1, 3, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("STRING", toolbox, "_STRING", 2, 2, ValueType.STRING, ValueType.NUMBER));
@@ -157,6 +160,22 @@ public class FunctionToolbox {
     /*----------------------------------------------------------------------------*/
 
     /*
+     * Returns the absolute value of the number
+     * abs(-1) -> 1
+     */
+    public Value _ABS(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        BigDecimal number = stack.pop().asNumber();
+        if (number != null) {
+            double d = Math.abs(number.doubleValue());
+            value.setValue(scale(BigDecimal.valueOf(d)));
+        }
+
+        return value;
+    }
+
+    /*
      * Returns the arc cosine of the number; number in radians
      * arccos(0.70710) -> 45
      * arccos(null) -> null
@@ -214,12 +233,12 @@ public class FunctionToolbox {
     public Value _ARRAYLEN(Token function, Stack<Token> stack) throws ParserException {
         Value value = new Value(function.getText()).setValue(BigDecimal.ZERO);
 
-        Token Token = stack.pop();
-        Value theValue = Token.getValue();
+        Token token = stack.pop();
+        Value theValue = token.getValue();
         if (theValue.asObject() != null) {
             if (theValue.getArray() == null) {
-                String msg = ParserException.formatMessage("error.expected_array", Token.getText());
-                throw new ParserException(msg, Token.getRow(), Token.getColumn());
+                String msg = ParserException.formatMessage("error.expected_array", token.getText());
+                throw new ParserException(msg, token.getRow(), token.getColumn());
             }
             value.setValue(BigDecimal.valueOf(theValue.getArray().size()));
         } else {
@@ -1106,6 +1125,44 @@ public class FunctionToolbox {
                     value.addValueToArray(aValue);
                 }
             }
+        }
+
+        return value;
+    }
+
+    /*
+     * Returns the number squared
+     * sqr(9) -> 81
+     */
+    public Value _SQR(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        BigDecimal number = stack.pop().asNumber();
+        if (number != null) {
+            double d = number.doubleValue() * number.doubleValue();
+            value.setValue(scale(BigDecimal.valueOf(d)));
+        }
+
+        return value;
+    }
+
+    /*
+     * Returns the square root of the number
+     * sqrt(81) -> 9
+     */
+    public Value _SQRT(Token function, Stack<Token> stack) throws ParserException {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        Token token = stack.pop();
+
+        BigDecimal number = token.asNumber();
+        if (number != null) {
+            double d = Math.sqrt(number.doubleValue());
+            if (Double.isNaN(d)) {
+                String msg = ParserException.formatMessage("error.not_a_number");
+                throw new ParserException(msg, token.getRow(), token.getColumn());
+            }
+            value.setValue(scale(BigDecimal.valueOf(d)));
         }
 
         return value;

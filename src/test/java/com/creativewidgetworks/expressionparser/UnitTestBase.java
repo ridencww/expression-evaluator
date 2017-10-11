@@ -8,7 +8,7 @@ import java.util.List;
 
 public class UnitTestBase extends Assert {
 
-    void validateExceptionThrown(Parser parser, String expression, String expected) {
+    void validateExceptionThrown(Parser parser, String expression, String expected, int row, int col) {
         try {
             Value result = parser.eval(expression);
             assertNotNull("should have value", result);
@@ -16,6 +16,8 @@ public class UnitTestBase extends Assert {
             assertTrue("expected ParserException result", result.asObject() instanceof ParserException);
             assertNotNull("Should have exception", parser.getLastException());
             assertEquals("wrong msg", expected, parser.getLastException().getMessage());
+            assertEquals("row", row, parser.getLastException().getErrorRow());
+            assertEquals("col", col, parser.getLastException().getErrorColumn());
          } catch (Exception ex) {
             ex.printStackTrace();
             fail("Uncaught exception evaluation " + expression);
@@ -61,6 +63,12 @@ public class UnitTestBase extends Assert {
             assertEquals(expression, ValueType.DATE, result.getType());
             assertTrue(expression, Math.abs(time - result.asDate().getTime()) < 1000);
         }
+    }
+
+
+    void validatePattern(Parser parser, String functionName) {
+        assertTrue("\"" + functionName + "\" should be part of the function matching pattern",
+                parser.getFunctionRegex().indexOf(functionName.toUpperCase()) != -1);
     }
 
     void validateTokens(List<Token> actual, Token... expected) {

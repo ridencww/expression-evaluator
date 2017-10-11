@@ -10,7 +10,7 @@ public class OperatorTest extends Assert {
 
     @Test
     public void testFind_case_sensitive() {
-        Token token = new Token(TokenType.OPERATOR, "AND");
+        Token token = new Token(TokenType.OPERATOR, "AND", 1, 1);
         assertNotNull(Operator.find(token, true));
         token.setText("and");
         assertNull(Operator.find(token, true));
@@ -18,7 +18,7 @@ public class OperatorTest extends Assert {
 
     @Test
     public void testFind_case_insensitive() {
-        Token token = new Token(TokenType.OPERATOR, "AND");
+        Token token = new Token(TokenType.OPERATOR, "AND", 1, 1);
         assertNotNull(Operator.find(token, false));
         token.setText("and");
         assertNotNull(Operator.find(token, false));

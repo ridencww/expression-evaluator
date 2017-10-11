@@ -6,52 +6,54 @@ import java.util.Date;
 
 public class Token {
     private final TokenType type;
-    private final Value value;
-    private final Value shadowValue;
+
+    private Value value;
+    private Value orgValue;
 
     private final int row;
     private final int column;
     private int argc;
     private String text;
 
-    public Token() { this(null, ""); }
+    public Token(TokenType type, String text, int row, int column) {
+        this(type, text, null, row, column);
+        Value value = new Value();
+        if (type != null) {
+            if (TokenType.NUMBER.equals(type)) {
+                value = new Value("number", new BigDecimal(text));
+            } else if (TokenType.STRING.equals(type)) {
+                value = new Value("string", text);
+            }
+        }
+        setValue(value);
 
-    public Token(TokenType type, String text) {
-        this(type, text, 0, 0);
     }
 
-    public Token(TokenType type, String text, int row, int column) {
+    public Token(TokenType type, Value value, int row, int column) {
+        this(type, "VALUE", value, row, column);
+    }
+
+    public Token(TokenType type, String text, Value value, int row, int column) {
         this.type = type == null ? TokenType.NOMATCH : type;
         this.text = text;
         this.row = row;
         this.column = column;
-        this.value = new Value();
-        switch (this.type) {
-            case NUMBER:
-                value.setValue(new BigDecimal(text));
-                break;
-
-            case STRING:
-                value.setValue(text);
-                break;
-
-            default:
-                break;
-        }
-
-        this.shadowValue = new Value(value);
+        this.value = new Value(value);
     }
 
     /*---------------------------------------------------------------------------------*/
 
-    /**
-     * This ensure that any changes made in RPNtoValue will not impacted cached tokens
-     */
-    public void restoreValue() {
-        value.set(shadowValue);
+
+    void saveOrgValue() {
+        orgValue = new Value(value);
+    }
+
+    void restoreOrgValue() {
+        value.set(orgValue);
     }
 
     /*---------------------------------------------------------------------------------*/
+
 
     public Boolean asBoolean() {
         return getValue() != null ? getValue().asBoolean() : null;
@@ -130,14 +132,19 @@ public class Token {
      * @return true if token is an operator and not an open or close parenthesis
      *
      * Instead of having to pass in caseSensitivity, departing from the other isXXX methods, the operator
-     * type is searched in case sensitive and case insensitive mode.
+     * type is searched in case sensitive and case insensitive mode. The searching only occurs for token
+     * types that are functions.
      */
     public boolean isOperator() {
-        Operator op = Operator.find(this, false);
-        if (op == null) {
-            op = Operator.find(this, true);
+        if (TokenType.OPERATOR.equals(type)) {
+            Operator op = Operator.find(this, false);
+            if (op == null) {
+                op = Operator.find(this, true);
+            }
+            return !Operator.LPAREN.equals(op) && !Operator.RPAREN.equals(op);
+        } else {
+            return false;
         }
-        return TokenType.OPERATOR.equals(type) && !Operator.LPAREN.equals(op) && !Operator.RPAREN.equals(op);
     }
 
     public boolean isParen() {

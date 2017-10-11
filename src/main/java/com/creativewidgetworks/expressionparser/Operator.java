@@ -1,8 +1,6 @@
 package com.creativewidgetworks.expressionparser;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 // Precedence and associativity of Java operators courtesy of http://introcs.cs.princeton.edu/java/11precedence/
 enum Operator {
@@ -60,6 +58,16 @@ enum Operator {
     static final int LEFT_ASSOCIATIVE  = 1;
     static final int RIGHT_ASSOCIATIVE = 2;
 
+    private static final Map<String, Operator> caseInsensitiveMap = new HashMap<String, Operator>();
+    private static final Map<String, Operator> caseSensitiveMap = new HashMap<String, Operator>();
+
+    static {
+        for (Operator operator : values()) {
+            caseInsensitiveMap.put(operator.text.toUpperCase(), operator);
+            caseSensitiveMap.put(operator.text, operator);
+        }
+    }
+
     private final int precedence;
     private final int association;
     private final String text;
@@ -73,16 +81,8 @@ enum Operator {
     }
 
     public static Operator find(Token token, boolean caseSensitive) {
-        if (token != null && token.getText() != null) {
-            for (Operator operator : values()) {
-                if (caseSensitive && operator.getText().equals(token.getText())) {
-                    return operator;
-                } else if  (!caseSensitive && operator.getText().equalsIgnoreCase(token.getText())) {
-                    return operator;
-                }
-            }
-        }
-        return null;
+        String key = (token == null || token.getText() == null) ? "" : caseSensitive ? token.getText() : token.getText().toUpperCase();
+        return caseSensitive ? caseSensitiveMap.get(key) : caseInsensitiveMap.get(key);
     }
 
     public boolean inSet(Operator... operators) {

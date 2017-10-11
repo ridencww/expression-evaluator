@@ -25,7 +25,7 @@ public class Parser {
     final Map<String,List<Token>> tokenizedExpressions = new HashMap<>();
 
     // Status
-    private ParserException  lastException;
+    private ParserException lastException;
     private String lastExpression;
 
     // Containers for constants, functions, and variables
@@ -304,18 +304,18 @@ public class Parser {
         // Clear results of last parse
         Value value;
         lastException = null;
-        lastExpression = source;
 
         try {
             // See if this expression has been previously parsed
             List<Token> tokens = tokenizedExpressions.get(source);
 
-            // If expression isn't in the map then tokenize, generate RPN stack, and store the tokens
+            // If expression isn't in the map then tokenize, generate RPN stack, and store the result
             if (tokens == null) {
                 tokens = new ArrayList<>();
                 String[] expressions = source.split(expressionDelimiter + SPLIT_REGEX);
                 for (String expression : expressions) {
                     if (expression.trim().length() > 0) {
+                        lastExpression = expression;
                         List<Token> list = tokenize(expression, false);
                         if (list.size() > 0) {
                             tokens.addAll(infixToRPN(list));
@@ -326,6 +326,11 @@ public class Parser {
                 // Save the parsed tokens in the cache
                 if (tokens.size() > 0) {
                     tokenizedExpressions.put(source, tokens);
+                }
+            } else {
+                // Restore any token values that may have been updated so cached expressions will continue to work
+                for (Token token : tokens) {
+                    token.restoreOrgValue();
                 }
             }
 
@@ -353,7 +358,9 @@ public class Parser {
                 for (TokenType tokenType : TokenType.values()) {
                     if (matcher.group(tokenType.name()) != null) {
                         String text = tokenType.resolve(matcher.group(tokenType.name()));
-                        tokens.add(new Token(tokenType, text, row, matcher.start() + 1 - offset));
+                        Token token = new Token(tokenType, text, row, matcher.start() + 1 - offset);
+                        token.saveOrgValue();
+                        tokens.add(token);
                         break;
                     }
                 }
@@ -492,13 +499,13 @@ public class Parser {
 
     private void assertBothNumbers(Token lhs, Token rhs) throws ParserException {
         if (lhs.getValue().getType() != ValueType.NUMBER || rhs.getValue().getType() != ValueType.NUMBER ) {
-            setStatusAndFail("error.both_must_be_numeric");
+            setStatusAndFail(rhs, "error.both_must_be_numeric", lhs.asString(), rhs.asString());
         }
     }
 
-    private void assertSufficientStack(Token Token, Stack<Token> stack, int requiredSize) throws ParserException {
+    private void assertSufficientStack(Token token, Stack<Token> stack, int requiredSize) throws ParserException {
         if (stack.size() < requiredSize) {
-            setStatusAndFail(Token, "error.syntax");
+            setStatusAndFail(token, "error.syntax");
         }
     }
 
@@ -517,14 +524,14 @@ public class Parser {
         if (op.equals(Operator.TIF)) {
             assertSufficientStack(token, stack, 4);
             if (!Operator.TELSE.equals(Operator.find(stack.pop(), caseSensitive))) {
-                setStatusAndFail("error.expected_telse", Operator.TELSE.getText());
+                setStatusAndFail(token, "error.expected_telse", Operator.TELSE.getText());
             }
 
             Token falseValue = stack.pop();
             Token trueValue = stack.pop();
             Token booleanValue =  stack.pop();
             if (booleanValue.getValue().getType() != ValueType.BOOLEAN) {
-                setStatusAndFail(booleanValue, "error.boolean_expected");
+                setStatusAndFail(booleanValue, "error.boolean_expected", booleanValue.getType());
             }
 
             return booleanValue.asBoolean() ? trueValue : falseValue;
@@ -598,23 +605,25 @@ public class Parser {
                     setStatusAndFail(lhs, "error.expected_identifier", lhs.getText());
                 }
             } else {
-                result = processRelationalOperators(lhs, op, rhs);
+                result = processRelationalOperators(lhs, token, rhs);
             }
         } catch (ArithmeticException ex) {
-            throw new ParserException(ex.getMessage(), ex);
+            throw new ParserException(ex.getMessage(), ex, token.getRow(), token.getColumn());
         }
 
         return result;
     }
 
-    private Token processRelationalOperators(Token lhs, Operator op, Token rhs) throws ParserException {
+    private Token processRelationalOperators(Token lhs, Token operator, Token rhs) throws ParserException {
         boolean isTrue = false;
+
+        Operator op = Operator.find(operator, caseSensitive);
 
         if (lhs.getValue().getType() == ValueType.BOOLEAN) {
             if (op.inSet(Operator.EQU, Operator.NEQ, Operator.AND, Operator.OR)) {
                 isTrue = performComparison(lhs.getValue().asBoolean(), rhs.getValue().asBoolean(), op);
             } else {
-                setStatusAndFail(rhs, "error.invalid_operator_boolean", op.getText());
+                setStatusAndFail(operator, "error.invalid_operator_boolean", op.getText());
             }
         } else if (lhs.getValue().getType() == ValueType.NUMBER) {
             if (!op.inSet(Operator.AND, Operator.OR)) {
@@ -636,9 +645,7 @@ public class Parser {
             }
         }
 
-        Token token = new Token();
-        token.getValue().setValue(isTrue ? Boolean.TRUE : Boolean.FALSE);
-        return token;
+        return new Token(TokenType.VALUE, new Value("VALUE", isTrue ? Boolean.TRUE : Boolean.FALSE), rhs.getRow(), rhs.getColumn() + 1);
     }
 
     @SuppressWarnings("unchecked")
@@ -670,7 +677,7 @@ public class Parser {
 
     private Token processField(Token field, Stack<Token> stack) throws ParserException {
         Value value = getField(field.getText());
-        return new Token().setValue(value);
+        return new Token(TokenType.VALUE, getField(field.getText()), field.getRow(), field.getColumn());
     }
 
     private Token processFunction(Token function, Stack<Token> stack) throws ParserException {
@@ -679,25 +686,21 @@ public class Parser {
 
         Function f = getFunction(name);
         if (f != null) {
-            try {
-                value = f.execute(function, stack);
-            } catch (ParserException ex) {
-                setStatusAndFail(function, ex.getMessage());
-            }
+            value = f.execute(function, stack);
         } else {
             setStatusAndFail(function, "error.no_handler", name);
         }
 
-        return new Token().setValue(value);
+        return new Token(TokenType.VALUE, value, function.getRow(), function.getColumn());
     }
 
     protected Value RPNtoValue(List<Token> tokens) throws ParserException {
         int tcount = 0;
+        Token last_telse = null;
 
         Stack<Token> stack = new Stack<>();
 
         for (Token token : tokens) {
-            token.restoreValue();
 
             if (token.isProperty()) {
                 Object obj = getProperty(token.getText());
@@ -751,6 +754,7 @@ public class Parser {
                     tcount--;
                 } else if (op.equals(Operator.TELSE)) {
                     tcount++;
+                    last_telse = token;
                     stack.push(token);
                     continue;
                 } else if (op.equals(Operator.UNARY_PLUS)) {
@@ -770,7 +774,7 @@ public class Parser {
 
         // Test for uncaught TELSE without corresponding TIF
         if (tcount != 0) {
-            setStatusAndFail("error.missing_tif", Operator.TELSE.getText(), Operator.TIF.getText());
+            setStatusAndFail(last_telse, "error.missing_tif", Operator.TELSE.getText(), Operator.TIF.getText());
         }
 
         return stack.pop().getValue();
@@ -815,7 +819,8 @@ public class Parser {
     public Value _NOW(Token function, Stack<Token> stack) throws ParserException {
         Calendar calendar = Calendar.getInstance();
         if (function.getArgc() > 0) {
-            int mode = stack.pop().asNumber().intValue();
+            Token token = stack.pop();
+            int mode = token.asNumber().intValue();
             switch (mode) {
                 case 0:
                     break; // current time
@@ -837,7 +842,7 @@ public class Parser {
                 default:
                     String msg = ParserException.formatMessage("error.function_value_out_of_range",
                             function.getText(), "1", "0", "2", String.valueOf(mode));
-                    throw new ParserException(msg);
+                    throw new ParserException(msg, token.getRow(), token.getColumn() - 1);
             }
         }
 
@@ -854,13 +859,14 @@ public class Parser {
     public Value _PRECISION(Token function, Stack<Token> stack) throws ParserException {
         int oldValue = precision;
         if (function.getArgc() > 0) {
-            int decimals = stack.pop().asNumber().intValue();
+            Token token = stack.pop();
+            int decimals = token.asNumber().intValue();
             if (decimals >= 0 && decimals <= 100) {
                 precision = decimals;
             } else {
                 String msg = ParserException.formatMessage("error.function_value_out_of_range",
                         function.getText(), "1", "0", "100", String.valueOf(decimals));
-                throw new ParserException(msg);
+                throw new ParserException(msg, token.getRow(), token.getColumn() - 1);
             }
         }
         return new Value(function.getText()).setValue(BigDecimal.valueOf(oldValue));

@@ -9,24 +9,29 @@ import java.util.Stack;
 
 public class FunctionToolboxTest extends UnitTestBase {
 
-    // TODO in-progress
+    private Parser parser;
 
-    /*
-    @Test
-    public void testARCCOS() throws Exception {
-        Parser parser = new Parser(new GrammarExtendedCalc());
-
-        validatePattern(parser, "ARCCOS");
-
-        validateException(parser.eval("ARCCOS()"), "ARCCOS expected 1 parameter(s), but got 0", 1, 6);
-        validateException(parser.eval("ARCCOS(0.01, 2)"), "ARCCOS expected 1 parameter(s), but got 2", 1, 6);
-        validateException(parser.eval("ARCCOS('1.23')"), "ARCCOS parameter 1 expected type NUMBER, but was STRING", 1, 6);
-
-        validateNumber(parser.eval("ARCCOS(null)"), null);
-        validateNumber(parser.eval("ARCCOS(0.9271838546)"), "22");
-        validateNumber(parser.eval("ARCCOS(0.7071068)"), "45");
+    @Before
+    public void beforeEach() {
+        parser = new Parser();
+        FunctionToolbox.register(parser);
     }
 
+    @Test
+    public void testARCCOS() throws Exception {
+        validatePattern(parser, "ARCCOS");
+
+        validateExceptionThrown(parser, "ARCCOS()", "ARCCOS expected 1 parameter(s), but got 0", 1, 7);
+        validateExceptionThrown(parser, "ARCCOS(0.01, 2)", "ARCCOS expected 1 parameter(s), but got 2", 1, 7);
+        validateExceptionThrown(parser, "ARCCOS('1.23')", "ARCCOS parameter 1 expected type NUMBER, but was STRING", 1, 7);
+
+        validateNumericResult(parser, "ARCCOS(null)", null);
+        validateNumericResult(parser, "ARCCOS(0.9271838546)", "22");
+        validateNumericResult(parser, "ARCCOS(0.7071068)", "45");
+    }
+
+
+/*
     @Test
     public void testARCSIN() throws Exception {
         Parser parser = new Parser(new GrammarExtendedCalc());

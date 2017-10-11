@@ -18,6 +18,65 @@ public class FunctionToolbox {
     private final char MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER = ':';
     private Parser tmpParser = null;
 
+
+    public static FunctionToolbox register(Parser parser) {
+        FunctionToolbox toolbox = new FunctionToolbox();
+
+        toolbox.parser = parser;
+
+        parser.addFunction(new Function("ARCCOS", toolbox, "_ARCCOS", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ARCSIN", toolbox, "_ARCSIN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ARCTAN", toolbox, "_ARCTAN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ARRAYLEN", toolbox, "_ARRAYLEN", 1, 1));
+        parser.addFunction(new Function("AVERAGE", toolbox, "_AVERAGE", 1, Integer.MAX_VALUE, ValueType.NUMBER));
+        parser.addFunction(new Function("CEILING", toolbox, "_CEILING", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("CONTAINS", toolbox, "_CONTAINS", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("CONTAINSALL", toolbox, "_CONTAINSALL", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("CONTAINSANY", toolbox, "_CONTAINSANY", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("COS", toolbox, "_COS", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ENDSWITH", toolbox, "_ENDSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("EXP", toolbox, "_EXP", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("FACTORIAL", toolbox, "_FACTORIAL", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("FIND", toolbox, "_FIND", 2, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("FLOOR", toolbox, "_FLOOR", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("HEX", toolbox, "_HEX", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ISBLANK", toolbox, "_ISBLANK", 1, 1));
+        parser.addFunction(new Function("ISBOOLEAN", toolbox, "_ISBOOLEAN", 1, 1));
+        parser.addFunction(new Function("ISDATE", toolbox, "_ISDATE", 1, 1));
+        parser.addFunction(new Function("ISNULL", toolbox, "_ISNULL", 1, 1));
+        parser.addFunction(new Function("ISNUMBER", toolbox, "_ISNUMBER", 1, 1));
+        parser.addFunction(new Function("LEFT", toolbox, "_LEFT", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("LEN", toolbox, "_LEN", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("LOG", toolbox, "_LOG", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("LOG10", toolbox, "_LOG10", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("LOWER", toolbox, "_LOWER", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("MAKEBOOLEAN", toolbox, "_MAKEBOOLEAN", 1, 1));
+        parser.addFunction(new Function("MATCH", toolbox, "_MATCH", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("MATCHBYLEN", toolbox, "_MATCHBYLEN", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("MAX", toolbox, "_MAX", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("MID", toolbox, "_MID", 2, 3, ValueType.STRING, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("MIN", toolbox, "_MIN", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("NAMECASE", toolbox, "_NAMECASE", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("RANDOM", toolbox, "_RANDOM", 0, 2, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("REPLACE", toolbox, "_REPLACE", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("REPLACEALL", toolbox, "_REPLACEALL", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("REPLACEFIRST", toolbox, "_REPLACEFIRST", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("RIGHT", toolbox, "_RIGHT", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("SIN", toolbox, "_SIN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("SPLIT", toolbox, "_SPLIT", 1, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("STARTSWITH", toolbox, "_STARTSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("STR", toolbox, "_STR", 1, 3, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("STRING", toolbox, "_STRING", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("TAN", toolbox, "_TAN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("TRIM", toolbox, "_TRIM", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("TRIMLEFT", toolbox, "_TRIMLEFT", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("TRIMRIGHT", toolbox, "_TRIMRIGHT", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("UPPER", toolbox, "_UPPER", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("VAL", toolbox, "_VAL", 1, 1, ValueType.STRING));
+
+        return toolbox;
+    }
+
     private boolean isTrimableCharacter(char toTest, char testChar) {
         return toTest == testChar || testChar == ' ' && Character.isWhitespace(toTest);
     }
@@ -854,6 +913,32 @@ public class FunctionToolbox {
         }
 
         return value;
+    }
+
+    /*
+     * Uppercases the first character of each word
+     * namecase("john smith") -> "John Smith"
+     */
+    public Value _NAMECASE(Token function, Stack<Token> stack) {
+        String str = stack.pop().asString();
+        if (str != null) {
+            StringBuilder sb = new StringBuilder();
+            boolean uc = true;
+            for (int i = 0; i < str.length(); i++) {
+                if (uc && !Character.isWhitespace(str.charAt(i))) {
+                    sb.append(Character.toUpperCase(str.charAt(i)));
+                    uc = false;
+                } else {
+                    sb.append(Character.toLowerCase(str.charAt(i)));
+                    if (Character.isWhitespace(str.charAt(i))) {
+                        uc = true;
+                    }
+                }
+            }
+            str = sb.toString();
+        }
+
+        return new Value(function.getText()).setValue(str);
     }
 
     /*

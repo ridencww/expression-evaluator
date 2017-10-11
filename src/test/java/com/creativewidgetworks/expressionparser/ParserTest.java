@@ -5,7 +5,6 @@ import org.junit.Test;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Stack;
 
 public class ParserTest extends UnitTestBase {
 
@@ -37,17 +36,17 @@ public class ParserTest extends UnitTestBase {
     @Test
     public void testBadExpressions() throws Exception {
         // mismatched parenthesis
-        validateExceptionThrown(parser, "(1 + 2", "Syntax error, missing parenthesis. Expected )");
-        validateExceptionThrown(parser, "1 + 2)", "Syntax error, missing parenthesis. Expected (");
-        validateExceptionThrown(parser, "(((1) + (2))", "Syntax error, missing parenthesis. Expected )");
-        validateExceptionThrown(parser, "((1) + (2)))", "Syntax error, missing parenthesis. Expected (");
+        validateExceptionThrown(parser, "(1 + 2", "Syntax error, missing parenthesis. Expected )", 1, 6);
+        validateExceptionThrown(parser, "1 + 2)", "Syntax error, missing parenthesis. Expected (", 1, 6);
+        validateExceptionThrown(parser, "(((1) + (2))", "Syntax error, missing parenthesis. Expected )", 1, 12);
+        validateExceptionThrown(parser, "((1) + (2)))", "Syntax error, missing parenthesis. Expected (", 1, 12);
 
         // missing terminals
-        validateExceptionThrown(parser, "1 + * 2", "Syntax error");
+        validateExceptionThrown(parser, "1 + * 2", "Syntax error", 1, 3);
 
         // dangling tokens
-        validateExceptionThrown(parser, "1 + 2 +", "Syntax error");
-        validateExceptionThrown(parser, "(1 == 1) ==", "Syntax error");
+        validateExceptionThrown(parser, "1 + 2 +", "Syntax error", 1, 7);
+        validateExceptionThrown(parser, "(1 == 1) ==", "Syntax error", 1, 10);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -101,8 +100,8 @@ public class ParserTest extends UnitTestBase {
         validateDateResult(parser, "NOW(1)", String.valueOf(bod));
         validateDateResult(parser, "NOW(2)", String.valueOf(eod));
 
-        validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2");
-        validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3");
+        validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2", 1, 4);
+        validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3", 1, 4);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -112,11 +111,12 @@ public class ParserTest extends UnitTestBase {
         int oldPrecision = parser.getPrecision();
         validateNumericResult(parser, "PRECISION(2)", "5");
         assertEquals(2, parser.getPrecision());
+        assertEquals(oldPrecision, Parser.DEFAULT_PRECISION);
 
-        validateExceptionThrown(parser, "PRECISION()", "PRECISION expected 1 parameter(s), but got 0");
-        validateExceptionThrown(parser, "PRECISION(0,1)", "PRECISION expected 1 parameter(s), but got 2");
-        validateExceptionThrown(parser, "PRECISION(-1)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was -1");
-        validateExceptionThrown(parser, "PRECISION(125)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was 125");
+        validateExceptionThrown(parser, "PRECISION()", "PRECISION expected 1 parameter(s), but got 0", 1, 10);
+        validateExceptionThrown(parser, "PRECISION(0,1)", "PRECISION expected 1 parameter(s), but got 2", 1, 10);
+        validateExceptionThrown(parser, "PRECISION(-1)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was -1", 1, 10);
+        validateExceptionThrown(parser, "PRECISION(125)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was 125", 1, 10);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -125,7 +125,7 @@ public class ParserTest extends UnitTestBase {
     public void testMultipleExpressions() throws Exception {
         validateNumericResult(parser, "A=3;B=7;A*B", "21");
         validateStringResult(parser, "A='Test;';B=' me';A+B", "Test; me");
-        validateExceptionThrown(parser, "A=3;B=0;A/B", "/ by zero");
+        validateExceptionThrown(parser, "A=3;B=0;A/B", "/ by zero", 1, 2);
     }
 
    /*----------------------------------------------------------------------------*/
@@ -200,11 +200,6 @@ public class ParserTest extends UnitTestBase {
         validateNumericResult(parser, "--2", "2");
         validateNumericResult(parser, "0--2", "2");
 
-        // unary minus (negation)
-        validateNumericResult(parser, "-2", "-2");
-        validateNumericResult(parser, "--2", "2");
-        validateNumericResult(parser, "0--2", "2");
-
         // subtraction
         validateNumericResult(parser, "1 - 2", "-1");
         validateNumericResult(parser, "10 - 2 - 3", "5");
@@ -248,7 +243,7 @@ public class ParserTest extends UnitTestBase {
 
     @Test
     public void testDivision() throws Exception {
-        validateExceptionThrown(parser, "23 / (1-1)", "/ by zero");
+        validateExceptionThrown(parser, "23 / (1-1)", "/ by zero", 1, 4);
 
         // floating point division
         validateNumericResult(parser, "15 / 2", "7.5");
@@ -273,7 +268,7 @@ public class ParserTest extends UnitTestBase {
     /*----------------------------------------------------------------------------*/
 
     @Test
-    public void TestExponentiation() throws Exception {
+    public void TestExponentiation() {
         validateNumericResult(parser, "10^1", "10");
         validateNumericResult(parser, "10^2", "100");
         validateNumericResult(parser, "10^3", "1000");
@@ -293,10 +288,10 @@ public class ParserTest extends UnitTestBase {
         validateBooleanResult(parser, "(1 == 0) OR (2 == 2)", Boolean.TRUE);
 
         // Invalid operators
-        validateExceptionThrown(parser, "(1 == 0) < (2 == 2)", "Invalid operator for boolean operations: <");
-        validateExceptionThrown(parser, "(1 == 0) <= (2 == 2)", "Invalid operator for boolean operations: <=");
-        validateExceptionThrown(parser, "(1 == 0) > (2 == 2)", "Invalid operator for boolean operations: >");
-        validateExceptionThrown(parser, "(1 == 0) >= (2 == 2)", "Invalid operator for boolean operations: >=");
+        validateExceptionThrown(parser, "(1 == 0) < (2 == 2)", "Invalid operator for boolean operations: <", 1, 10);
+        validateExceptionThrown(parser, "(1 == 0) <= (2 == 2)", "Invalid operator for boolean operations: <=", 1, 10);
+        validateExceptionThrown(parser, "(1 == 0) > (2 == 2)", "Invalid operator for boolean operations: >", 1, 10);
+        validateExceptionThrown(parser, "(1 == 0) >= (2 == 2)", "Invalid operator for boolean operations: >=", 1, 10);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -334,8 +329,8 @@ public class ParserTest extends UnitTestBase {
         }
 
         // Invalid operators
-        validateExceptionThrown(parser, "1 AND 2", "Invalid operator: AND");
-        validateExceptionThrown(parser, "1 OR 2", "Invalid operator: OR");
+        validateExceptionThrown(parser, "1 AND 2", "Invalid operator: AND", 1, 7);
+        validateExceptionThrown(parser, "1 OR 2", "Invalid operator: OR", 1, 6);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -362,8 +357,8 @@ public class ParserTest extends UnitTestBase {
         validateBooleanResult(parser, "\"ABC\" > \"ABD\"", Boolean.FALSE);
 
         // Invalid operators
-        validateExceptionThrown(parser, "\"ABC\" AND \"Abc\"", "Invalid operator: AND");
-        validateExceptionThrown(parser, "\"ABC\" OR \"Abc\"", "Invalid operator: OR");
+        validateExceptionThrown(parser, "\"ABC\" AND \"Abc\"", "Invalid operator: AND", 1, 11);
+        validateExceptionThrown(parser, "\"ABC\" OR \"Abc\"", "Invalid operator: OR", 1, 10);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -405,22 +400,32 @@ public class ParserTest extends UnitTestBase {
         assertFalse("NOT (1==1)", parser.eval("NOT (1==1)").asBoolean());
 
         // Invalid operators
-        validateExceptionThrown(parser, "D1 AND D4", "Invalid operator: AND");
-        validateExceptionThrown(parser, "D1 OR D4", "Invalid operator: OR");
+        validateExceptionThrown(parser, "D1 AND D4", "Invalid operator: AND", 1, 8);
+        validateExceptionThrown(parser, "D1 OR D4", "Invalid operator: OR", 1, 7);
     }
 
     /*----------------------------------------------------------------------------*/
 
     @Test
     public void testTernary() throws Exception {
-        validateExceptionThrown(parser, "(1==1) ? 'Y'", "Syntax error, ? without a matching :");
-        validateExceptionThrown(parser, "(1==1) : 'N'", "Syntax error, : without preceding ?");
-        validateExceptionThrown(parser, "1 ? 'Y' : 'N'", "Expected boolean value");
+        validateExceptionThrown(parser, "(1==1) ? 'Y'", "Syntax error, ? without a matching :", 1, 8);
+        validateExceptionThrown(parser, "(1==1) : 'N'", "Syntax error, : without preceding ?", 1, 8);
+        validateExceptionThrown(parser, "1 ? 'Y' : 'N'", "Expected boolean value, but was NUMBER", 1, 1);
 
         validateStringResult(parser, "(1==1) ? 'Y' : 'N'", "Y");
         validateStringResult(parser, "(1==2) ? 'Y' : 'N'", "N");
         validateStringResult(parser, "(1==1) ? ((2==1) ? 'A' : 'B') : 'N'", "B");
         validateStringResult(parser, "(1==2) ? 'C' : ((2==1) ? 'C' : 'D')", "D");
     }
+
+        /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testTokenCacheValueIsolation() throws Exception {
+        parser.setPrecision(15);
+        validateNumericResult(parser, "-2", "-2");
+        validateNumericResult(parser, "-2", "-2");
+    }
+
 
 }

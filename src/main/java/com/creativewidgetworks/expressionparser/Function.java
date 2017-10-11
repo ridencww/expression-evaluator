@@ -45,16 +45,22 @@ public class Function {
 
         try {
             validateParameters(function, stack);
-            value = (Value)javaMethod.invoke(javaInstance, function, stack);
+            value = (Value) javaMethod.invoke(javaInstance, function, stack);
+        } catch (ParserException pex) {
+            throw pex;
         } catch (Exception ex) {
-            String msg = ex.getMessage();
-            if (msg == null) {
-                msg = ex.getCause().getMessage();
+            if (ex.getCause() instanceof ParserException) {
+                throw (ParserException)ex.getCause();
+            } else {
+                String msg = ex.getMessage();
                 if (msg == null) {
-                    msg = ex.getCause().toString();
+                    msg = ex.getCause().getMessage();
+                    if (msg == null) {
+                        msg = ex.getCause().toString();
+                    }
                 }
+                throw new ParserException(msg, ex, function.getRow(), function.getColumn());
             }
-            throw new ParserException(msg, ex);
         }
 
         return value;
@@ -69,7 +75,7 @@ public class Function {
                 String strMaxArgs = maxArgs != Integer.MAX_VALUE ? String.valueOf(maxArgs) : "n";
                 String str = (minArgs == maxArgs) ? String.valueOf(minArgs) : (minArgs + ".." + strMaxArgs);
                 String msg = ParserException.formatMessage("error.function_parameter_count", function.getText(), str, function.getArgc());
-                throw new ParserException(msg, function.getRow(), function.getColumn());
+                throw new ParserException(msg, function.getRow(), function.getColumn() + function.getText().length());
             }
 
             // Validate parameter types that were passed to the function
@@ -97,7 +103,7 @@ public class Function {
                     if (!parameters[i].name().equals(token.getValue().getType().name())) {
                         String msg = ParserException.formatMessage("error.function_type_mismatch",
                                 function.getText(), String.valueOf(i + 1), parameters[i].name(), token.getValue().getType().name());
-                        throw new ParserException(msg, function.getRow(), function.getColumn());
+                        throw new ParserException(msg, function.getRow(), function.getColumn() + function.getText().length());
                     }
                 }
             }

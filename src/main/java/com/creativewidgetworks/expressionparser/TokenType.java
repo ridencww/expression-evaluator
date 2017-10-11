@@ -16,7 +16,8 @@ enum TokenType {
     NEWLINE("\n", false),
     EOS(";", false),
     WHITESPACE("[ \\t]+", false),
-    NOMATCH("", false);
+    NOMATCH("", false),
+    VALUE("", false); // intermediate value during parse
 
     private static Pattern combinedPattern;
 

@@ -169,11 +169,11 @@ public class ParserCoreTest extends UnitTestBase {
         assertEquals("not enough expected arguments passed to match expected size (bad test setup)", expectedSize, expected.length);
 
         Stack<Token> stack = new Stack<>();
-        stack.push(new Token(TokenType.NUMBER, "1"));
-        stack.push(new Token(TokenType.NUMBER, "2"));
-        stack.push(new Token(TokenType.STRING, "RI"));
+        stack.push(new Token(TokenType.NUMBER, "1", 1, 1));
+        stack.push(new Token(TokenType.NUMBER, "2", 1, 1));
+        stack.push(new Token(TokenType.STRING, "RI", 1, 1));
 
-        Token function = new Token(TokenType.FUNCTION, "test").setArgc(numToPop);
+        Token function = new Token(TokenType.FUNCTION, "test", 1, 1).setArgc(numToPop);
 
         Token[] args = parser.popArguments(function, stack);
         assertEquals("argument count", expectedSize, args.length);

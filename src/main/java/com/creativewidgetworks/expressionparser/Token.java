@@ -189,13 +189,9 @@ public class Token {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(type.name());
-        while (sb.length() < 15) sb.append(".");
-        sb.append(" ").append(getText());
-        if (type == TokenType.FUNCTION) {
-            sb.append(" (args=").append(argc).append(")");
-        }
-        return sb.toString();
+        String rc = getRow() + "," + getColumn();
+        String args = TokenType.FUNCTION.equals(getType())  ? " (args=" +  argc + ")" : "";
+        return String.format("%-6s %-10s %s %s", rc, getType().name(), getText(), args);
     }
 
 }

@@ -1,6 +1,5 @@
 package com.creativewidgetworks.expressionparser;
 
-import com.creativewidgetworks.expressionparser.*;
 import org.junit.Assert;
 
 import java.math.BigDecimal;
@@ -8,7 +7,48 @@ import java.util.List;
 
 public class UnitTestBase extends Assert {
 
-    void validateExceptionThrown(Parser parser, String expression, String expected, int row, int col) {
+    protected void validateArray(Parser parser, String expression, String baseValue, String... arrayValues) {
+        Value result = parser.eval(expression);
+        validateNoParserException(result);
+        if (baseValue == null) {
+            assertNull("expected null value", result.asString());
+            assertNull("expected null list", result.getArray());
+        } else {
+            assertEquals("wrong value", baseValue, result.asString());
+            if (arrayValues != null && arrayValues.length > 0) {
+                assertNotNull("Not an array value", result.getArray());
+                assertEquals("Not enough elements in array", arrayValues.length, result.getArray().size());
+                for (int i = 0; i < arrayValues.length; i++) {
+                    assertEquals("wrong array value at index " + i, arrayValues[i], result.getArray().get(i).asString());
+                }
+            }
+        }
+    }
+
+    protected void validateBooleanResult(Parser parser, String expression, Boolean expected) {
+        Value result = parser.eval(expression);
+        validateNoParserException(result);
+        if (expected == null) {
+            assertNull(expression, result.asString());
+        } else {
+            assertEquals(expression, ValueType.BOOLEAN, result.getType());
+            assertEquals(expression, expected, result.asBoolean());
+        }
+    }
+
+    protected void validateDateResult(Parser parser, String expression, String expected) {
+        Value result = parser.eval(expression);
+        validateNoParserException(result);
+        if (expected == null) {
+            assertNull(expression, result.asDate());
+        } else {
+            long time = Long.valueOf(expected);
+            assertEquals(expression, ValueType.DATE, result.getType());
+            assertTrue(expression, Math.abs(time - result.asDate().getTime()) < 1000);
+        }
+    }
+
+    protected void validateExceptionThrown(Parser parser, String expression, String expected, int row, int col) {
         try {
             Value result = parser.eval(expression);
             assertNotNull("should have value", result);
@@ -24,8 +64,15 @@ public class UnitTestBase extends Assert {
         }
     }
 
-    void validateNumericResult(Parser parser, String expression, String expected) {
+    protected void validateNoParserException(Value result) {
+        if (result.getType() == ValueType.OBJECT && result.asObject() instanceof ParserException) {
+            fail("Unexpected ParserException: " + ((ParserException)result.asObject()).getMessage());
+        }
+    }
+
+    protected void validateNumericResult(Parser parser, String expression, String expected) {
         Value result = parser.eval(expression);
+        validateNoParserException(result);
         if (expected == null) {
             assertNull(expression, result.asNumber());
         } else {
@@ -34,44 +81,23 @@ public class UnitTestBase extends Assert {
         }
     }
 
-    void validateStringResult(Parser parser, String expression, String expected) {
+    protected void validatePattern(Parser parser, String functionName) {
+        assertTrue("\"" + functionName + "\" should be part of the function matching pattern",
+                parser.getFunctionRegex().indexOf(functionName.toUpperCase()) != -1);
+    }
+
+    protected void validateStringResult(Parser parser, String expression, String expected) {
         Value result = parser.eval(expression);
+        validateNoParserException(result);
         if (expected == null) {
-            assertEquals(expression, "", result.asString());
+            assertTrue(expression, ValueType.UNDEFINED.equals(result.getType()) || result.asString() == null);
         } else {
             assertEquals(expression, ValueType.STRING, result.getType());
             assertEquals(expression, expected, result.asString());
         }
     }
 
-    void validateBooleanResult(Parser parser, String expression, Boolean expected) {
-        Value result = parser.eval(expression);
-        if (expected == null) {
-            assertNull(expression, result.asString());
-        } else {
-            assertEquals(expression, ValueType.BOOLEAN, result.getType());
-            assertEquals(expression, expected, result.asBoolean());
-        }
-    }
-
-    void validateDateResult(Parser parser, String expression, String expected) {
-        Value result = parser.eval(expression);
-        if (expected == null) {
-            assertNull(expression, result.asDate());
-        } else {
-            long time = Long.valueOf(expected);
-            assertEquals(expression, ValueType.DATE, result.getType());
-            assertTrue(expression, Math.abs(time - result.asDate().getTime()) < 1000);
-        }
-    }
-
-
-    void validatePattern(Parser parser, String functionName) {
-        assertTrue("\"" + functionName + "\" should be part of the function matching pattern",
-                parser.getFunctionRegex().indexOf(functionName.toUpperCase()) != -1);
-    }
-
-    void validateTokens(List<Token> actual, Token... expected) {
+    protected void validateTokens(List<Token> actual, Token... expected) {
         assertEquals("token count", expected.length, actual.size());
         int row = 0;
         for (Token token : expected) {

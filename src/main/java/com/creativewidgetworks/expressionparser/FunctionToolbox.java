@@ -415,10 +415,12 @@ public class FunctionToolbox {
     public Value _FACTORIAL(Token function, Stack<Token> stack) throws ParserException {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
 
-        BigDecimal number = stack.pop().asNumber();
+        Token numberToken = stack.pop();
+        BigDecimal number = numberToken.asNumber();
+
         if (number != null) {
             if (number.intValue() < 0) {
-                throw new ParserException(ParserException.formatMessage("error.function_value_negative", number));
+                throw new ParserException(ParserException.formatMessage("error.function_value_negative", number), numberToken.getRow(), numberToken.getColumn());
             }
 
             // Start with 1
@@ -725,7 +727,9 @@ public class FunctionToolbox {
     public Value _MATCH(Token function, Stack<Token> stack) throws ParserException {
         Value value = new Value(function.getText()).setValue((String)null);
 
-        String pattern = stack.pop().asString();
+        Token patternToken = stack.pop();
+        String pattern = patternToken.asString();
+
         String str = stack.pop().asString();
 
         if (str != null && pattern != null) {
@@ -733,7 +737,7 @@ public class FunctionToolbox {
             try {
                 p = Pattern.compile(pattern);
             } catch (PatternSyntaxException ex) {
-                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern));
+                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern), patternToken.getRow(), patternToken.getColumn());
             }
 
             Matcher m1 = p.matcher(str);
@@ -778,7 +782,10 @@ public class FunctionToolbox {
         }
 
         String variations = stack.pop().asString();
-        String pattern = stack.pop().asString();
+
+        Token patternToken = stack.pop();
+        String pattern = patternToken.asString();
+
         String str = stack.pop().asString();
 
         if (str != null && pattern != null && variations != null) {
@@ -786,7 +793,7 @@ public class FunctionToolbox {
             try {
                 p = Pattern.compile(pattern);
             } catch (PatternSyntaxException ex) {
-                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern));
+                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern), patternToken.getRow(), patternToken.getColumn());
             }
 
             Matcher m1 = p.matcher(str);
@@ -1363,13 +1370,15 @@ public class FunctionToolbox {
      * val("123.45") -> 123.45
      * val("kdkdkd") -> arithmetic exception
      */
-    public Value _VAL(Token function, Stack<Token> stack) {
-        String str = stack.pop().asString();
-        BigDecimal bd = (str == null) ? null : str.length() == 0 ? BigDecimal.ZERO : new BigDecimal(str);
-        return new Value(function.getText()).setValue(bd);
+    public Value _VAL(Token function, Stack<Token> stack) throws ParserException {
+        Token token = stack.pop();
+        try {
+            String str = token.asString();
+            BigDecimal bd = (str == null) ? null : str.length() == 0 ? BigDecimal.ZERO : new BigDecimal(str);
+            return new Value(function.getText()).setValue(bd);
+        } catch (NumberFormatException nfe) {
+            throw new ParserException(ParserException.formatMessage("error.expected_numberformat", token.asString()), token.getRow(), token.getColumn());
+        }
     }
-
-
-
 
 }

@@ -428,7 +428,7 @@ public class Parser {
 
     /*----------------------------------------------------------------------------*/
 
-    /**
+    /*
      * Convert a list of infix tokens to Reverse Polish Notation (RPN) form. Dijkstra's
      * shunting-yard algorithm is used to process the tokens.
      * @param inputTokens list of tokens to process
@@ -817,7 +817,7 @@ public class Parser {
 
     /*----------------------------------------------------------------------------*/
 
-    /**
+    /*
      * Pops the arguments off of the stack and returns an array in the order
      * that they were pushed. This ensures optional arguments in function calls
      * appear at the end of the array and not the beginning.

@@ -281,7 +281,7 @@ public class FunctionToolbox {
         return value;
     }
 
-    /**
+    /*
      * Returns the number of elements in an array variable
      * arraylen(split("00,10,11", ",")) -> 3
      */

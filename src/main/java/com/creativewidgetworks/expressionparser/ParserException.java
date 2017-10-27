@@ -9,7 +9,7 @@ public class ParserException extends Exception {
 
     private int errorAtRow;
     private int errorAtCol;
-    
+
     public ParserException(String msg) {
         super(msg);
         initialize(0, 0);
@@ -24,7 +24,7 @@ public class ParserException extends Exception {
         super(msg);
         initialize(row, column);
     }
-    
+
     public ParserException(String msg, Throwable th, int row, int column) {
         super(msg, th);
         initialize(row, column);
@@ -32,9 +32,9 @@ public class ParserException extends Exception {
 
     private void initialize(int row, int column) {
         this.errorAtRow = row;
-        this.errorAtCol = column;    
+        this.errorAtCol = column;
     }
-    
+
     public int getErrorRow() {
         return errorAtRow;
     }
@@ -42,12 +42,12 @@ public class ParserException extends Exception {
     public int getErrorColumn() {
         return errorAtCol;
     }
-    
+
 
     /**
      * Format a message with the given parameters. If the bundle is not null then the message is
      * treated as a key in that bundle; the found resource will be used as the message to format.
-     * 
+     *
      * This method provides a convenient wrapper for java.util.ResourceBundle and
      * java.text.MessageFormat operations because all exceptions are caught and a simple
      * concatenation of the original message and the parameters is returned.
@@ -59,7 +59,7 @@ public class ParserException extends Exception {
      */
      static String formatMessage( String message, Object... parameters) {
         String formattedMessage = message;
-        
+
         if (message != null) {
             // Lookup message in resource bundle, if applicable
             if (bundle != null) {
@@ -69,7 +69,7 @@ public class ParserException extends Exception {
                     // Do nothing, we'll just use the message itself
                 }
             }
-            
+
             // Format message with parameters, if applicable
             if (parameters != null) {
                 try {
@@ -89,8 +89,8 @@ public class ParserException extends Exception {
                 }
             }
         }
-        
+
         return formattedMessage;
-    }    
-    
+    }
+
 }

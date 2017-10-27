@@ -47,10 +47,7 @@ public class Value {
         this.valueNum = BigDecimal.ZERO;
         this.valueDate = null;
         this.valueObj = null;
-        if (array != null) {
-            array.clear();
-            array = null;
-        }
+        unsetArray();
         return this;
     }
 
@@ -58,7 +55,7 @@ public class Value {
         if (var != null) {
             this.name = var.name;
             this.type = var.type;
-            this.valueObj = var.valueStr;
+            this.valueObj = var.valueObj;
             this.valueStr = var.valueStr;
             this.valueNum = var.valueNum == null ? null : new BigDecimal(var.valueNum.toPlainString());
             this.valueDate = var.valueDate == null ? null : new Date(var.valueDate.getTime());
@@ -111,8 +108,8 @@ public class Value {
             array.clear();
             array = null;
         }
-    }    
-    
+    }
+
     /*----------------------------------------------------------------------------*/
 
     public Boolean asBoolean() {

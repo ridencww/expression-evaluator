@@ -3,6 +3,7 @@ package com.creativewidgetworks.expressionparser;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -29,6 +30,10 @@ public class ParserTest extends UnitTestBase {
        result = new Parser().eval("");
        assertEquals("ERROR: EMPTY EXPRESSION", result.getName());
        assertEquals("", result.asString());
+       assertEquals("name=ERROR: EMPTY EXPRESSION type=UNDEFINED str= num=0", result.toString());
+
+       assertNull(parser.getLastExpression());
+       assertNull( parser.getLastException());
     }
 
     /*----------------------------------------------------------------------------*/
@@ -79,26 +84,67 @@ public class ParserTest extends UnitTestBase {
     /*----------------------------------------------------------------------------*/
 
     @Test
+    public void testBuiltInFunction_CLEARGLOBAL() {
+        parser.getGlobalVariables().put("NEWVAR1", new Value("NEWVAR1", "Hello, world"));
+        validateBooleanResult(parser, "ClearGlobal('NEWVAR1')", Boolean.TRUE);
+        assertNull(parser.getGlobalVariables().get("NEWVAR1"));
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testBuiltInFunction_CLEARGLOBALS() {
+        parser.addGlobalVariable("TEMP", new Value("TEMP", "c:\\tmp"));
+        validateBooleanResult(parser, "ClearGlobals()", Boolean.TRUE);
+        assertEquals("globals cleared", 0, parser.getGlobalVariables().size());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testBuiltInFunction_GETGLOBAL() {
+        parser.getGlobalVariables().put("NEWVAR1", new Value("NEWVAR1", "Hello, world"));
+        parser.getGlobalVariables().put("NEWVAR2", new Value("NEWVAR1", BigDecimal.TEN));
+        validateStringResult(parser, "GetGlobal('NEWVAR1')", "Hello, world");
+        validateNumericResult(parser, "GetGlobal('NEWVAR2')", "10");
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testBuiltInFunction_SETGLOBAL() {
+        validateExceptionThrown(parser, "SetGlobal()", "SetGlobal expected 2 parameter(s), but got 0", 1, 10 );
+        validateExceptionThrown(parser, "SetGlobal(1, 'Hello')", "SetGlobal parameter 1 expected type STRING, but was NUMBER", 1, 10 );
+
+        validateBooleanResult(parser, "SetGlobal('MODE', 'Append')", Boolean.TRUE);
+        Value value = parser.getGlobalVariable("MODE");
+        assertNotNull(value);
+        assertEquals("value", "Append", value.asString());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
     public void testBuiltInFunction_NOW() {
         Calendar calendar = Calendar.getInstance();
-        long now = calendar.getTimeInMillis();
+        Date now = calendar.getTime();
 
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-        long bod = calendar.getTimeInMillis();
+        Date bod = calendar.getTime();
 
         calendar.set(Calendar.HOUR_OF_DAY, 23);
         calendar.set(Calendar.MINUTE, 59);
         calendar.set(Calendar.SECOND, 59);
         calendar.set(Calendar.MILLISECOND, 0);
-        long eod = calendar.getTimeInMillis();
+        Date eod = calendar.getTime();
 
-        validateDateResult(parser, "NOW()", String.valueOf(now));
-        validateDateResult(parser, "NOW(0)", String.valueOf(now));
-        validateDateResult(parser, "NOW(1)", String.valueOf(bod));
-        validateDateResult(parser, "NOW(2)", String.valueOf(eod));
+        validateDateResult(parser, "NOW()", now);
+        validateDateResult(parser, "NOW(0)", now);
+        validateDateResult(parser, "NOW(1)", bod);
+        validateDateResult(parser, "NOW(2)", eod);
 
         validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2", 1, 4);
         validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3", 1, 4);
@@ -114,9 +160,23 @@ public class ParserTest extends UnitTestBase {
         assertEquals(oldPrecision, Parser.DEFAULT_PRECISION);
 
         validateExceptionThrown(parser, "PRECISION()", "PRECISION expected 1 parameter(s), but got 0", 1, 10);
+        validateExceptionThrown(parser, "PRECISION('Hello')", "PRECISION parameter 1 expected type NUMBER, but was STRING", 1, 10);
         validateExceptionThrown(parser, "PRECISION(0,1)", "PRECISION expected 1 parameter(s), but got 2", 1, 10);
         validateExceptionThrown(parser, "PRECISION(-1)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was -1", 1, 10);
         validateExceptionThrown(parser, "PRECISION(125)", "PRECISION parameter 1 expected value to be in the range of 0..100, but was 125", 1, 10);
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testAddInvalidFunction() throws Exception {
+        parser = new Parser();
+        try {
+            parser.addFunction(new Function("bogus", this, "_BOGUS", 1, 1));
+            fail("Expected IllegalStateException");
+        } catch (IllegalStateException ex) {
+            assertEquals("error message", "Init com.creativewidgetworks.expressionparser.ParserTest NoSuchMethodException _BOGUS", ex.getMessage());
+        }
     }
 
     /*----------------------------------------------------------------------------*/
@@ -153,7 +213,7 @@ public class ParserTest extends UnitTestBase {
         validateBooleanResult(parser, "V1", Boolean.TRUE);
 
         // date
-        String now = String.valueOf(new Date().getTime());
+        Date now = new Date();
         validateDateResult(parser, "V1=NOW()", now);
         validateDateResult(parser, "V1()", now);
     }
@@ -244,6 +304,9 @@ public class ParserTest extends UnitTestBase {
     @Test
     public void testDivision() throws Exception {
         validateExceptionThrown(parser, "23 / (1-1)", "/ by zero", 1, 4);
+
+        // Percentage
+        validateNumericResult(parser, "12.5%", ".125");
 
         // floating point division
         validateNumericResult(parser, "15 / 2", "7.5");
@@ -418,7 +481,7 @@ public class ParserTest extends UnitTestBase {
         validateStringResult(parser, "(1==2) ? 'C' : ((2==1) ? 'C' : 'D')", "D");
     }
 
-        /*----------------------------------------------------------------------------*/
+    /*----------------------------------------------------------------------------*/
 
     @Test
     public void testTokenCacheValueIsolation() throws Exception {
@@ -426,6 +489,5 @@ public class ParserTest extends UnitTestBase {
         validateNumericResult(parser, "-2", "-2");
         validateNumericResult(parser, "-2", "-2");
     }
-
 
 }

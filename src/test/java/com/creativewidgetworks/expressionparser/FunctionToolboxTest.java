@@ -4,15 +4,25 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 public class FunctionToolboxTest extends UnitTestBase {
 
     private Parser parser;
+    private FunctionToolbox toolbox;
 
     @Before
     public void beforeEach() {
         parser = new Parser();
-        FunctionToolbox.register(parser);
+        toolbox = FunctionToolbox.register(parser);
+    }
+
+    private Date makeDate(int mon, int day, int year, int hr, int min, int sec) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(year, mon - 1, day, hr, min, sec);
+        return cal.getTime();
     }
 
     @Test
@@ -116,7 +126,6 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "CEILING(2.022)", "3.0");
     }
 
-
     @Test
     public void testCONTAINS() throws Exception {
         validatePattern(parser, "CONTAINS");
@@ -187,6 +196,52 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testDATEBETWEEN() throws Exception {
+        parser.eval("DATE1=MakeDate(5,1,2009)");
+        parser.eval("DATE2=MakeDate(9,11,2009)");
+        parser.eval("FROMDATE=MakeDate(9,1,2009)");
+        parser.eval("THRUDATE=MakeDate(9,30,2009)");
+
+        validatePattern(parser, "DATEBETWEEN");
+
+        validateExceptionThrown(parser, "DATEBETWEEN()", "DATEBETWEEN expected 3 parameter(s), but got 0", 1, 12);
+        validateExceptionThrown(parser, "DATEBETWEEN(1, DATE1, DATE2)", "DATEBETWEEN parameter 1 expected type DATE, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "DATEBETWEEN(DATE1, 2, DATE2)", "DATEBETWEEN parameter 2 expected type DATE, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "DATEBETWEEN(DATE1, DATE2, 3)", "DATEBETWEEN parameter 3 expected type DATE, but was NUMBER", 1, 12);
+
+        validateBooleanResult(parser, "DATEBETWEEN(DATE2, FROMDATE, THRUDATE)", Boolean.TRUE);
+        validateBooleanResult(parser, "DATEBETWEEN(DATE1, FROMDATE, THRUDATE)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEBETWEEN(null, FROMDATE, THRUDATE)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEBETWEEN(null, null, THRUDATE)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEBETWEEN(null, null, null)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEBETWEEN(DATE2, FROMDATE, null)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, THRUDATE)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, null)", Boolean.FALSE);
+    }
+
+    @Test
+    public void testDATEWITHIN() throws Exception {
+        parser.eval("DATE1=MakeDate(6,15,2008,8,50,10)");
+        parser.eval("DATE2=MakeDate(6,15,2008,8,50,15)");
+
+        validatePattern(parser, "DATEWITHIN");
+
+        validateExceptionThrown(parser, "DATEWITHIN()", "DATEWITHIN expected 3 parameter(s), but got 0", 1, 11);
+        validateExceptionThrown(parser, "DATEWITHIN(1, DATE1, 1000)", "DATEWITHIN parameter 1 expected type DATE, but was NUMBER", 1, 11);
+        validateExceptionThrown(parser, "DATEWITHIN(DATE1, 2, 1000)", "DATEWITHIN parameter 2 expected type DATE, but was NUMBER", 1, 11);
+        validateExceptionThrown(parser, "DATEWITHIN(DATE1, DATE2, 'Hello')", "DATEWITHIN parameter 3 expected type NUMBER, but was STRING", 1, 11);
+
+        validateBooleanResult(parser, "DATEWITHIN(DATE1, DATE2, 10000)", Boolean.TRUE);
+        validateBooleanResult(parser, "DATEWITHIN(DATE1, DATE2, 1000)", Boolean.FALSE);
+
+        validateBooleanResult(parser, "DATEWITHIN(DATE1, null, 1000)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEWITHIN(null, DATE2, 1000)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEWITHIN(null, null, 1000)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEWITHIN(DATE1, DATE2, null)", Boolean.FALSE);
+        validateBooleanResult(parser, "DATEWITHIN(null, null, null)", Boolean.FALSE);
+    }
+
+    @Test
     public void testENDSWITH() throws Exception {
         validatePattern(parser, "ENDSWITH");
 
@@ -213,9 +268,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "EXP('1.23')", "EXP parameter 1 expected type NUMBER, but was STRING", 1, 4);
 
         validateNumericResult(parser, "EXP(null)", null);
-        validateNumericResult(parser, "EXP(0)", "1.0");
-        validateNumericResult(parser, "EXP(1)", "2.7182818284590455");
-        validateNumericResult(parser, "EXP(2)", "7.38905609893065");
+        validateNumericResult(parser, "EXP(0)", "1.00000");
+        validateNumericResult(parser, "EXP(1)", "2.71828");
+        validateNumericResult(parser, "EXP(2)", "7.38906");
     }
 
     @Test
@@ -288,6 +343,25 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testISANYOF() throws Exception {
+        validatePattern(parser, "ISANYOF");
+
+        validateExceptionThrown(parser, "ISANYOF()", "ISANYOF expected 1..n parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "ISANYOF(123, '123')", "ISANYOF parameter 1 expected type STRING, but was NUMBER", 1, 8);
+
+        validateBooleanResult(parser, "ISANYOF('alpha', 'alpha', 'beta', 'gamma')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISANYOF('beta', 'alpha', 'beta', 'gamma')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISANYOF('gamma', 'alpha', 'beta', 'gamma')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISANYOF('omega', 'alpha', 'beta', 'gamma')", Boolean.FALSE);
+
+        // Comparison values are coerced to strings
+        validateBooleanResult(parser, "ISANYOF('123', 123)", Boolean.TRUE);
+
+        // Case sensitive comparisons
+        validateBooleanResult(parser, "ISANYOF('BETA', 'alpha', 'beta', 'gamma')", Boolean.FALSE);
+    }
+
+    @Test
     public void testISBLANK() throws Exception {
         validatePattern(parser, "ISBLANK");
 
@@ -334,6 +408,46 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testISDATE() throws Exception {
+        validatePattern(parser, "ISDATE");
+
+        validateExceptionThrown(parser, "ISDATE()", "ISDATE expected 1..2 parameter(s), but got 0", 1, 7);
+        validateExceptionThrown(parser, "ISDATE(123)", "ISDATE parameter 1 expected type STRING, but was NUMBER", 1, 7);
+        validateExceptionThrown(parser, "ISDATE('2009', 123)", "ISDATE parameter 2 expected type STRING, but was NUMBER", 1, 7);
+
+        validateBooleanResult(parser, "ISDATE('2/29/76')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISDATE('2/29/77')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISDATE('1/15/2009')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISDATE('99/15/2009')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISDATE('not-a-date')", Boolean.FALSE);
+
+        validateBooleanResult(parser, "ISDATE(null)", Boolean.FALSE);
+        validateBooleanResult(parser, "ISDATE('')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISDATE('2009')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISDATE('2009','')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISDATE('2009','yyyy')", Boolean.TRUE);
+    }
+
+    @Test
+    public void testISNONEOF() throws Exception {
+        validatePattern(parser, "ISNONEOF");
+
+        validateExceptionThrown(parser, "ISNONEOF()", "ISNONEOF expected 1..n parameter(s), but got 0", 1, 9);
+        validateExceptionThrown(parser, "ISNONEOF(123, '123')", "ISNONEOF parameter 1 expected type STRING, but was NUMBER", 1, 9);
+
+        validateBooleanResult(parser, "ISNONEOF('alpha', 'alpha', 'beta', 'gamma')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISNONEOF('beta', 'alpha', 'beta', 'gamma')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISNONEOF('gamma', 'alpha', 'beta', 'gamma')", Boolean.FALSE);
+        validateBooleanResult(parser, "ISNONEOF('omega', 'alpha', 'beta', 'gamma')", Boolean.TRUE);
+
+        // Comparison values are coerced to strings
+        validateBooleanResult(parser, "ISNONEOF('123', 123)", Boolean.FALSE);
+
+        // Case sensitive comparisons
+        validateBooleanResult(parser, "ISNONEOF('BETA', 'alpha', 'beta', 'gamma')", Boolean.TRUE);
+    }
+
+    @Test
     public void testISNULL() throws Exception {
         validatePattern(parser, "ISNULL");
 
@@ -372,12 +486,12 @@ public class FunctionToolboxTest extends UnitTestBase {
     @Test
     public void testLEFT() throws Exception {
         validatePattern(parser, "LEFT");
-    
+
         validateExceptionThrown(parser, "LEFT()", "LEFT expected 2 parameter(s), but got 0", 1, 5);
         validateExceptionThrown(parser, "LEFT('test')", "LEFT expected 2 parameter(s), but got 1", 1, 5);
         validateExceptionThrown(parser, "LEFT('test', 2, 2)", "LEFT expected 2 parameter(s), but got 3", 1, 5);
         validateExceptionThrown(parser, "LEFT(123, 2)", "LEFT parameter 1 expected type STRING, but was NUMBER", 1, 5);
-    
+
         validateStringResult(parser, "LEFT(null, 2)", null);
         validateStringResult(parser, "LEFT('', 3)", "");
         validateStringResult(parser, "LEFT('12345', null)", "12345");
@@ -387,54 +501,54 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "LEFT('12', 5)", "12");
         validateStringResult(parser, "LEFT(RIGHT('12', 2), 5)", "12");
     }
-    
+
     @Test
     public void testLEN() throws Exception {
         validatePattern(parser, "LEN");
-    
+
         validateExceptionThrown(parser, "LEN()", "LEN expected 1 parameter(s), but got 0", 1, 4);
         validateExceptionThrown(parser, "LEN('test', 'test')", "LEN expected 1 parameter(s), but got 2", 1, 4);
         validateExceptionThrown(parser, "LEN(123)", "LEN parameter 1 expected type STRING, but was NUMBER", 1, 4);
-    
+
         validateNumericResult(parser, "LEN('')", "0");
         validateNumericResult(parser, "LEN(null)", "0");
         validateNumericResult(parser, "LEN('Hello')", "5");
     }
-    
+
     @Test
     public void testLOG() throws Exception {
         validatePattern(parser, "LOG");
-    
+
         validateExceptionThrown(parser, "LOG()", "LOG expected 1 parameter(s), but got 0", 1, 4);
         validateExceptionThrown(parser, "LOG(0.01, 2)", "LOG expected 1 parameter(s), but got 2", 1, 4);
         validateExceptionThrown(parser, "LOG('1.23')", "LOG parameter 1 expected type NUMBER, but was STRING", 1, 4);
-    
+
         validateNumericResult(parser, "LOG(null)", null);
         validateNumericResult(parser, "LOG(1)", "0.0");
         validateNumericResult(parser, "LOG(2)", "0.6931471805599453");
     }
-    
+
     @Test
     public void testLOG10() throws Exception {
         validatePattern(parser, "LOG10");
-    
+
         validateExceptionThrown(parser, "LOG10()", "LOG10 expected 1 parameter(s), but got 0", 1, 6);
         validateExceptionThrown(parser, "LOG10(0.01, 2)", "LOG10 expected 1 parameter(s), but got 2", 1, 6);
         validateExceptionThrown(parser, "LOG10('1.23')", "LOG10 parameter 1 expected type NUMBER, but was STRING", 1, 6);
-    
+
         validateNumericResult(parser, "LOG10(null)", null);
         validateNumericResult(parser, "LOG10(1)", "0.0");
         validateNumericResult(parser, "LOG10(2)", "0.3010299956639812");
     }
-    
+
     @Test
     public void testLOWER() throws Exception {
         validatePattern(parser, "LOWER");
-    
+
         validateExceptionThrown(parser, "LOWER()", "LOWER expected 1 parameter(s), but got 0", 1, 6);
         validateExceptionThrown(parser, "LOWER('test', 'test')", "LOWER expected 1 parameter(s), but got 2", 1, 6);
         validateExceptionThrown(parser, "LOWER(123)", "LOWER parameter 1 expected type STRING, but was NUMBER", 1, 6);
-    
+
         validateStringResult(parser, "LOWER(null)", null);
         validateStringResult(parser, "LOWER('')", "");
         validateStringResult(parser, "LOWER('HellO, WORLD')", "hello, world");
@@ -469,6 +583,99 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "MAKEBOOLEAN('TRUE')", Boolean.TRUE);
         validateBooleanResult(parser, "MAKEBOOLEAN('trUe')", Boolean.TRUE);
         validateBooleanResult(parser, "MAKEBOOLEAN(1==1)", Boolean.TRUE);
+    }
+
+    @Test
+    public void testMAKEDATE_mdyhms() throws Exception {
+        validatePattern(parser, "MAKEDATE");
+        validateExceptionThrown(parser, "MAKEDATE()", "MAKEDATE expected 1..6 parameter(s), but got 0", 1, 9);
+        validateExceptionThrown(parser, "MAKEDATE(1,2,3,4,5,6,7)", "MAKEDATE expected 1..6 parameter(s), but got 7", 1, 9);
+
+        validateExceptionThrown(parser, "MAKEDATE(0, 3, 2009)", "Error: Invalid value MONTH", 1, 10);
+        validateExceptionThrown(parser, "MAKEDATE(4, 53, 2009)", "Error: Invalid value DAY_OF_MONTH", 1, 13);
+        validateExceptionThrown(parser, "MAKEDATE(4, 3, -2009)", "Error: Invalid value YEAR", 1, 16);
+        validateExceptionThrown(parser, "MAKEDATE(4, 3, 2009, 99)", "Error: Invalid value HOUR_OF_DAY", 1, 22);
+        validateExceptionThrown(parser, "MAKEDATE(4, 3, 2009, 13, 99)", "Error: Invalid value MINUTE", 1, 26);
+        validateExceptionThrown(parser, "MAKEDATE(4, 3, 2009, 13, 14, 99)", "Error: Invalid value SECOND", 1, 30);
+
+        validateDateResult(parser, "MAKEDATE(2, 29, 76)", makeDate(2, 29, 1976, 0, 0, 0));
+        validateDateResult(parser, "MAKEDATE(4, 3, 2009)", makeDate(4, 3, 2009, 0, 0,0));
+        validateDateResult(parser, "MAKEDATE(4, 3, 2009, 13)", makeDate(4, 3, 2009, 13, 0,0));
+        validateDateResult(parser, "MAKEDATE(4, 3, 2009, 13, 14)", makeDate(4, 3, 2009, 13, 14,0));
+        validateDateResult(parser, "MAKEDATE(4, 3, 2009, 13, 14, 15)", makeDate(4, 3, 2009, 13, 14,15));
+    }
+
+    @Test
+    public void testMAKEDATE_parse() throws Exception {
+        validateExceptionThrown(parser, "MAKEDATE('2009/04/03', 'mm-dd-yy', 123)", "MAKEDATE expected 1..2 parameter(s), but got 3", 1, 24);
+        validateExceptionThrown(parser, "MAKEDATE('2009/04/03', '')", "Expected a non-empty value for format string", 1, 24);
+        validateExceptionThrown(parser, "MAKEDATE('2009/04/03', 123)", "Type mismatch error. Expected STRING, but was NUMBER", 1, 24);
+
+        // Build the timezone offset used for the test. Doing this will allow the test
+        // to run across multiple timezones and handle Daylight Saving or Summer Time.
+        TimeZone tz = TimeZone.getDefault();
+        int hoursOffset = Math.abs(tz.getRawOffset() / 3600000);
+        String tzOffset = hoursOffset + "00";
+        if (hoursOffset < 12) {
+            tzOffset = "0" + tzOffset;
+        }
+        if (hoursOffset >= 0) {
+            tzOffset = "-" + tzOffset;
+        }
+
+        String timeZoneShortForm = tz.getDisplayName(false, TimeZone.SHORT);
+
+        Date dtDate = makeDate(1, 15, 2009,0, 0, 0);
+        Date dtDateLastCentury = makeDate(1, 15, 60,0, 0, 0);
+        Date dtDateTime = makeDate( 1, 15, 2009, 7, 32, 59);
+        Date dtDateTime24 = makeDate(1, 15, 2009, 21, 32, 59);
+        Date dtDateTimeMilli = makeDate(1, 15, 2009,7, 32, 59);
+        Date dtDateTimeMilli24 = makeDate(1, 15, 2009,21, 32, 59);
+        Date dtTime = makeDate(1, 1, 1970, 7, 32, 59);
+        Date dtTime24 = makeDate(1, 1, 1970, 21, 32, 59);
+
+        Object[][] testData = new Object[][] {
+            {"20090115", dtDate},
+            {"2009/01/15", dtDate},
+            {"2009/1/15", dtDate},
+            {"01/15/2009", dtDate},
+            {"1/15/2009", dtDate},
+            {"1/15/60", dtDateLastCentury},
+            {"Jan 15 2009 07:32:59 AM", dtDateTime},
+            {"Jan 15 2009 07:32:59.123 AM", dtDateTimeMilli},
+            {"2009-01-15", dtDate},
+            {"2009-01-15 07:32:59", dtDateTime},
+            {"2009-01-15 21:32:59", dtDateTime24},
+            {"2009-01-15 07:32:59.123", dtDateTimeMilli},
+            {"2009-01-15 21:32:59.123", dtDateTimeMilli24},
+            {"2009-01-15T07:32:59" + tzOffset, dtDateTime},
+            {"2009-01-15T07:32:59" + timeZoneShortForm, dtDateTime},
+            {"2009-01-15T21:32:59" + tzOffset, dtDateTime24},
+            {"2009-01-15T07:32:59.123", dtDateTimeMilli},
+            {"2009-01-15T21:32:59.123", dtDateTimeMilli24},
+            {"07:32:59", dtTime},
+            {"21:32:59", dtTime24},
+        };
+
+        for (int i = 0; i < testData.length; i++) {
+            String testDate = "MAKEDATE('" + testData[i][0].toString() + "')";
+            validateDateResult(parser, testDate, (Date)testData[i][1]);
+        }
+
+        // Custom format: 'TODAY: 'MM-dd-yyyy
+        validateDateNotParseable(parser, "MAKEDATE('TODAY: 01-15-2009')");
+        validateDateResult(parser, "MAKEDATE('TODAY: 01-15-2009', \"'TODAY: 'MM-dd-yyyy\")", dtDate);
+
+        // Switch out patterns so the custom pattern is the only one accepted
+        String[] orgPatterns = toolbox.getDatePatterns();
+        try {
+            validateDateNotParseable(parser, "MAKEDATE('TODAY: 01-15-2009')");
+            toolbox.setDatePatterns(new String[] {"'TODAY: 'MM-dd-yyyy"});
+            validateDateNotParseable(parser, "MAKEDATE('01-15-2009')");
+            validateDateResult(parser, "MAKEDATE('TODAY: 01-15-2009')", dtDate);
+        } finally {
+            toolbox.setDatePatterns(orgPatterns);
+        }
     }
 
     @Test
@@ -631,6 +838,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "RANDOM('123', 2)","RANDOM parameter 1 expected type NUMBER, but was STRING", 1, 7);
         validateExceptionThrown(parser, "RANDOM(1, '123')","RANDOM parameter 2 expected type NUMBER, but was STRING", 1, 7);
 
+        assertTrue(parser.eval("RANDOM()").asString().startsWith("0"));
         assertTrue(parser.eval("RANDOM(0)").asString().startsWith("0"));
 
         Value result;
@@ -646,7 +854,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         BigDecimal bdMin1 = new BigDecimal("50");
         BigDecimal bdMax1 = new BigDecimal("99");
         for (int i = 0; i < 1000; i++) {
-            result = parser.eval("RANDOM(50, 99)");
+            // Reverse low/high periodically to verify function swaps them back
+            String exp = (i % 15 == 0) ? "RANDOM(99, 50)" : "RANDOM(50, 99)";
+            result = parser.eval(exp);
             if (result.asNumber().compareTo(bdMin1) < 0 ||
                     result.asNumber().compareTo(bdMax1) > 0) {
                 fail("Random number outside of range (50..99)");

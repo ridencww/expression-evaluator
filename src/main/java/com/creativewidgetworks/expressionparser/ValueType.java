@@ -1,4 +1,4 @@
-package com.creativewidgetworks.expressionparser.enums;
+package com.creativewidgetworks.expressionparser;
 
 public enum ValueType {
     UNDEFINED,

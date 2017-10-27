@@ -2,113 +2,121 @@ package com.creativewidgetworks.expressionparser;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.creativewidgetworks.expressionparser.enums.ValueType;
-import com.creativewidgetworks.expressionparser.functions.NameCase;
+public class FunctionToolbox {
+    private Parser parser;
 
-/**
- * Defines the grammar tokens for a expression parser comparable
- * to a scientific calculator with string and date functions
- */
-public class GrammarExtendedCalc extends GrammarBasicCalc {
-    
     // Used for isNumber
-    private final Pattern pattern_NUMBER = Pattern.compile(getPattern_NUMBER(), Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-    
+    private final Pattern pattern_NUMBER = Pattern.compile(TokenType.NUMBER.getRegex(new Parser()), Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
     // Used by MatchByLen
     private final char MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER = ':';
     private Parser tmpParser = null;
-    
-    @Override    
-    public String getPattern_FUNCTION() { 
-        String baseFunctions = super.getPattern_FUNCTION();
-        String moreFunctions = 
-            "arccos|arcsin|arctan|arraylen|average|ceiling|containsall|containsany|contains|cos|endswith|" +
-            "exp|factorial|find|floor|hex|isblank|isboolean|isdate|isnumber|isnull|left|len|log10|log|lower|" +
-            "makeboolean|matchbylen|match|max|min|mid|namecase|random|replaceall|replacefirst|replace|right|" +
-            "sin|split|startswith|string|str|tan|trimleft|trimright|trim|upper|val";
-        return baseFunctions.endsWith("|") ? baseFunctions + moreFunctions : baseFunctions + "|" + moreFunctions; 
-    }
 
-    /*----------------------------------------------------------------------------*/
-
-    @Override
-    protected Map<String, Function> getFunctions() {
-        Map<String, Function> functions = super.getFunctions();
-        if (functions.get("ARCCOS") == null) {
-            functions.put("ARCCOS", new Function(this, "_ARCCOS", 1, 1, ValueType.NUMBER));
-            functions.put("ARCSIN", new Function(this, "_ARCSIN", 1, 1, ValueType.NUMBER));
-            functions.put("ARCTAN", new Function(this, "_ARCTAN", 1, 1, ValueType.NUMBER));
-            functions.put("ARRAYLEN", new Function(this, "_ARRAYLEN", 1, 1));
-            functions.put("AVERAGE", new Function(this, "_AVERAGE", 1, Integer.MAX_VALUE, ValueType.NUMBER));
-            functions.put("CEILING", new Function(this, "_CEILING", 1, 1, ValueType.NUMBER));
-            functions.put("CONTAINS", new Function(this, "_CONTAINS", 2, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("CONTAINSALL", new Function(this, "_CONTAINSALL", 2, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("CONTAINSANY", new Function(this, "_CONTAINSANY", 2, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("COS", new Function(this, "_COS", 1, 1, ValueType.NUMBER));
-            functions.put("ENDSWITH", new Function(this, "_ENDSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("EXP", new Function(this, "_EXP", 1, 1, ValueType.NUMBER));
-            functions.put("FACTORIAL", new Function(this, "_FACTORIAL", 1, 1, ValueType.NUMBER));
-            functions.put("FIND", new Function(this, "_FIND", 2, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
-            functions.put("FLOOR", new Function(this, "_FLOOR", 1, 1, ValueType.NUMBER));
-            functions.put("HEX", new Function(this, "_HEX", 1, 1, ValueType.NUMBER));
-            functions.put("ISBLANK", new Function(this, "_ISBLANK", 1, 1));
-            functions.put("ISBOOLEAN", new Function(this, "_ISBOOLEAN", 1, 1));
-            functions.put("ISDATE", new Function(this, "_ISDATE", 1, 1));
-            functions.put("ISNULL", new Function(this, "_ISNULL", 1, 1));
-            functions.put("ISNUMBER", new Function(this, "_ISNUMBER", 1, 1));
-            functions.put("LEFT", new Function(this, "_LEFT", 2, 2, ValueType.STRING, ValueType.NUMBER));
-            functions.put("LEN", new Function(this, "_LEN", 1, 1, ValueType.STRING));
-            functions.put("LOG", new Function(this, "_LOG", 1, 1, ValueType.NUMBER));
-            functions.put("LOG10", new Function(this, "_LOG10", 1, 1, ValueType.NUMBER));
-            functions.put("LOWER", new Function(this, "_LOWER", 1, 1, ValueType.STRING));
-            functions.put("MAKEBOOLEAN", new Function(this, "_MAKEBOOLEAN", 1, 1));
-            functions.put("MATCH", new Function(this, "_MATCH", 2, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("MATCHBYLEN", new Function(this, "_MATCHBYLEN", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
-            functions.put("MAX", new Function(this, "_MAX", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
-            functions.put("MID", new Function(this, "_MID", 2, 3, ValueType.STRING, ValueType.NUMBER, ValueType.NUMBER));
-            functions.put("MIN", new Function(this, "_MIN", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
-            functions.put("NAMECASE", new Function(new NameCase(), "_NAMECASE", 1, 1, ValueType.STRING));
-            functions.put("RANDOM", new Function(this, "_RANDOM", 0, 2, ValueType.NUMBER, ValueType.NUMBER));
-            functions.put("REPLACE", new Function(this, "_REPLACE", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
-            functions.put("REPLACEALL", new Function(this, "_REPLACEALL", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
-            functions.put("REPLACEFIRST", new Function(this, "_REPLACEFIRST", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
-            functions.put("RIGHT", new Function(this, "_RIGHT", 2, 2, ValueType.STRING, ValueType.NUMBER));
-            functions.put("SIN", new Function(this, "_SIN", 1, 1, ValueType.NUMBER));
-            functions.put("SPLIT", new Function(this, "_SPLIT", 1, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
-            functions.put("STARTSWITH", new Function(this, "_STARTSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("STR", new Function(this, "_STR", 1, 3, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
-            functions.put("STRING", new Function(this, "_STRING", 2, 2, ValueType.STRING, ValueType.NUMBER));
-            functions.put("TAN", new Function(this, "_TAN", 1, 1, ValueType.NUMBER));
-            functions.put("TRIM", new Function(this, "_TRIM", 1, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("TRIMLEFT", new Function(this, "_TRIMLEFT", 1, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("TRIMRIGHT", new Function(this, "_TRIMRIGHT", 1, 2, ValueType.STRING, ValueType.STRING));
-            functions.put("UPPER", new Function(this, "_UPPER", 1, 1, ValueType.STRING));
-            functions.put("VAL", new Function(this, "_VAL", 1, 1, ValueType.STRING));
-        }
-        
-        return functions;
-    }
-    
-    
-    /**
-       DATE", "DATEWITHIN", "DATEBETWEEN"
-       
-       ISDATE MAKETIMESTAMP
-       //  CAL_DAYS UNITS_HOURS ,MONTHS,WEEKS  CAL_SECS CAL_MS
-       //  CAL_BOM EOM BOY EOY
-       DATECALC(date, amount, units)
-       DATECALC(date, CAL_EOM)                 
-       DATEDIFF(date1,date2,units) 
-   
-       NAMECASE
+    /* A list of commonly used date formats.
+     * IMPORTANT: More specific formats (i.e., formats that return times in milliseconds)
+     * MUST be BEFORE more general formats (i.e., times that just contain seconds). Otherwise,
+     * the more general case will match first and precision will be lost.
      */
-    
+    public static final String[] DEFAULT_DATE_PATTERNS = {
+        // specialized formats or timedate forms with milliseconds
+        "yyyy-MM-dd'T'HH:mm:ss.S",   // Excel XML export format
+        "MMM dd yyyy hh:mm:ss.S a",  // MS SQL Server with millis
+        "yyyy-MM-dd HH:mm:ss.S",
+
+        // general dates
+        "yyyyMMdd",
+        "yyyy/MM/dd",
+        "MM/dd/yyyy",
+        "MMMM dd, yyyy",
+
+        // MS SQL server
+        "MMM dd yyyy hh:mm:ss a",
+
+        // ISO
+        "yyyy-MM-dd'T'HH:mm:ssZ",
+        "yyyy-MM-dd'T'HH:mm:ssz",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd",
+        "HH:mm:ss"                    // Time only (date part 1-1-1970)
+    };
+
+    public static FunctionToolbox register(Parser parser) {
+        FunctionToolbox toolbox = new FunctionToolbox();
+
+        toolbox.parser = parser;
+
+        parser.addFunction(new Function("ABS", toolbox, "_ABS", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ARCCOS", toolbox, "_ARCCOS", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ARCSIN", toolbox, "_ARCSIN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ARCTAN", toolbox, "_ARCTAN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ARRAYLEN", toolbox, "_ARRAYLEN", 1, 1));
+        parser.addFunction(new Function("AVERAGE", toolbox, "_AVERAGE", 1, Integer.MAX_VALUE, ValueType.NUMBER));
+        parser.addFunction(new Function("CEILING", toolbox, "_CEILING", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("CONTAINS", toolbox, "_CONTAINS", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("CONTAINSALL", toolbox, "_CONTAINSALL", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("CONTAINSANY", toolbox, "_CONTAINSANY", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("COS", toolbox, "_COS", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("DATEBETWEEN", toolbox, "_DATEBETWEEN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.DATE));
+        parser.addFunction(new Function("DATEWITHIN", toolbox, "_DATEWITHIN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.NUMBER));
+        parser.addFunction(new Function("ENDSWITH", toolbox, "_ENDSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("EXP", toolbox, "_EXP", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("FACTORIAL", toolbox, "_FACTORIAL", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("FIND", toolbox, "_FIND", 2, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("FLOOR", toolbox, "_FLOOR", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("HEX", toolbox, "_HEX", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ISANYOF", toolbox, "_ISANYOF", 1, Integer.MAX_VALUE, ValueType.STRING, ValueType.UNDEFINED));
+        parser.addFunction(new Function("ISBLANK", toolbox, "_ISBLANK", 1, 1));
+        parser.addFunction(new Function("ISBOOLEAN", toolbox, "_ISBOOLEAN", 1, 1));
+        parser.addFunction(new Function("ISDATE", toolbox, "_ISDATE", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("ISNONEOF", toolbox, "_ISNONEOF", 1, Integer.MAX_VALUE, ValueType.STRING, ValueType.UNDEFINED));
+        parser.addFunction(new Function("ISNULL", toolbox, "_ISNULL", 1, 1));
+        parser.addFunction(new Function("ISNUMBER", toolbox, "_ISNUMBER", 1, 1));
+        parser.addFunction(new Function("LEFT", toolbox, "_LEFT", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("LEN", toolbox, "_LEN", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("LOG", toolbox, "_LOG", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("LOG10", toolbox, "_LOG10", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("LOWER", toolbox, "_LOWER", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("MAKEBOOLEAN", toolbox, "_MAKEBOOLEAN", 1, 1));
+        parser.addFunction(new Function("MAKEDATE", toolbox, "_MAKEDATE", 1, 6, ValueType.UNDEFINED, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("MATCH", toolbox, "_MATCH", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("MATCHBYLEN", toolbox, "_MATCHBYLEN", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("MAX", toolbox, "_MAX", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("MID", toolbox, "_MID", 2, 3, ValueType.STRING, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("MIN", toolbox, "_MIN", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("NAMECASE", toolbox, "_NAMECASE", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("RANDOM", toolbox, "_RANDOM", 0, 2, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("REPLACE", toolbox, "_REPLACE", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("REPLACEALL", toolbox, "_REPLACEALL", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("REPLACEFIRST", toolbox, "_REPLACEFIRST", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("RIGHT", toolbox, "_RIGHT", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("SIN", toolbox, "_SIN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("SPLIT", toolbox, "_SPLIT", 1, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("SQR", toolbox, "_SQR", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("SQRT", toolbox, "_SQRT", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("STARTSWITH", toolbox, "_STARTSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("STR", toolbox, "_STR", 1, 3, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("STRING", toolbox, "_STRING", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("TAN", toolbox, "_TAN", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("TRIM", toolbox, "_TRIM", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("TRIMLEFT", toolbox, "_TRIMLEFT", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("TRIMRIGHT", toolbox, "_TRIMRIGHT", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("UPPER", toolbox, "_UPPER", 1, 1, ValueType.STRING));
+        parser.addFunction(new Function("VAL", toolbox, "_VAL", 1, 1, ValueType.STRING));
+
+        return toolbox;
+    }
+
+    private String[] datePatterns = DEFAULT_DATE_PATTERNS;
+
     private boolean isTrimableCharacter(char toTest, char testChar) {
         return toTest == testChar || testChar == ' ' && Character.isWhitespace(toTest);
     }
@@ -120,7 +128,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
         return sb.toString();
     }
-    
+
     private double getNumber(long minimum, long maximum, int precision) {
         double result = (minimum - 1);
         double multiplier = 0;
@@ -131,9 +139,9 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
             minimum = maximum;
             maximum = temp;
         }
-        
+
         precision = Math.abs(precision);
-        
+
         // Get a whole number greater than or equal to the minimum value and less than the maximum value
         result = Math.min(minimum, maximum) + Math.floor((Math.random() * Math.abs(maximum - minimum)));
 
@@ -144,13 +152,24 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
 
         return result;
     }
-    
+
+    protected BigDecimal scale(BigDecimal number) {
+        BigDecimal result = number;
+        if (number != null) {
+            if (number.doubleValue() == 0.0) {
+                result = BigDecimal.ZERO;
+            } else {
+                result = number.setScale(parser.getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
+            }
+        }
+        return result;
+    }
 
     private String trimLeft(String str, char characterToRemove) {
         StringBuilder sb = new StringBuilder(str);
         if (str.length() > 0) {
             while ((sb.length() > 0) && isTrimableCharacter(sb.charAt(0), characterToRemove)) {
-              sb.deleteCharAt( 0 );
+                sb.deleteCharAt( 0 );
             }
         }
         return sb.toString();
@@ -169,20 +188,56 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
     private String trim(String str, char characterToRemove) {
         String strToTrim = trimLeft(str, characterToRemove);
         return trimRight(strToTrim, characterToRemove);
-    }    
-    
+    }
+
     /*----------------------------------------------------------------------------*/
     /*----------------------------------------------------------------------------*/
     /*----------------------------------------------------------------------------*/
+
+    /*
+     * Return the list of the currently defined date parsing patterns
+     * @return String[] the current set of date parsing parameters
+     */
+    public String[] getDatePatterns() {
+        return datePatterns;
+    }
+
+    /*
+     * Set the list of date patterns to use when parsing dates. DEFAULT_DATE_PATTERNS can be used to reset to
+     * the default set of pattern strings.
+     * @param datePatterns the new set of date parsing parameters
+     * @return String[] the current set of date parsing parameters
+     */
+    public String[] setDatePatterns(String[] datePatterns) {
+        String[] orgDatePatterns = this.datePatterns;
+        this.datePatterns = datePatterns;
+        return orgDatePatterns;
+    }
+
+    /*
+     * Returns the absolute value of the number
+     * abs(-1) -> 1
+     */
+    public Value _ABS(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        BigDecimal number = stack.pop().asNumber();
+        if (number != null) {
+            double d = Math.abs(number.doubleValue());
+            value.setValue(scale(BigDecimal.valueOf(d)));
+        }
+
+        return value;
+    }
 
     /*
      * Returns the arc cosine of the number; number in radians
      * arccos(0.70710) -> 45
      * arccos(null) -> null
      */
-    public Value _ARCCOS(Symbol function, Stack<Symbol> stack) {
+    public Value _ARCCOS(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double d = Math.acos(number.doubleValue());
@@ -190,55 +245,55 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
 
         return value;
-    }      
+    }
 
     /*
      * Returns the arc sine of the number; number in radians
      * arcsin(0.70710) -> 45
      * arcsin(null) -> null
      */
-    public Value _ARCSIN(Symbol function, Stack<Symbol> stack) {
+    public Value _ARCSIN(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double d = Math.asin(number.doubleValue());
             value.setValue(scale(BigDecimal.valueOf(Math.toDegrees(d))));
         }
-        
+
         return value;
-    }      
+    }
 
     /*
      * Returns the arc tangent of the number; number in radians
      * arctan(1) -> 45
      * arctan(null) -> null
      */
-    public Value _ARCTAN(Symbol function, Stack<Symbol> stack) {
+    public Value _ARCTAN(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double d = Math.atan(number.doubleValue());
             value.setValue(scale(BigDecimal.valueOf(Math.toDegrees(d))));
         }
-        
+
         return value;
-    }      
-    
+    }
+
     /**
      * Returns the number of elements in an array variable
      * arraylen(split("00,10,11", ",")) -> 3
-     */    
-    public Value _ARRAYLEN(Symbol function, Stack<Symbol> stack) throws ParserException {
+     */
+    public Value _ARRAYLEN(Token function, Stack<Token> stack) throws ParserException {
         Value value = new Value(function.getText()).setValue(BigDecimal.ZERO);
-        
-        Symbol symbol = stack.pop();
-        Value theValue = symbol.getValue();
+
+        Token token = stack.pop();
+        Value theValue = token.getValue();
         if (theValue.asObject() != null) {
             if (theValue.getArray() == null) {
-                String msg = ParserException.formatMessage("error.expected_array", symbol.getText());
-                throw new ParserException(msg, symbol.getRow(), symbol.getColumn());
+                String msg = ParserException.formatMessage("error.expected_array", token.getText());
+                throw new ParserException(msg, token.getRow(), token.getColumn());
             }
             value.setValue(BigDecimal.valueOf(theValue.getArray().size()));
         } else {
@@ -246,18 +301,18 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
 
         return value;
-    }    
-    
+    }
+
     /*
      * Returns the average for a list of NUMBER values
      * average(2, 4, 6, 8) -> 5
      * average(null) -> null
      */
-    public Value _AVERAGE(Symbol function, Stack<Symbol> stack) throws ParserException {
+    public Value _AVERAGE(Token function, Stack<Token> stack) throws ParserException {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
 
-        Symbol[] args = popArguments(function, stack); 
-        
+        Token[] args = parser.popArguments(function, stack);
+
         BigDecimal number = args[0].asNumber();
         if (number != null) {
             int count = 1;
@@ -272,22 +327,22 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                     throw new ParserException(msg, args[i].getRow(), args[i].getColumn());
                 }
             }
-            
+
             value.setValue(scale(BigDecimal.valueOf(d / count)));
         }
 
         return value;
-    }     
-    
+    }
+
     /*
      * Returns the next integer greater than the number
      * ceiling(0.01) -> 1
      * ceiling(2.022) -> 3
      * ceiling(null) -> null
      */
-    public Value _CEILING(Symbol function, Stack<Symbol> stack) {
+    public Value _CEILING(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double d = Math.ceil(number.doubleValue());
@@ -295,8 +350,8 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
 
         return value;
-    }     
-    
+    }
+
     /*
      * Determines if source string contains target string
      * contains("Ralph", "") -> false
@@ -304,7 +359,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * contains("Ralph", "lp") -> true
      * contains("Ralph", "LP") -> false
      */
-    public Value _CONTAINS(Symbol function, Stack<Symbol> stack) {
+    public Value _CONTAINS(Token function, Stack<Token> stack) {
         String matchStr = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = false;
@@ -312,7 +367,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
             b = str.contains(matchStr);
         }
         return new Value(function.getText()).setValue(b ? Boolean.TRUE : Boolean.FALSE);
-    }    
+    }
 
     /*
      * Determines if source string contains ALL of the CHARACTERS in the target. The
@@ -321,7 +376,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * containsAll("", "lp") -> false
      * containsAll("Ralph", "hR") -> true
      */
-    public Value _CONTAINSALL(Symbol function, Stack<Symbol> stack) {
+    public Value _CONTAINSALL(Token function, Stack<Token> stack) {
         String matchStr = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = false;
@@ -335,7 +390,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
             }
         }
         return new Value(function.getText()).setValue(b ? Boolean.TRUE : Boolean.FALSE);
-    }    
+    }
 
     /*
      * Determines if source string contains ANY of the CHARACTERS in the target. The
@@ -344,7 +399,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * containsAny("", "lp") -> false
      * containsAny("Ralph", "12a") -> true
      */
-    public Value _CONTAINSANY(Symbol function, Stack<Symbol> stack) {
+    public Value _CONTAINSANY(Token function, Stack<Token> stack) {
         String matchStr = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = false;
@@ -356,17 +411,17 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 }
             }
         }
-        return new Value(function.getText()).setValue(b ? Boolean.TRUE : Boolean.FALSE);        
-    }    
-    
+        return new Value(function.getText()).setValue(b ? Boolean.TRUE : Boolean.FALSE);
+    }
+
     /*
      * Returns the cosine of the number; number in degrees
      * cos(45) -> 0.70710
      * cos(null) -> null
      */
-    public Value _COS(Symbol function, Stack<Symbol> stack) {
+    public Value _COS(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double radians = Math.toRadians(number.doubleValue());
@@ -374,15 +429,54 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
 
         return value;
-    }      
-    
+    }
+
+    /*
+     * Tests a datetime to see if it is between two values
+     * Date1 = 2009-11-01 12:00:00
+     * Date2 = 2009-12-10 12:00:00
+     * FromDate = 2009-12-01 12:00:00
+     * ThruDate = 2009-12-15 12:00:00
+     * DateBetween(Date1, dtFrom, dtThru) ->  FALSE
+     * DateBetween(Date2, dtFrom, dtThru) ->  TRUE
+     */
+    public Value _DATEBETWEEN(Token function, Stack<Token> stack) {
+        Date upper = stack.pop().asDate();
+        Date lower = stack.pop().asDate();
+        Date dateToTest = stack.pop().asDate();
+
+        // Any nulls returns FALSE
+        boolean inRange = upper != null && lower != null && dateToTest != null;
+        inRange = inRange && dateToTest.getTime() >= lower.getTime() && dateToTest.getTime() <= upper.getTime();
+
+        return new Value(function.getText()).setValue(inRange ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /*
+     * Tests two dates to see if they are within x milliseconds of each other
+     * Date1 = 2009-12-01 12:20:00
+     * Date2 = 2009-12-01 12:20:30
+     * DateWithin(Date1, Date2, 10000) ->  FALSE
+     * DateWithin(Date1, Date2, 60000) ->  TRUE
+     */
+    public Value _DATEWITHIN(Token function, Stack<Token> stack) {
+        BigDecimal millis = stack.pop().asNumber();
+        Date date2 = stack.pop().asDate();
+        Date date1 = stack.pop().asDate();
+
+        boolean within = millis != null && date2 != null && date1 != null;
+        within = within && Math.abs(date1.getTime() - date2.getTime()) <= millis.intValue();
+
+        return new Value(function.getText()).setValue(within ? Boolean.TRUE : Boolean.FALSE);
+    }
+
     /*
      * Tests to see if a string ends with a given string
      * endswith("Ralph", "I") -> false
      * endswith("Ralph", "ph") -> true
      * endswith("Ralph", "Ph") -> false
      */
-    public Value _ENDSWITH(Symbol function, Stack<Symbol> stack) {
+    public Value _ENDSWITH(Token function, Stack<Token> stack) {
         String match = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = str != null && match != null && str.endsWith(match);
@@ -393,49 +487,53 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * Returns e (the base of natural logarithms) raised to a power
      * exp(1) -> 2.71828
      * exp(null) -> null
-     */    
-    public Value _EXP(Symbol function, Stack<Symbol> stack) {
+     */
+    public Value _EXP(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
+            int dp = parser.getPrecision();
             double d = Math.exp(number.doubleValue());
-            value.setValue(BigDecimal.valueOf(d));
+            BigDecimal bd = BigDecimal.valueOf(d).setScale(dp, BigDecimal.ROUND_HALF_UP);
+            value.setValue(bd);
         }
 
         return value;
-    }     
-    
+    }
+
     /*
      * FACTORIAL(number)
      *  5! = 1 x 2 x 3 x 4 x 5 = 120
      *
      * FACTORIAL(5) = 120
      */
-    public Value _FACTORIAL(Symbol function, Stack<Symbol> stack) throws ParserException {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);     
-        
-        BigDecimal number = stack.pop().asNumber();
+    public Value _FACTORIAL(Token function, Stack<Token> stack) throws ParserException {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        Token numberToken = stack.pop();
+        BigDecimal number = numberToken.asNumber();
+
         if (number != null) {
             if (number.intValue() < 0) {
-                throw new ParserException(ParserException.formatMessage("error.function_value_negative", number));                
+                throw new ParserException(ParserException.formatMessage("error.function_value_negative", number), numberToken.getRow(), numberToken.getColumn());
             }
 
             // Start with 1
             BigDecimal bd = BigDecimal.ONE;
-            
+
             // and perform the multiplication
             int count = number.intValue();
             for (int i = 1; i <= count; i++) {
                 bd = bd.multiply(BigDecimal.valueOf(i));
             }
-            
+
             value.setValue(bd);
         }
-        
+
         return value;
-    }     
-    
+    }
+
     /*
      * Returns a 1 based index of search within target string
      * find("Ralph", "") -> 0
@@ -443,25 +541,25 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * find("Ralph", "lp") -> 3
      * find("RalphRalph", "lp", 5) -> 8
      */
-    public Value _FIND(Symbol function, Stack<Symbol> stack) {
-        Value value = new Value(function.getText()).setValue(BigDecimal.ZERO);     
+    public Value _FIND(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue(BigDecimal.ZERO);
 
-        Symbol[] args = popArguments(function, stack); 
-        
+        Token[] args = parser.popArguments(function, stack);
+
         String str = args[0].asString();
         String searchFor = args[1].asString();
         BigDecimal start = function.getArgc() == 3 ? args[2].asNumber() : BigDecimal.ONE;
         if (str != null && searchFor != null &&
-            str.length() > 0 && searchFor.length() > 0) {
+                str.length() > 0 && searchFor.length() > 0) {
             int startAt = start.intValue();
             if (startAt < str.length()) {
                 BigDecimal bd = new BigDecimal(str.indexOf(searchFor, --startAt));
                 value.setValue(bd.add(BigDecimal.ONE));
             }
         }
-        
+
         return value;
-    }    
+    }
 
     /*
      * Returns the lowest integer less than the number
@@ -469,9 +567,9 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * floor(2.022) -> 2
      * floor(null) -> null
      */
-    public Value _FLOOR(Symbol function, Stack<Symbol> stack) {
+    public Value _FLOOR(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double d = Math.floor(number.doubleValue());
@@ -479,26 +577,26 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
 
         return value;
-    }     
-    
+    }
+
     /*
      * Converts a number to a hex string
      * hex(0) -> "0"
      * hex(123.45) -> "123.45"
-     * hex("kdkdkd") -> not a number exception 
+     * hex("kdkdkd") -> not a number exception
      */
-    public Value _HEX(Symbol function, Stack<Symbol> stack) {
+    public Value _HEX(Token function, Stack<Token> stack) {
         final int byteMax = 256;
         final int wordMax = 65536;
         final int hexByteLen = 2;
         final int hexWordLen = 4;
         final int hexLongLen = 8;
 
-        Value value = new Value(function.getText()).setValue((String)null);     
-        
+        Value value = new Value(function.getText()).setValue((String)null);
+
         int l = 0;
         String str = "";
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             long d = number.longValue();
@@ -519,11 +617,35 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                     str = "0" + str;
                 }
             }
-            
+
             value.setValue(str.toUpperCase());
         }
-        
+
         return value;
+    }
+
+    /*
+     * Tests to see if string is one of the supplied values
+     * isAnyOf("beta", "alpha", "beta", "gamma") -> true
+     * isAnyOf("BETA", "alpha", "beta", "gamma") -> false
+     * isAnyOf("omega", "alpha", "beta", "gamma") -> false
+    */
+    public Value _ISANYOF(Token function, Stack<Token> stack) {
+        Token[] args = parser.popArguments(function, stack);
+
+        String text = args[0].asString();
+
+        boolean found = false;
+        if (text != null) {
+            for (int i = 1; i < function.getArgc(); i++) {
+                if (text.equals(args[i].asString())) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        return new Value(function.getText()).setValue(found ? Boolean.TRUE : Boolean.FALSE);
     }
 
     /*
@@ -533,10 +655,10 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * isBlank(NULL) -> true
      * isBlank("raLph") -> false
      */
-    public Value _ISBLANK(Symbol function, Stack<Symbol> stack) {
+    public Value _ISBLANK(Token function, Stack<Token> stack) {
         String str = stack.pop().asString();
         return new Value(function.getText()).setValue(str == null || str.trim().length() == 0 ? Boolean.TRUE : Boolean.FALSE);
-    }       
+    }
 
     /*
      * Returns whether or not the string can be parsed into a number into a date.  Note that this
@@ -552,21 +674,41 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * makeBoolean("<null>") -> false
      * makeBoolean("2.0") -> false
      */
-    public Value _ISBOOLEAN(Symbol function, Stack<Symbol> stack) {
+    public Value _ISBOOLEAN(Token function, Stack<Token> stack) {
         Value value = _MAKEBOOLEAN(function, stack);
         value.setValue(value.asObject() != null && value.asBoolean().booleanValue() ? Boolean.TRUE : Boolean.FALSE);
         return value;
-    }       
-    
+    }
+
     /*
-     * Returns whether or not the string can be parsed into a valid DATE value.  Note the this method 
-     * calls MakeDate() and then tests the result
-     */
-    public Value _ISDATE(Symbol function, Stack<Symbol> stack) {
-        String str = stack.pop().asString();
-        return new Value(function.getText()).setValue(str == null || str.trim().length() == 0 ? Boolean.TRUE : Boolean.FALSE);
-    }       
-    
+     * Returns whether or not the string can be parsed into a valid DATE value.
+     * isDate("05/10/2009") -> Boolean.TRUE
+     * isDate("55/10/2009") -> Boolean.FALSE
+     * isDate("YR: 2009") -> Boolean.FALSE
+     * isDate("YR: 2009", "'YR: 'yyyy") -> Boolean.TRUE
+     *  */
+    public Value _ISDATE(Token function, Stack<Token> stack) {
+        boolean validDate;
+        try {
+            Value value = _MAKEDATE(function, stack);
+            validDate = value.asDate() != null;
+        } catch (ParserException ex) {
+            validDate = false;
+        }
+        return new Value(function.getText()).setValue(validDate ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /*
+     * Tests to see if string is not one of the supplied values
+     * isAnyOf("omega", "alpha", "beta", "gamma") -> true
+     * isAnyOf("BETA", "alpha", "beta", "gamma") -> true
+     * isAnyOf("beta", "alpha", "beta", "gamma") -> false
+    */
+    public Value _ISNONEOF(Token function, Stack<Token> stack) {
+        Value value = _ISANYOF(function, stack);
+        return new Value(function.getText()).setValue(value.asBoolean().booleanValue() ? Boolean.FALSE : Boolean.TRUE);
+    }
+
     /*
      * Returns whether or not the string is null
      * isNull("") -> false
@@ -574,10 +716,10 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * isNull(NULL) -> true
      * isNull("raLph") -> false
      */
-    public Value _ISNULL(Symbol function, Stack<Symbol> stack) {
+    public Value _ISNULL(Token function, Stack<Token> stack) {
         String str = stack.pop().asString();
         return new Value(function.getText()).setValue(str == null ? Boolean.TRUE : Boolean.FALSE);
-    }      
+    }
 
     /*
      * Returns whether or not the string represents a number
@@ -585,24 +727,24 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * isNumber("X") -> false
      * isNumber("<null>") -> false
      */
-    public Value _ISNUMBER(Symbol function, Stack<Symbol> stack) {
+    public Value _ISNUMBER(Token function, Stack<Token> stack) {
         String str = stack.pop().asString();
         boolean b = str != null && pattern_NUMBER.matcher(str).find();
         return new Value(function.getText()).setValue(Boolean.valueOf(b));
     }
-        
+
     /*
      * Returns the leftmost n characters
      * left("", 3) -> ""
      * left("Ralph", 3) -> "Ral"
      * left("Ra", 3) -> "Ra"
      */
-    public Value _LEFT(Symbol function, Stack<Symbol> stack) {    
-        Value value = new Value(function.getText()).setValue((String)null);        
-        
+    public Value _LEFT(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
         BigDecimal bdCount = stack.pop().asNumber();
         String str = stack.pop().asString();
-        
+
         if (str != null) {
             if (bdCount != null) {
                 int count = bdCount.intValue();
@@ -614,34 +756,34 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                     value.setValue(new String(buffer));
                 } else {
                     value.setValue("");
-                }   
+                }
             } else {
                 value.setValue(str);
             }
         }
-        
+
         return value;
-    }    
-    
+    }
+
     /*
      * Returns the length of a string
      * len("raLph") -> 5
      * len(null) -> 0
      */
-    public Value _LEN(Symbol function, Stack<Symbol> stack) {
+    public Value _LEN(Token function, Stack<Token> stack) {
         String str = stack.pop().asString();
         return new Value(function.getText()).setValue(BigDecimal.valueOf(str == null ? 0 : str.length()));
     }
 
-    
+
     /*
      * Returns the natural log of the number
      * log(2) -> 0.69314
      * log(null) -> null
      */
-    public Value _LOG(Symbol function, Stack<Symbol> stack) {
+    public Value _LOG(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double d = Math.log(number.doubleValue());
@@ -656,27 +798,27 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * log10(2) -> 0.30102
      * log10(null) -> null
      */
-    public Value _LOG10(Symbol function, Stack<Symbol> stack) {
+    public Value _LOG10(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double d = Math.log10(number.doubleValue());
             value.setValue(BigDecimal.valueOf(d));
         }
 
-        return value;    }    
-    
-    
+        return value;    }
+
+
     /*
      * Lower cases a string
      * lower("raLph iDen") -> "ralph iden"
      */
-    public Value _LOWER(Symbol function, Stack<Symbol> stack) {
+    public Value _LOWER(Token function, Stack<Token> stack) {
         String str = stack.pop().asString();
         return new Value(function.getText()).setValue(str == null ? null : str.toLowerCase());
     }
-    
+
     /*
      * Create a BOOLEAN value from an input string
      * makeBoolean("1") -> true
@@ -689,17 +831,17 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * makeBoolean("X") -> null
      * makeBoolean("<null>") -> null
      * makeBoolean("2.0") -> null
-     */    
-    public Value _MAKEBOOLEAN(Symbol function, Stack<Symbol> stack) {    
-        Value value = new Value(function.getText()).setValue((Boolean)null);        
-    
-        Symbol token = stack.pop();
+     */
+    public Value _MAKEBOOLEAN(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((Boolean)null);
+
+        Token token = stack.pop();
         if (token.asString() != null && token.getValue().getType() != ValueType.DATE) {
             // Try conversion of boolean-like strings
             String str = token.asString() + "~";
-            if (str.length() > 1 && ("1~true~yes~on~").indexOf(str.toLowerCase()) != -1) {
+            if (str.length() > 1 && ("1~true~yes~on~").contains(str.toLowerCase())) {
                 value.setValue(Boolean.TRUE);
-            } else if (str.length() > 1 && ("0~false~no~off~").indexOf(str.toLowerCase()) != -1) {
+            } else if (str.length() > 1 && ("0~false~no~off~").contains(str.toLowerCase())) {
                 value.setValue(Boolean.FALSE);
             } else {
                 // probe for variations of 0 and 1
@@ -713,29 +855,120 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                     }
                 }
             }
-        }        
-        
+        }
+
         return value;
     }
-    
+
+    /*
+     * Creates a Date
+     * mon, day, year, hr, min, sec
+     * MakeDate("2009/01/22") -- based on set of allowed datetime formats
+     * MakeDate("2009-01-22", "yyyy-MM-dd") -- user specified format
+     * MakeDate(12, 1, 08) ->  2008-12-01 00:00:00.0
+     * MakeDate(12, 1, 59) ->  1959-12-01 00:00:00.0
+     * MakeDate(12, 1, 2008) ->  2008-12-01 00:00:00.0
+     * MakeDate(12, 1, 2008, 2, 3, 30) -> 2008-12-01 02:03:30.0
+     */
+    public Value _MAKEDATE(Token function, Stack<Token> stack) throws ParserException {
+        Value value = new Value(function.getText()).setValue((Date)null);
+
+        Token[] args = parser.popArguments(function, stack);
+
+        String[] patterns = getDatePatterns();
+
+        if (ValueType.STRING == args[0].getValue().getType()) {
+            // Only support one date expression STRING and optional STRING format when taking this path
+            if (args.length > 1) {
+                if (ValueType.STRING != args[1].getValue().getType()) {
+                    // second parameter must be a string
+                    throw new ParserException(ParserException.formatMessage("error.type_mismatch_generic", "STRING", args[1].getValue().getType()), args[1].getRow(), args[1].getColumn());
+                } else if (args.length > 2) {
+                    // too many arguments
+                    throw new ParserException(ParserException.formatMessage("error.function_parameter_count", "MAKEDATE", "1..2", String.valueOf(args.length)), args[1].getRow(), args[1].getColumn());
+                } else if (args[1].asString() == null || args[1].asString().trim().length() == 0) {
+                    // empty format not allowed
+                    throw new ParserException(ParserException.formatMessage("error.empty", "format string"), args[1].getRow(), args[1].getColumn());
+                }
+                patterns = new String[] {args[1].asString()};
+            }
+
+            for (String pattern : patterns) {
+                SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+                sdf.setLenient(false);
+                try {
+                    value.setValue(sdf.parse(args[0].asString()));
+                    break;
+                } catch (ParseException ex) {
+                    // Okay to ignore, try next pattern
+                }
+            }
+        } else {
+            int mon, day, year, hour, min, sec;
+            try {
+                mon = args[0].asNumber().intValue() - 1;
+                day = args[1].asNumber().intValue();
+                year = args[2].asNumber().intValue();
+                hour = args.length > 3 ? args[3].asNumber().intValue() : 0;
+                min = args.length > 4 ? args[4].asNumber().intValue() : 0;
+                sec = args.length > 5 ? args[5].asNumber().intValue() : 0;
+            } catch (Exception ex) {
+                // Handles null values that may have been passed in as parameters
+                return value;
+            }
+
+            if (year < 100) {
+                if (year > 50) {
+                    year += 1900;
+                } else {
+                    year += 2000;
+                }
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setLenient(false);
+            try {
+                cal.set(year, mon, day, hour, min, sec);
+                value.setValue(cal.getTime());
+            } catch (Exception ex) {
+                String msg = ex.getMessage();
+                String[] fields = {"MONTH", "DAY_OF_MONTH", "YEAR", "HOUR_OF_DAY", "MINUTE", "SECOND"};
+                int row = function.getRow();
+                int col = function.getColumn();
+                for (int i = 0; i < fields.length; i++) {
+                    if (fields[i].equals(msg)) {
+                        row = args[i].getRow();
+                        col = args[i].getColumn();
+                        break;
+                    }
+                }
+                throw new ParserException(ParserException.formatMessage("error", "Invalid value " + msg), row, col);
+            }
+        }
+
+        return value;
+    }
+
     /*
      * Performs a match of the regular expression and stores the groups in an array variable
      * match("(815) 555-1212 x100","(\d{3})\D*(\d{3})\D*(\d{4})\D*(\d*)$") -> [815][555][1212][100]
-     */    
-    public Value _MATCH(Symbol function, Stack<Symbol> stack) throws ParserException {    
+     */
+    public Value _MATCH(Token function, Stack<Token> stack) throws ParserException {
         Value value = new Value(function.getText()).setValue((String)null);
-        
-        String pattern = stack.pop().asString();
+
+        Token patternToken = stack.pop();
+        String pattern = patternToken.asString();
+
         String str = stack.pop().asString();
-        
+
         if (str != null && pattern != null) {
             Pattern p = null;
             try {
                 p = Pattern.compile(pattern);
             } catch (PatternSyntaxException ex) {
-                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern));
+                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern), patternToken.getRow(), patternToken.getColumn());
             }
-            
+
             Matcher m1 = p.matcher(str);
             if (m1.find()) {
                 for (int i = 0; i <= m1.groupCount(); i++) {
@@ -752,43 +985,46 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 // No matches, which isn't necessarily an error. Return empty string
                 value.setValue("");
             }
-        }   
-        
+        }
+
         return value;
     }
 
     /*
      * Performs a match of the regular expression and returns a formatted string
-     * based on the matched pattern. This is a funky scheme that I devised to 
-     * format strings, phone numbers in my example, based on the length of the 
+     * based on the matched pattern. This is a funky scheme that I devised to
+     * format strings, phone numbers in my example, based on the length of the
      * matched pattern.
-     * 
+     *
      * matchByLen("8155551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
      *     -> "(815) 555-1212"
-     * 
+     *
      * matchByLen("5551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
      *     -> "      555-1212"
-     */    
-    public Value _MATCHBYLEN(Symbol function, Stack<Symbol> stack) throws ParserException {    
+     */
+    public Value _MATCHBYLEN(Token function, Stack<Token> stack) throws ParserException {
         Value value = new Value(function.getText()).setValue((String)null);
-        
+
         // Create temp parser if one hasn't already been created
         if (tmpParser == null) {
-            tmpParser = new Parser(this);
+            tmpParser = new Parser();
         }
-        
+
         String variations = stack.pop().asString();
-        String pattern = stack.pop().asString();
+
+        Token patternToken = stack.pop();
+        String pattern = patternToken.asString();
+
         String str = stack.pop().asString();
-        
+
         if (str != null && pattern != null && variations != null) {
             Pattern p = null;
             try {
                 p = Pattern.compile(pattern);
             } catch (PatternSyntaxException ex) {
-                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern));
-            }            
-           
+                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern), patternToken.getRow(), patternToken.getColumn());
+            }
+
             Matcher m1 = p.matcher(str);
             if (m1.find()) {
                 // Look for template variations based on number of chars matched
@@ -850,11 +1086,11 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 // No matches, which isn't necessarily an error. Return empty string
                 value.setValue("");
             }
-        }   
-        
+        }
+
         return value;
     }
-    
+
     /*
      * Returns the larger of the two values
      * min(5, 3) -> 3
@@ -862,59 +1098,59 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * min(null, 1) -> null
      * min(1, null) -> null
      */
-    public Value _MAX(Symbol function, Stack<Symbol> stack) {    
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);        
-        
+    public Value _MAX(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
         BigDecimal rhs = stack.pop().asNumber();
         BigDecimal lhs = stack.pop().asNumber();
         if (lhs != null && rhs != null) {
             value.setValue(lhs.max(rhs));
         }
-        
+
         return value;
-    }      
-    
+    }
+
     /*
      * Returns a substring of a set of characters
      * mid("Ralph",2,1) -> "a"
      * mid("Ralph",2) -> "alph"
      * mid("Ralph",2,100) -> "alph"
      */
-    public Value _MID(Symbol function, Stack<Symbol> stack) {    
-        Value value = new Value(function.getText()).setValue((String)null);        
+    public Value _MID(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
 
-        Symbol[] args = popArguments(function, stack); 
-        
+        Token[] args = parser.popArguments(function, stack);
+
         String str = args[0].asString(); // source string
         BigDecimal index = args[1].asNumber(); // starting index (1 based)
         BigDecimal length = args.length == 2 ? null : args[2].asNumber();  // length to copy
-        
+
         if (str != null && index != null && (args.length < 3 || length != null)) {
             if (str.length() > 0) {
                 int end;
                 int start = index.intValue();
                 int count = function.getArgc() == 2 ? str.length() : length.intValue();
-                    
-                 if (start < 1 || count <= 0 || start > str.length()) {
-                        value.setValue("");
-                 } else {
-                     int len = str.length();
-                     if (start + count > len) {
-                         end = len;
-                     } else {
-                         end = (start - 1) + count;
-                     }
-                        
-                     value.setValue(str.substring(start - 1, end));
+
+                if (start < 1 || count <= 0 || start > str.length()) {
+                    value.setValue("");
+                } else {
+                    int len = str.length();
+                    if (start + count > len) {
+                        end = len;
+                    } else {
+                        end = (start - 1) + count;
+                    }
+
+                    value.setValue(str.substring(start - 1, end));
                 }
             } else {
                 value.setValue("");
             }
         }
-        
+
         return value;
-    }      
-    
+    }
+
     /*
      * Returns the smaller of the two values
      * min(5, 3) -> 3
@@ -922,17 +1158,43 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * min(null, 1) -> null
      * min(1, null) -> null
      */
-    public Value _MIN(Symbol function, Stack<Symbol> stack) {    
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);        
-        
+    public Value _MIN(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
         BigDecimal rhs = stack.pop().asNumber();
         BigDecimal lhs = stack.pop().asNumber();
         if (lhs != null && rhs != null) {
             value.setValue(lhs.min(rhs));
         }
-        
+
         return value;
-    }    
+    }
+
+    /*
+     * Uppercases the first character of each word
+     * namecase("john smith") -> "John Smith"
+     */
+    public Value _NAMECASE(Token function, Stack<Token> stack) {
+        String str = stack.pop().asString();
+        if (str != null) {
+            StringBuilder sb = new StringBuilder();
+            boolean uc = true;
+            for (int i = 0; i < str.length(); i++) {
+                if (uc && !Character.isWhitespace(str.charAt(i))) {
+                    sb.append(Character.toUpperCase(str.charAt(i)));
+                    uc = false;
+                } else {
+                    sb.append(Character.toLowerCase(str.charAt(i)));
+                    if (Character.isWhitespace(str.charAt(i))) {
+                        uc = true;
+                    }
+                }
+            }
+            str = sb.toString();
+        }
+
+        return new Value(function.getText()).setValue(str);
+    }
 
     /*
      * Returns the random number between two values
@@ -940,28 +1202,28 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * random(3) -> 3.2323  (range 0..5)
      * random(10, 15) -> 13.2323  (range 10..15)
      */
-    public Value _RANDOM(Symbol function, Stack<Symbol> stack) {    
-        Symbol[] args = popArguments(function, stack);
+    public Value _RANDOM(Token function, Stack<Token> stack) {
+        Token[] args = parser.popArguments(function, stack);
         double d = 0;
         if (args.length == 0) {
-            d = getNumber(0, 1, getPrecision());
+            d = getNumber(0, 1, parser.getPrecision());
         } else if (args.length == 1) {
-            d = getNumber(0, args[0].asNumber().longValue(), getPrecision());
+            d = getNumber(0, args[0].asNumber().longValue(), parser.getPrecision());
         } else if (args.length == 2) {
-            d = getNumber(args[0].asNumber().longValue(), args[1].asNumber().longValue(), getPrecision());
+            d = getNumber(args[0].asNumber().longValue(), args[1].asNumber().longValue(), parser.getPrecision());
         }
         return new Value(function.getText()).setValue(BigDecimal.valueOf(d));
-    }  
-    
+    }
+
     /*
      * Replaces the occurrences of the first string with the second
      * string. Does not support regular expressions for the search.
      * replace("Ralph,Iden,Dev", ",", "/") -> Ralph/Iden/Dev
      * replace("Ralph", null, null) -> Ralph
      */
-    public Value _REPLACE(Symbol function, Stack<Symbol> stack) {
+    public Value _REPLACE(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((String)null);
-        
+
         String replaceWith = stack.pop().asString();
         String searchFor = stack.pop().asString();
         String str = stack.pop().asString();
@@ -972,7 +1234,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 value.setValue(str.replace(searchFor, replaceWith));
             }
         }
-        
+
         return value;
     }
 
@@ -984,9 +1246,9 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * replaceAll("acabc-000-abc", "ab+c", "123") -> ac123-000-123
      * replaceAll("Ralph", null, null) -> Ralph
      */
-    public Value _REPLACEALL(Symbol function, Stack<Symbol> stack) {
+    public Value _REPLACEALL(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((String)null);
-        
+
         String replaceWith = stack.pop().asString();
         String searchFor = stack.pop().asString();
         String str = stack.pop().asString();
@@ -997,7 +1259,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 value.setValue(str.replaceAll(searchFor, replaceWith));
             }
         }
-        
+
         return value;
     }
 
@@ -1009,9 +1271,9 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * replaceFirst("acabc-000-abc", "ab+c", "123") -> ac123-000-abc
      * replaceFirst("Ralph", null, null) -> Ralph
      */
-    public Value _REPLACEFIRST(Symbol function, Stack<Symbol> stack) {
+    public Value _REPLACEFIRST(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((String)null);
-        
+
         String replaceWith = stack.pop().asString();
         String searchFor = stack.pop().asString();
         String str = stack.pop().asString();
@@ -1022,22 +1284,22 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 value.setValue(str.replaceFirst(searchFor, replaceWith));
             }
         }
-        
+
         return value;
     }
-    
+
     /*
      * Returns the rightmost n characters
      * right("", 3) -> ""
      * right("Ralph", 3) -> "lph"
      * right("Ra", 3) -> "Ra"
      */
-    public Value _RIGHT(Symbol function, Stack<Symbol> stack) {    
-        Value value = new Value(function.getText()).setValue((String)null);        
-        
+    public Value _RIGHT(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
         BigDecimal bdCount = stack.pop().asNumber();
         String str = stack.pop().asString();
-        
+
         if (str != null) {
             if (bdCount != null) {
                 int count = bdCount.intValue();
@@ -1049,23 +1311,23 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                     value.setValue(new String(buffer));
                 } else {
                     value.setValue("");
-                }                
+                }
             } else {
                 value.setValue(str);
             }
         }
-        
+
         return value;
-    }    
-    
+    }
+
     /*
      * Returns the sine of the number; number in degrees
      * sin(45) -> 0.70710
      * sin(null) -> null
      */
-    public Value _SIN(Symbol function, Stack<Symbol> stack) {
+    public Value _SIN(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double radians = Math.toRadians(number.doubleValue());
@@ -1073,8 +1335,8 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
 
         return value;
-    }     
-    
+    }
+
     /*
      * Splits a string on delimiter boundaries into a String array
      * split("Ralph,Iden") -> [Ralph][Iden]
@@ -1083,14 +1345,14 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * See the javadoc for String.split for an explaination of the limit (third)
      * parameter.
      */
-    public Value _SPLIT(Symbol function, Stack<Symbol> stack) {
+    public Value _SPLIT(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((String)null);
-        
-        Symbol[] args = popArguments(function, stack);
+
+        Token[] args = parser.popArguments(function, stack);
         if (args[0].asString() != null) {
             String delimiter = (args.length > 1 && args[1].asString() != null) ? args[1].asString() : ",";
             int limit = (args.length == 3 && args[2].asNumber() != null) ? args[2].asNumber().intValue() : -1;
-            
+
             String[] fields = args[0].asString().split(delimiter, limit);
             if (fields.length > 0) {
                 value.setValue(fields[0]);
@@ -1100,17 +1362,55 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 }
             }
         }
-        
+
         return value;
-    }    
-    
+    }
+
+    /*
+     * Returns the number squared
+     * sqr(9) -> 81
+     */
+    public Value _SQR(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        BigDecimal number = stack.pop().asNumber();
+        if (number != null) {
+            double d = number.doubleValue() * number.doubleValue();
+            value.setValue(scale(BigDecimal.valueOf(d)));
+        }
+
+        return value;
+    }
+
+    /*
+     * Returns the square root of the number
+     * sqrt(81) -> 9
+     */
+    public Value _SQRT(Token function, Stack<Token> stack) throws ParserException {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        Token token = stack.pop();
+
+        BigDecimal number = token.asNumber();
+        if (number != null) {
+            double d = Math.sqrt(number.doubleValue());
+            if (Double.isNaN(d)) {
+                String msg = ParserException.formatMessage("error.not_a_number");
+                throw new ParserException(msg, token.getRow(), token.getColumn());
+            }
+            value.setValue(scale(BigDecimal.valueOf(d)));
+        }
+
+        return value;
+    }
+
     /*
      * Tests to see if a string starts with a given string
      * startswith("Ralph", "I") -> false
      * startswith("Ralph", "Ra") -> true
      * startswith("Ralph", "ra") -> false
      */
-    public Value _STARTSWITH(Symbol function, Stack<Symbol> stack) {
+    public Value _STARTSWITH(Token function, Stack<Token> stack) {
         String match = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = str != null && match != null && str.startsWith(match);
@@ -1126,18 +1426,18 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * str(123.45, 3) -> "123"
      * str(123.45, 7, 3) -> "123.450"
      * str("kdkdkd") -> 0 or not a number exception if "ignoreErrors" is true
-     */    
-    public Value _STR(Symbol function, Stack<Symbol> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);        
-        
-        Symbol[] args = popArguments(function, stack);
-        
+     */
+    public Value _STR(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
+        Token[] args = parser.popArguments(function, stack);
+
         String number = args[0].asString();
         if (number != null) {
             boolean done = false;
             BigDecimal precision = null;
             BigDecimal width = null;
-            
+
             if (function.getArgc() > 1) {
                 width = args[1].asNumber();
                 if (width == null) {
@@ -1175,20 +1475,20 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                     value.setValue(number);
                 }
             }
-        }        
-        
+        }
+
         return value;
     }
-    
+
     /*
      * Replicates a string n number of times
      * replicate("*", 2) -> "**"
      * replicate("RI", 2) -> "RIRI"
-     */    
-    public Value _STRING(Symbol function, Stack<Symbol> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);        
+     */
+    public Value _STRING(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
 
-        BigDecimal count = stack.pop().asNumber();  
+        BigDecimal count = stack.pop().asNumber();
         String str = stack.pop().asString();
         if (str != null && count != null) {
             StringBuilder sb = new StringBuilder();
@@ -1196,19 +1496,19 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 sb.append(str);
             }
             value.setValue(sb.toString());
-        }        
-        
+        }
+
         return value;
     }
-    
+
     /*
      * Returns the tangent of the number; number in degrees
      * tan(45) -> 1
      * tan(null) -> null
-     */    
-    public Value _TAN(Symbol function, Stack<Symbol> stack) {
+     */
+    public Value _TAN(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
-        
+
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
             double radians = Math.toRadians(number.doubleValue());
@@ -1216,18 +1516,18 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
         }
 
         return value;
-    }     
-    
+    }
+
     /*
      * Removes the specified character (or WHITESPACE) from both ends of a string
      * trim(" Ralph \r ") -> "Ralph"
      * trim("**Ralph**", "*") -> "Ralph"
-     */    
-    public Value _TRIM(Symbol function, Stack<Symbol> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);  
-        
-        Symbol[] args = popArguments(function, stack);
-        
+     */
+    public Value _TRIM(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
+        Token[] args = parser.popArguments(function, stack);
+
         String str = args[0].asString();
         if (str != null) {
             if (function.getArgc() == 2 && args[1].asString().length() > 0) {
@@ -1236,7 +1536,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 value.setValue(str.trim());
             }
         }
-        
+
         return value;
     }
 
@@ -1244,12 +1544,12 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * Removes the specified character (or WHITESPACE) from the left side of a string
      * trim(" Ralph \r ") -> "Ralph \r "
      * trim("**Ralph**", "*") -> "Ralph**"
-     */    
-    public Value _TRIMLEFT(Symbol function, Stack<Symbol> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);  
-        
-        Symbol[] args = popArguments(function, stack);
-        
+     */
+    public Value _TRIMLEFT(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
+        Token[] args = parser.popArguments(function, stack);
+
         String str = args[0].asString();
         if (str != null) {
             if (function.getArgc() == 2 && args[1].asString().length() > 0) {
@@ -1258,7 +1558,7 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 value.setValue(trimLeft(str, ' '));
             }
         }
-        
+
         return value;
     }
 
@@ -1266,12 +1566,12 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * Removes the specified character (or WHITESPACE) from the right side of a string
      * trim(" Ralph \r ") -> " Ralph"
      * trim("**Ralph**", "*") -> "**Ralph"
-     */    
-    public Value _TRIMRIGHT(Symbol function, Stack<Symbol> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);  
-        
-        Symbol[] args = popArguments(function, stack);
-        
+     */
+    public Value _TRIMRIGHT(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
+        Token[] args = parser.popArguments(function, stack);
+
         String str = args[0].asString();
         if (str != null) {
             if (function.getArgc() == 2 && args[1].asString().length() > 0) {
@@ -1280,15 +1580,15 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
                 value.setValue(trimRight(str, ' '));
             }
         }
-        
+
         return value;
-    }    
-    
+    }
+
     /*
      * Upper cases a string
      * upper("raLph iDen") -> "RALPH IDEN"
-     */    
-    public Value _UPPER(Symbol function, Stack<Symbol> stack) {
+     */
+    public Value _UPPER(Token function, Stack<Token> stack) {
         String str = stack.pop().asString();
         return new Value(function.getText()).setValue(str == null ? null : str.toUpperCase());
     }
@@ -1298,11 +1598,16 @@ public class GrammarExtendedCalc extends GrammarBasicCalc {
      * val("") -> 0
      * val("123.45") -> 123.45
      * val("kdkdkd") -> arithmetic exception
-     */    
-    public Value _VAL(Symbol function, Stack<Symbol> stack) {
-        String str = stack.pop().asString();
-        BigDecimal bd = (str == null) ? null : str.length() == 0 ? BigDecimal.ZERO : new BigDecimal(str);
-        return new Value(function.getText()).setValue(bd);
+     */
+    public Value _VAL(Token function, Stack<Token> stack) throws ParserException {
+        Token token = stack.pop();
+        try {
+            String str = token.asString();
+            BigDecimal bd = (str == null) ? null : str.length() == 0 ? BigDecimal.ZERO : new BigDecimal(str);
+            return new Value(function.getText()).setValue(bd);
+        } catch (NumberFormatException nfe) {
+            throw new ParserException(ParserException.formatMessage("error.expected_numberformat", token.asString()), token.getRow(), token.getColumn());
+        }
     }
-    
+
 }

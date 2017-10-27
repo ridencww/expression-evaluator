@@ -11,13 +11,33 @@ enum TokenType {
     CONSTANT("~~dynamically-generated~~", false),
     FUNCTION("~~dynamically-generated~~", false),
     IDENTIFIER("[_A-Za-z][_A-Za-z0-9]*", false),
-    FIELD("@([_/:A-Za-z0-9]+)", true), // @name  @name_first @name:first @name/first
+    FIELD("@([\\.\\->_/:A-Za-z0-9]+)", true), // @name  @name_first @name:first @name/first
     PROPERTY("\\$\\{(.*)}", true), // ${id}
     NEWLINE("\n", false),
     EOS(";", false),
     WHITESPACE("[ \\t]+", false),
     NOMATCH("", false),
     VALUE("", false); // intermediate value during parse
+
+    /*
+     * Field identifiers begin with @ and allow for flexibility with naming:
+     *   @name
+     *   @name.first
+     *   @name-first
+     *   @name>first
+     *   @name->first
+     *   @name_first
+     *   @name/first
+     *   @name:first
+     *   @name::first
+     *   @99test
+     *   And any permutations of the above. It is strongly recommended that expressions
+     *   using fields should include whitespace after the field name to avoid the risk
+     *   of an unintended parse because of symbol conflicts.
+     *
+     *   Do this:
+     *   @/metadata/number1/<sp>/<sp>@/metadata/number2/
+     */
 
     private static Pattern combinedPattern;
 

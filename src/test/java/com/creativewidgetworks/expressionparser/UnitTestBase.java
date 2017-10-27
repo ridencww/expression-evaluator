@@ -3,6 +3,7 @@ package com.creativewidgetworks.expressionparser;
 import org.junit.Assert;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 public class UnitTestBase extends Assert {
@@ -36,15 +37,24 @@ public class UnitTestBase extends Assert {
         }
     }
 
-    protected void validateDateResult(Parser parser, String expression, String expected) {
+    protected void validateDateNotParseable(Parser parser, String expression) {
+        Value result = parser.eval(expression);
+        validateNoParserException(result);
+        assertEquals(expression, ValueType.DATE, result.getType());
+        assertNull("Should not parse to date", result.asDate());
+    }
+
+    protected void validateDateResult(Parser parser, String expression, Date expected) {
         Value result = parser.eval(expression);
         validateNoParserException(result);
         if (expected == null) {
             assertNull(expression, result.asDate());
         } else {
-            long time = Long.valueOf(expected);
             assertEquals(expression, ValueType.DATE, result.getType());
-            assertTrue(expression, Math.abs(time - result.asDate().getTime()) < 1000);
+            if (result.asDate() == null) {
+                fail("Expected date would be parsed from: " + expression);
+            }
+            assertTrue(expression + " = " + expected.toString(), Math.abs(expected.getTime() - result.asDate().getTime()) < 1000);
         }
     }
 

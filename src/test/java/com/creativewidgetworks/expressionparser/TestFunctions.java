@@ -33,10 +33,10 @@ public class TestFunctions {
      * date(1) ->  2009-08-31 00:00:00
      * date(2) ->  2009-08-31 23:59:59
      * date("kdkdkd") -> expected number exception
-     * 
-     * This function exists in the basic calc grammar because the ParserTest needs 
+     *
+     * This function exists in the basic calc grammar because the ParserTest needs
      * to be sure that it can test Values that are dates
-     * 
+     *
      */
     public Value _NOW(Token function, Stack<Token> stack) throws ParserException {
         Calendar calendar = Calendar.getInstance();

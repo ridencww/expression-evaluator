@@ -137,9 +137,9 @@ public class Token {
      */
     public boolean isOperator() {
         if (TokenType.OPERATOR.equals(type)) {
-            Operator op = Operator.find(this, false);
+            Operator op = Operator.find(this, true);
             if (op == null) {
-                op = Operator.find(this, true);
+                op = Operator.find(this, false);
             }
             return !Operator.LPAREN.equals(op) && !Operator.RPAREN.equals(op);
         } else {

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Stack;
 
-public class ParserCoreTest extends UnitTestBase {
+public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     private static final String EXPRESSION = "( 1 -2) * (3/4)-(  5+6)";
 
     private Parser parser;
@@ -15,20 +15,14 @@ public class ParserCoreTest extends UnitTestBase {
     @Before
     public void beforeEach() {
         parser = new Parser();
+        parser.setFieldInterface(this);
     }
 
     /*---------------------------------------------------------------------------------*/
 
-    // These are required to exercise the function tests. Do not remove.
-
-    @SuppressWarnings("unused")
-    public Value _ALPHA(Token function, Stack<Token> stack) {
-        return new Value();
-    }
-
-    @SuppressWarnings("unused")
-    public Value _BETA(Token function, Stack<Token> stack) {
-        return new Value();
+    // FieldInterface to echo the field names passed to it for the tests
+    public Value getField(String name, boolean caseSensitive) {
+        return new Value(name, name);
     }
 
     /*---------------------------------------------------------------------------------*/
@@ -46,12 +40,85 @@ public class ParserCoreTest extends UnitTestBase {
     /*----------------------------------------------------------------------------*/
 
     @Test
+    public void testClearGlobals() {
+        assertEquals("should be empty", 0, parser.getGlobalVariables().size());
+
+        parser.getGlobalVariables().put("A", new Value());
+        parser.getGlobalVariables().put("B", new Value());
+        parser.getGlobalVariables().put("C", new Value());
+        assertEquals("wrong count", 3, parser.getGlobalVariables().size());
+
+        parser.clearGlobalVariables();
+        assertEquals("should be empty", 0, parser.getGlobalVariables().size());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testClearConstants() {
+        parser.addConstant("TEN", BigDecimal.TEN);
+        assertEquals("basic constants present", 3, parser.getConstants().size());
+        parser.clearConstants();
+        assertEquals("constants removed and defaults inserted", 2, parser.getConstants().size());
+
+        // Really remove all and verify regex is not available
+        parser.getConstants().clear();
+        TokenType.invalidatePattern();;
+        assertEquals("no regex", "~~no-constants-defined~~", parser.getConstantRegex());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testClearConstant() {
+        assertEquals("basic constants present", 2, parser.getConstants().size());
+        parser.clearConstant("PI");
+        assertEquals("PI removed", 1, parser.getConstants().size());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testClearFunctions() {
+        assertEquals("basic constants present", 6, parser.getFunctions().size());
+        parser.clearFunctions();;
+        assertEquals("functions removed and defaults inserted", 6, parser.getFunctions().size());
+
+        // Really remove all and verify regex is not available
+        parser.getFunctions().clear();
+        TokenType.invalidatePattern();;
+        assertEquals("no regex", "~~no-functions-defined~~", parser.getFunctionRegex());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testClearFunction() {
+        assertEquals("basic constants present", 6, parser.getFunctions().size());
+        parser.clearFunction("NOW");;
+        assertEquals("functions removed and defaults inserted", 5, parser.getFunctions().size());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testClearVariabl() {
+        parser.addVariable("A", new Value());
+        assertNotNull(parser.getVariable("A"));
+        assertEquals("wrong count", 1, parser.getVariables().size());
+        parser.clearVariable("A");
+        assertEquals("should be empty", 0, parser.getVariables().size());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
     public void testClearVariables() {
         assertEquals("should be empty", 0, parser.getVariables().size());
 
-        parser.getVariables().put("A", new Value());
-        parser.getVariables().put("B", new Value());
-        parser.getVariables().put("C", new Value());
+        parser.addVariable("A", new Value());
+        parser.addVariable("B", new Value());
+        parser.addVariable("C", new Value());
         assertEquals("wrong count", 3, parser.getVariables().size());
 
         parser.clearVariables();
@@ -93,10 +160,32 @@ public class ParserCoreTest extends UnitTestBase {
     /*----------------------------------------------------------------------------*/
 
     @Test
+    public void testField() throws Exception {
+        String[] testFields = {
+            "@name", "@name/", "@name.first", "@name-first", "@name>first", "@name->first", "@name_first",
+            "@person/name/first", "@name:first", "@name::first", "@99TestField"
+        };
+
+        for (String field : testFields) {
+            Value value = parser.eval(field);
+            assertEquals("field echoed", field.substring(1), value.asString());
+        }
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
     public void testProperty() throws Exception {
         try {
             System.setProperty("MYTEST_PROPERTY", "Abc123");
             validateStringResult(parser, "${MYMISSING_PROPERTY}", null);
+
+            // By default, access to system and environment properties are disabled
+            validateStringResult(parser, "${MYTEST_PROPERTY}", null);
+
+            // Enable access to properties
+            boolean oldValue = parser.setAllowProperties(true);
+            assertFalse("no properties access", oldValue);
             validateStringResult(parser, "${MYTEST_PROPERTY}", "Abc123");
 
             // This checks the ENV, but only works under Windows
@@ -180,19 +269,17 @@ public class ParserCoreTest extends UnitTestBase {
 
         if (expectedSize > 0) {
             for (int i = 0; i < expectedSize; i++) {
-                assertEquals(expected[i], args[i].asString());
+                assertEquals(String.valueOf(i), expected[i], args[i].asString());
             }
         }
     }
 
     @Test
     public void testPopArguments() {
-        // TODO - inprogress
-        //   validatePoppedArgs(0, 0);
-     //   validatePoppedArgs(1, 1, "RI");
-     //   validatePoppedArgs(2, 2, "RI", "2");
-     //   validatePoppedArgs(3, 3, "RI", "2", "1");
-
+        validatePoppedArgs(0, 0);
+        validatePoppedArgs(1, 1, "RI");
+        validatePoppedArgs(2, 2, "2", "RI");
+        validatePoppedArgs(3, 3, "1", "2", "RI");
     }
 
     @Test
@@ -264,20 +351,5 @@ public class ParserCoreTest extends UnitTestBase {
        assertEquals("ERROR: EMPTY EXPRESSION", result.getName());
        assertEquals("", result.asString());
    }
-
-   /*----------------------------------------------------------------------------*/
-
-    @Test
-    public void testBasicParse() {
-        validateNumericResult(parser, "1 + 3", "4");
-    }
-
-   /*----------------------------------------------------------------------------*/
-
-    @Test
-    public void testMultipleExpressions() throws Exception {
-        validateNumericResult(parser, "A=3;B=7;A*B", "21");
-        validateStringResult(parser, "A='Test;';B=' me';A+B", "Test; me");
-    }
 
 }

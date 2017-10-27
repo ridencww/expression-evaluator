@@ -2,13 +2,16 @@ package com.creativewidgetworks.expressionparser;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class FunctionToolbox {
-
     private Parser parser;
 
     // Used for isNumber
@@ -18,6 +21,33 @@ public class FunctionToolbox {
     private final char MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER = ':';
     private Parser tmpParser = null;
 
+    /* A list of commonly used date formats.
+     * IMPORTANT: More specific formats (i.e., formats that return times in milliseconds)
+     * MUST be BEFORE more general formats (i.e., times that just contain seconds). Otherwise,
+     * the more general case will match first and precision will be lost.
+     */
+    public static final String[] DEFAULT_DATE_PATTERNS = {
+        // specialized formats or timedate forms with milliseconds
+        "yyyy-MM-dd'T'HH:mm:ss.S",   // Excel XML export format
+        "MMM dd yyyy hh:mm:ss.S a",  // MS SQL Server with millis
+        "yyyy-MM-dd HH:mm:ss.S",
+
+        // general dates
+        "yyyyMMdd",
+        "yyyy/MM/dd",
+        "MM/dd/yyyy",
+        "MMMM dd, yyyy",
+
+        // MS SQL server
+        "MMM dd yyyy hh:mm:ss a",
+
+        // ISO
+        "yyyy-MM-dd'T'HH:mm:ssZ",
+        "yyyy-MM-dd'T'HH:mm:ssz",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd",
+        "HH:mm:ss"                    // Time only (date part 1-1-1970)
+    };
 
     public static FunctionToolbox register(Parser parser) {
         FunctionToolbox toolbox = new FunctionToolbox();
@@ -35,15 +65,19 @@ public class FunctionToolbox {
         parser.addFunction(new Function("CONTAINSALL", toolbox, "_CONTAINSALL", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("CONTAINSANY", toolbox, "_CONTAINSANY", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("COS", toolbox, "_COS", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("DATEBETWEEN", toolbox, "_DATEBETWEEN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.DATE));
+        parser.addFunction(new Function("DATEWITHIN", toolbox, "_DATEWITHIN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.NUMBER));
         parser.addFunction(new Function("ENDSWITH", toolbox, "_ENDSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("EXP", toolbox, "_EXP", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("FACTORIAL", toolbox, "_FACTORIAL", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("FIND", toolbox, "_FIND", 2, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("FLOOR", toolbox, "_FLOOR", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("HEX", toolbox, "_HEX", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("ISANYOF", toolbox, "_ISANYOF", 1, Integer.MAX_VALUE, ValueType.STRING, ValueType.UNDEFINED));
         parser.addFunction(new Function("ISBLANK", toolbox, "_ISBLANK", 1, 1));
         parser.addFunction(new Function("ISBOOLEAN", toolbox, "_ISBOOLEAN", 1, 1));
-        parser.addFunction(new Function("ISDATE", toolbox, "_ISDATE", 1, 1));
+        parser.addFunction(new Function("ISDATE", toolbox, "_ISDATE", 1, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("ISNONEOF", toolbox, "_ISNONEOF", 1, Integer.MAX_VALUE, ValueType.STRING, ValueType.UNDEFINED));
         parser.addFunction(new Function("ISNULL", toolbox, "_ISNULL", 1, 1));
         parser.addFunction(new Function("ISNUMBER", toolbox, "_ISNUMBER", 1, 1));
         parser.addFunction(new Function("LEFT", toolbox, "_LEFT", 2, 2, ValueType.STRING, ValueType.NUMBER));
@@ -52,6 +86,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("LOG10", toolbox, "_LOG10", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("LOWER", toolbox, "_LOWER", 1, 1, ValueType.STRING));
         parser.addFunction(new Function("MAKEBOOLEAN", toolbox, "_MAKEBOOLEAN", 1, 1));
+        parser.addFunction(new Function("MAKEDATE", toolbox, "_MAKEDATE", 1, 6, ValueType.UNDEFINED, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("MATCH", toolbox, "_MATCH", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("MATCHBYLEN", toolbox, "_MATCHBYLEN", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("MAX", toolbox, "_MAX", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
@@ -79,6 +114,8 @@ public class FunctionToolbox {
 
         return toolbox;
     }
+
+    private String[] datePatterns = DEFAULT_DATE_PATTERNS;
 
     private boolean isTrimableCharacter(char toTest, char testChar) {
         return toTest == testChar || testChar == ' ' && Character.isWhitespace(toTest);
@@ -128,8 +165,6 @@ public class FunctionToolbox {
         return result;
     }
 
-
-
     private String trimLeft(String str, char characterToRemove) {
         StringBuilder sb = new StringBuilder(str);
         if (str.length() > 0) {
@@ -158,6 +193,26 @@ public class FunctionToolbox {
     /*----------------------------------------------------------------------------*/
     /*----------------------------------------------------------------------------*/
     /*----------------------------------------------------------------------------*/
+
+    /*
+     * Return the list of the currently defined date parsing patterns
+     * @return String[] the current set of date parsing parameters
+     */
+    public String[] getDatePatterns() {
+        return datePatterns;
+    }
+
+    /*
+     * Set the list of date patterns to use when parsing dates. DEFAULT_DATE_PATTERNS can be used to reset to
+     * the default set of pattern strings.
+     * @param datePatterns the new set of date parsing parameters
+     * @return String[] the current set of date parsing parameters
+     */
+    public String[] setDatePatterns(String[] datePatterns) {
+        String[] orgDatePatterns = this.datePatterns;
+        this.datePatterns = datePatterns;
+        return orgDatePatterns;
+    }
 
     /*
      * Returns the absolute value of the number
@@ -377,6 +432,45 @@ public class FunctionToolbox {
     }
 
     /*
+     * Tests a datetime to see if it is between two values
+     * Date1 = 2009-11-01 12:00:00
+     * Date2 = 2009-12-10 12:00:00
+     * FromDate = 2009-12-01 12:00:00
+     * ThruDate = 2009-12-15 12:00:00
+     * DateBetween(Date1, dtFrom, dtThru) ->  FALSE
+     * DateBetween(Date2, dtFrom, dtThru) ->  TRUE
+     */
+    public Value _DATEBETWEEN(Token function, Stack<Token> stack) {
+        Date upper = stack.pop().asDate();
+        Date lower = stack.pop().asDate();
+        Date dateToTest = stack.pop().asDate();
+
+        // Any nulls returns FALSE
+        boolean inRange = upper != null && lower != null && dateToTest != null;
+        inRange = inRange && dateToTest.getTime() >= lower.getTime() && dateToTest.getTime() <= upper.getTime();
+
+        return new Value(function.getText()).setValue(inRange ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /*
+     * Tests two dates to see if they are within x milliseconds of each other
+     * Date1 = 2009-12-01 12:20:00
+     * Date2 = 2009-12-01 12:20:30
+     * DateWithin(Date1, Date2, 10000) ->  FALSE
+     * DateWithin(Date1, Date2, 60000) ->  TRUE
+     */
+    public Value _DATEWITHIN(Token function, Stack<Token> stack) {
+        BigDecimal millis = stack.pop().asNumber();
+        Date date2 = stack.pop().asDate();
+        Date date1 = stack.pop().asDate();
+
+        boolean within = millis != null && date2 != null && date1 != null;
+        within = within && Math.abs(date1.getTime() - date2.getTime()) <= millis.intValue();
+
+        return new Value(function.getText()).setValue(within ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /*
      * Tests to see if a string ends with a given string
      * endswith("Ralph", "I") -> false
      * endswith("Ralph", "ph") -> true
@@ -399,8 +493,10 @@ public class FunctionToolbox {
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
+            int dp = parser.getPrecision();
             double d = Math.exp(number.doubleValue());
-            value.setValue(BigDecimal.valueOf(d));
+            BigDecimal bd = BigDecimal.valueOf(d).setScale(dp, BigDecimal.ROUND_HALF_UP);
+            value.setValue(bd);
         }
 
         return value;
@@ -487,7 +583,7 @@ public class FunctionToolbox {
      * Converts a number to a hex string
      * hex(0) -> "0"
      * hex(123.45) -> "123.45"
-     * hex("kdkdkd") -> not a number exception 
+     * hex("kdkdkd") -> not a number exception
      */
     public Value _HEX(Token function, Stack<Token> stack) {
         final int byteMax = 256;
@@ -529,6 +625,30 @@ public class FunctionToolbox {
     }
 
     /*
+     * Tests to see if string is one of the supplied values
+     * isAnyOf("beta", "alpha", "beta", "gamma") -> true
+     * isAnyOf("BETA", "alpha", "beta", "gamma") -> false
+     * isAnyOf("omega", "alpha", "beta", "gamma") -> false
+    */
+    public Value _ISANYOF(Token function, Stack<Token> stack) {
+        Token[] args = parser.popArguments(function, stack);
+
+        String text = args[0].asString();
+
+        boolean found = false;
+        if (text != null) {
+            for (int i = 1; i < function.getArgc(); i++) {
+                if (text.equals(args[i].asString())) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        return new Value(function.getText()).setValue(found ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /*
      * Returns whether or not the string is null or empty
      * isBlank("") -> true
      * isBlank(null) -> true
@@ -561,12 +681,32 @@ public class FunctionToolbox {
     }
 
     /*
-     * Returns whether or not the string can be parsed into a valid DATE value.  Note the this method 
-     * calls MakeDate() and then tests the result
-     */
+     * Returns whether or not the string can be parsed into a valid DATE value.
+     * isDate("05/10/2009") -> Boolean.TRUE
+     * isDate("55/10/2009") -> Boolean.FALSE
+     * isDate("YR: 2009") -> Boolean.FALSE
+     * isDate("YR: 2009", "'YR: 'yyyy") -> Boolean.TRUE
+     *  */
     public Value _ISDATE(Token function, Stack<Token> stack) {
-        String str = stack.pop().asString();
-        return new Value(function.getText()).setValue(str == null || str.trim().length() == 0 ? Boolean.TRUE : Boolean.FALSE);
+        boolean validDate;
+        try {
+            Value value = _MAKEDATE(function, stack);
+            validDate = value.asDate() != null;
+        } catch (ParserException ex) {
+            validDate = false;
+        }
+        return new Value(function.getText()).setValue(validDate ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /*
+     * Tests to see if string is not one of the supplied values
+     * isAnyOf("omega", "alpha", "beta", "gamma") -> true
+     * isAnyOf("BETA", "alpha", "beta", "gamma") -> true
+     * isAnyOf("beta", "alpha", "beta", "gamma") -> false
+    */
+    public Value _ISNONEOF(Token function, Stack<Token> stack) {
+        Value value = _ISANYOF(function, stack);
+        return new Value(function.getText()).setValue(value.asBoolean().booleanValue() ? Boolean.FALSE : Boolean.TRUE);
     }
 
     /*
@@ -699,9 +839,9 @@ public class FunctionToolbox {
         if (token.asString() != null && token.getValue().getType() != ValueType.DATE) {
             // Try conversion of boolean-like strings
             String str = token.asString() + "~";
-            if (str.length() > 1 && ("1~true~yes~on~").indexOf(str.toLowerCase()) != -1) {
+            if (str.length() > 1 && ("1~true~yes~on~").contains(str.toLowerCase())) {
                 value.setValue(Boolean.TRUE);
-            } else if (str.length() > 1 && ("0~false~no~off~").indexOf(str.toLowerCase()) != -1) {
+            } else if (str.length() > 1 && ("0~false~no~off~").contains(str.toLowerCase())) {
                 value.setValue(Boolean.FALSE);
             } else {
                 // probe for variations of 0 and 1
@@ -714,6 +854,95 @@ public class FunctionToolbox {
                         value.setValue(Boolean.TRUE);
                     }
                 }
+            }
+        }
+
+        return value;
+    }
+
+    /*
+     * Creates a Date
+     * mon, day, year, hr, min, sec
+     * MakeDate("2009/01/22") -- based on set of allowed datetime formats
+     * MakeDate("2009-01-22", "yyyy-MM-dd") -- user specified format
+     * MakeDate(12, 1, 08) ->  2008-12-01 00:00:00.0
+     * MakeDate(12, 1, 59) ->  1959-12-01 00:00:00.0
+     * MakeDate(12, 1, 2008) ->  2008-12-01 00:00:00.0
+     * MakeDate(12, 1, 2008, 2, 3, 30) -> 2008-12-01 02:03:30.0
+     */
+    public Value _MAKEDATE(Token function, Stack<Token> stack) throws ParserException {
+        Value value = new Value(function.getText()).setValue((Date)null);
+
+        Token[] args = parser.popArguments(function, stack);
+
+        String[] patterns = getDatePatterns();
+
+        if (ValueType.STRING == args[0].getValue().getType()) {
+            // Only support one date expression STRING and optional STRING format when taking this path
+            if (args.length > 1) {
+                if (ValueType.STRING != args[1].getValue().getType()) {
+                    // second parameter must be a string
+                    throw new ParserException(ParserException.formatMessage("error.type_mismatch_generic", "STRING", args[1].getValue().getType()), args[1].getRow(), args[1].getColumn());
+                } else if (args.length > 2) {
+                    // too many arguments
+                    throw new ParserException(ParserException.formatMessage("error.function_parameter_count", "MAKEDATE", "1..2", String.valueOf(args.length)), args[1].getRow(), args[1].getColumn());
+                } else if (args[1].asString() == null || args[1].asString().trim().length() == 0) {
+                    // empty format not allowed
+                    throw new ParserException(ParserException.formatMessage("error.empty", "format string"), args[1].getRow(), args[1].getColumn());
+                }
+                patterns = new String[] {args[1].asString()};
+            }
+
+            for (String pattern : patterns) {
+                SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+                sdf.setLenient(false);
+                try {
+                    value.setValue(sdf.parse(args[0].asString()));
+                    break;
+                } catch (ParseException ex) {
+                    // Okay to ignore, try next pattern
+                }
+            }
+        } else {
+            int mon, day, year, hour, min, sec;
+            try {
+                mon = args[0].asNumber().intValue() - 1;
+                day = args[1].asNumber().intValue();
+                year = args[2].asNumber().intValue();
+                hour = args.length > 3 ? args[3].asNumber().intValue() : 0;
+                min = args.length > 4 ? args[4].asNumber().intValue() : 0;
+                sec = args.length > 5 ? args[5].asNumber().intValue() : 0;
+            } catch (Exception ex) {
+                // Handles null values that may have been passed in as parameters
+                return value;
+            }
+
+            if (year < 100) {
+                if (year > 50) {
+                    year += 1900;
+                } else {
+                    year += 2000;
+                }
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setLenient(false);
+            try {
+                cal.set(year, mon, day, hour, min, sec);
+                value.setValue(cal.getTime());
+            } catch (Exception ex) {
+                String msg = ex.getMessage();
+                String[] fields = {"MONTH", "DAY_OF_MONTH", "YEAR", "HOUR_OF_DAY", "MINUTE", "SECOND"};
+                int row = function.getRow();
+                int col = function.getColumn();
+                for (int i = 0; i < fields.length; i++) {
+                    if (fields[i].equals(msg)) {
+                        row = args[i].getRow();
+                        col = args[i].getColumn();
+                        break;
+                    }
+                }
+                throw new ParserException(ParserException.formatMessage("error", "Invalid value " + msg), row, col);
             }
         }
 
@@ -763,13 +992,13 @@ public class FunctionToolbox {
 
     /*
      * Performs a match of the regular expression and returns a formatted string
-     * based on the matched pattern. This is a funky scheme that I devised to 
-     * format strings, phone numbers in my example, based on the length of the 
+     * based on the matched pattern. This is a funky scheme that I devised to
+     * format strings, phone numbers in my example, based on the length of the
      * matched pattern.
-     * 
+     *
      * matchByLen("8155551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
      *     -> "(815) 555-1212"
-     * 
+     *
      * matchByLen("5551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
      *     -> "      555-1212"
      */

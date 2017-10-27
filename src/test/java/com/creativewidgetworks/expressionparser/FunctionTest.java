@@ -9,7 +9,7 @@ import java.util.Stack;
 public class FunctionTest extends Assert {
 
     private Parser parser;
-    
+
     @Before
     public void beforeEach() {
         parser = new Parser();
@@ -33,21 +33,21 @@ public class FunctionTest extends Assert {
 
     @Test
     public void testGetFunctionRegex_no_functions() {
-        assertEquals("precision|now", parser.getFunctionRegex());
+        assertEquals("setGlobal|precision|now|getGlobal|clearGlobals|clearGlobal", parser.getFunctionRegex());
     }
 
     @Test
     public void testGetFunctionRegEx_case_insensitive() {
         parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
         parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
-        assertEquals("precision|now|beta|alpha", parser.getFunctionRegex());
+        assertEquals("setGlobal|precision|now|getGlobal|clearGlobals|clearGlobal|beta|alpha", parser.getFunctionRegex());
     }
 
     @Test
     public void testGetFunctionRegEx_case_sensitive() {
         parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
         parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
-        assertEquals("precision|now|beta|alpha", parser.getFunctionRegex());
+        assertEquals("setGlobal|precision|now|getGlobal|clearGlobals|clearGlobal|beta|alpha", parser.getFunctionRegex());
     }
 
     @Test
@@ -74,12 +74,12 @@ public class FunctionTest extends Assert {
 
     @Test
     public void testClearFunctions() {
-        assertEquals(2, parser.getFunctions().size());
+        assertEquals(6, parser.getFunctions().size());
         parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
         parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
-        assertEquals(4, parser.getFunctions().size());
+        assertEquals(8, parser.getFunctions().size());
         parser.clearFunctions();
-        assertEquals(2, parser.getFunctions().size());
+        assertEquals(6, parser.getFunctions().size());
     }
 
     @Test

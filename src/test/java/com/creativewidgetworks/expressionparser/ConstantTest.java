@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public class ConstantTest extends Assert {
 
     private Parser parser;
-    
+
     @Before
     public void beforeEach() {
         parser = new Parser();
@@ -33,7 +33,7 @@ public class ConstantTest extends Assert {
         parser.addConstant("e", BigDecimal.valueOf(Math.E));
         assertEquals("PI|NULL|E", parser.getConstantRegex());
     }
-    
+
     @Test
     public void test_getConstantRegex_case_sensitive() {
         parser.setCaseSensitive(true);

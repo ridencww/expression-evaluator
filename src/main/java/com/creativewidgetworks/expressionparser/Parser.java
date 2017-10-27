@@ -13,6 +13,9 @@ public class Parser {
     // Default numeric precision (number of decimal places)
     public static final int DEFAULT_PRECISION = 5;
 
+    // By default, disable access to system and environment properties
+    private boolean allowProperties = false;
+
     private static final String DEFAULT_SPLIT_CHARACTER = ";";
     private static final String SPLIT_REGEX = "(?=([^\\\"\\']*[\\\"\\'][^\\\"\\']*[\\\"\\'])*[^\\\"\\']*$)";
 
@@ -31,6 +34,7 @@ public class Parser {
     // Containers for constants, functions, and variables
     private final Map<String, BigDecimal> constants = new HashMap<>();
     private final Map<String, Function> functions = new HashMap<>();
+    private final Map<String, Value> globals = new TreeMap<>();
     private final Map<String, Value> variables = new TreeMap<>();
 
     private FieldInterface fieldInterface;
@@ -40,6 +44,14 @@ public class Parser {
         expressionDelimiter = DEFAULT_SPLIT_CHARACTER;
         clearConstants();
         clearFunctions();
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    public boolean setAllowProperties(boolean allowProperties) {
+        boolean orgAllowProperties = this.allowProperties;
+        this.allowProperties = allowProperties;
+        return orgAllowProperties;
     }
 
     /*----------------------------------------------------------------------------*/
@@ -129,8 +141,12 @@ public class Parser {
 
     public void clearFunctions() {
         functions.clear();
+        addFunction(new Function("clearGlobal", this, "_CLEARGLOBAL", 1, 1));
+        addFunction(new Function("clearGlobals", this, "_CLEARGLOBALS", 0, 0));
+        addFunction(new Function("getGlobal", this, "_GETGLOBAL", 1, 1, ValueType.STRING));
+        addFunction(new Function("setGlobal", this, "_SETGLOBAL", 2, 2, ValueType.STRING));
         addFunction(new Function("now", this, "_NOW", 0, 1));
-        addFunction(new Function("precision", this, "_PRECISION", 1, 1));
+        addFunction(new Function("precision", this, "_PRECISION", 1, 1, ValueType.NUMBER));
         TokenType.invalidatePattern();
     }
 
@@ -169,14 +185,44 @@ public class Parser {
     /*----------------------------------------------------------------------------*/
 
     private Object getProperty(String name) {
-        Object obj = System.getenv(name);
-        return obj == null ? System.getProperty(name) : obj;
+        if (allowProperties) {
+            Object obj = System.getenv(name);
+            return obj == null ? System.getProperty(name) : obj;
+        } else {
+            return null;
+        }
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    public void addGlobalVariable(String name, Value value) {
+        if (name != null && value != null) {
+            globals.put(caseSensitive ? name : name.toUpperCase(), value);
+        }
+    }
+
+    public void clearGlobalVariable(String name) {
+        if (name != null) {
+            globals.remove(caseSensitive ? name : name.toUpperCase());
+        }
+    }
+
+    public void clearGlobalVariables() {
+        globals.clear();
+    }
+
+    public Value getGlobalVariable(String name) {
+        return name == null ? null : globals.get(caseSensitive ? name : name.toUpperCase());
+    }
+
+    public Map<String, Value> getGlobalVariables() {
+        return globals;
     }
 
     /*----------------------------------------------------------------------------*/
 
     public void addVariable(String name, Value value) {
-        if (name != null) {
+        if (name != null && value != null) {
             variables.put(caseSensitive ? name : name.toUpperCase(), value);
         }
     }
@@ -189,8 +235,8 @@ public class Parser {
         variables.clear();
     }
 
-    public BigDecimal getVariable(String name) {
-        return name == null ? null : constants.get(caseSensitive ? name : name.toUpperCase());
+    public Value getVariable(String name) {
+        return name == null ? null : variables.get(caseSensitive ? name : name.toUpperCase());
     }
 
     public Map<String, Value> getVariables() {
@@ -279,10 +325,6 @@ public class Parser {
     }
 
     /*----------------------------------------------------------------------------*/
-
-    private void setStatusAndFail(String message, Object... parameters) throws ParserException {
-        setStatusAndFail(null, message, parameters);
-    }
 
     private void setStatusAndFail(Token currentToken, String message, Object... parameters) throws ParserException {
         int errorAtRow = currentToken == null ? -1 : currentToken.getRow();
@@ -578,10 +620,6 @@ public class Parser {
                 // Modulus
                 BigDecimal bd = lhs.asNumber().remainder(rhs.asNumber());
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
-            } else if (op.equals(Operator.PERCENT)) {
-                BigDecimal bd = lhs.asNumber().divide(new BigDecimal("100"), RoundingMode.UP);
-                bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
-                result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.EXP)) {
                 // Exponentiation x^y
                 MathContext mc = rhs.asNumber().compareTo(BigDecimal.ZERO) < 0 ? MathContext.DECIMAL128 : MathContext.UNLIMITED;
@@ -650,7 +688,7 @@ public class Parser {
 
     @SuppressWarnings("unchecked")
     private boolean performComparison(Comparable o1, Comparable o2, Operator op) throws ParserException {
-        boolean isTrue;
+        boolean isTrue = false;
         boolean haveValues = o1 != null && o2 != null;
         if (Operator.AND.equals(op)) {
             isTrue = o1 instanceof Boolean && o2 instanceof Boolean && ((Boolean) o1 && (Boolean) o2);
@@ -668,9 +706,6 @@ public class Parser {
             isTrue = haveValues && o1.compareTo(o2) >= 0;
         } else if (Operator.GT.equals(op)) {
             isTrue = haveValues && o1.compareTo(o2) > 0;
-        } else {
-            isTrue = false;
-            setStatusAndFail("error.invalid_operator", op);
         }
         return isTrue;
     }
@@ -779,13 +814,13 @@ public class Parser {
 
         return stack.pop().getValue();
     }
-    
+
     /*----------------------------------------------------------------------------*/
 
     /**
-     * Pops the arguments off of the stack and returns an array in reverse order
-     * (e.g., 1, 2, "RI" -> "RI", 2, 1).  This ensures optional arguments in
-     * function calls appear at the end of the array and not the beginning.
+     * Pops the arguments off of the stack and returns an array in the order
+     * that they were pushed. This ensures optional arguments in function calls
+     * appear at the end of the array and not the beginning.
      */
     public Token[] popArguments(Token function, Stack<Token> stack) {
         Token[] args = null;
@@ -805,6 +840,54 @@ public class Parser {
     /*----------------------------------------------------------------------------*/
 
     /*
+     * Clears a global variable
+     *  clearGlobal("DOW") -> Boolean.TRUE and "DOW" is removed, if present
+     */
+
+    public Value _CLEARGLOBAL(Token function, Stack<Token> stack) throws ParserException {
+        clearGlobalVariable(stack.pop().asString());
+        return new Value(function.getText()).setValue(Boolean.TRUE);
+    }
+
+    /*
+     * Clears all global variables
+     *  clearGlobals() -> Boolean.TRUE and global variables cleared
+     */
+    public Value _CLEARGLOBALS(Token function, Stack<Token> stack) throws ParserException {
+        clearGlobalVariables();
+        return new Value(function.getText()).setValue(Boolean.TRUE);
+    }
+
+    /*
+     * Returns a global variable or null if not found
+     * parser.eval("SetGlobal('DOW', 1)");
+     * getGlobal("DOW") ->  1 (NUMBER)
+     * getGlobal("NotFound") -> null
+     */
+    public Value _GETGLOBAL(Token function, Stack<Token> stack) throws ParserException {
+        String name = stack.pop().asString();
+        Value value = new Value(function.getText());
+        value.set(globals.get(name == null ? "~nofind~" : name));
+        return value;
+    }
+
+    /*
+     * Sets a global variableif not found
+     * setGlobal("DOW", "Wednesday") ->  Boolean.TRUE and global "DOW" is (created and) set to "Wednesday"
+     */
+    public Value _SETGLOBAL(Token function, Stack<Token> stack) throws ParserException {
+        Value value = stack.pop().getValue();
+        String name = stack.pop().asString();
+
+        boolean haveValues = value.asString() != null && name != null;
+        if (haveValues) {
+            addGlobalVariable(name, value);
+        }
+
+        return new Value(function.getText()).setValue(haveValues ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+     /*
       * Returns the current date and time
       * parameter_1: (no parameter = actual time)
       *              0 = actual time

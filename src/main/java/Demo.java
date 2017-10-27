@@ -30,17 +30,18 @@ public class Demo {
             return rpn;
         }
     }
-    
+
     private static void usage() {
+        System.out.println();
         System.out.println("usage: Demo \"expression\" [-verbose]");
-        System.exit(0);
     }
-    
+
     public static void main(String[] args) throws ParserException {
         boolean verbose = false;
         String expression = null;
         if (args.length == 0) {
             usage();
+            return;
         } else {
             expression = args[0];
             verbose = args.length > 1 && args[1].toLowerCase().startsWith("-v");
@@ -65,14 +66,14 @@ public class Demo {
                 System.out.println(token);
             }
             System.out.println();
-            
+
             // Convert infix (left to right) to RPN
             List<Token> rpn = parser.getPostfix();
             System.out.println("RPN (POSTFIX)");
             for (Token token : rpn) {
                 System.out.println(token);
             }
-            System.out.println();        
+            System.out.println();
         }
 
         System.out.print("RESULT: ");
@@ -82,29 +83,23 @@ public class Demo {
                 case BOOLEAN:
                     System.out.println(value.asBoolean() + " [boolean]");
                     break;
-                    
+
                 case DATE:
                     System.out.println(value.asDate() + " [date]");
                     break;
-                    
+
                 case STRING:
                     System.out.println(value.asString() + " [string]");
                     break;
-                    
+
                 case NUMBER:
                     System.out.println(value.asNumber() + " [number]");
                     break;
-                    
-                case OBJECT:
-                    System.out.println(value.asObject() + " [object]");
-                    break;
-                    
+
                 case UNDEFINED:
                     System.out.println("undefined");
                     break;
-            } 
-        } else {
-            System.out.println("null");
+            }
         }
     }
 

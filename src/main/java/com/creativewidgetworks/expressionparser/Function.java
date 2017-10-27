@@ -100,7 +100,7 @@ public class Function {
                     }
 
                     // Make sure parameter type agrees with what is expected
-                    if (!parameters[i].name().equals(token.getValue().getType().name())) {
+                    if (parameters[i] != token.getValue().getType() && parameters[i] != ValueType.UNDEFINED) {
                         String msg = ParserException.formatMessage("error.function_type_mismatch",
                                 function.getText(), String.valueOf(i + 1), parameters[i].name(), token.getValue().getType().name());
                         throw new ParserException(msg, function.getRow(), function.getColumn() + function.getText().length());

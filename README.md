@@ -148,6 +148,5 @@ Examples:
 
 expression-parser is licensed under the [Modified BSD][1] license. Permission is granted to anyone to use this software for any purpose, including commercial applications.
 
+[1]: http://www.opensource.org/licenses/BSD-3-Clause
 
-  [1]: http://www.opensource.org/licenses/BSD-3-Clause
-                                 |                                                |

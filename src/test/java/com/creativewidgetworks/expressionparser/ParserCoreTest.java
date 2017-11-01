@@ -4,7 +4,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.Stack;
 
 public class ParserCoreTest extends UnitTestBase implements FieldInterface {
@@ -177,16 +179,30 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     @Test
     public void testProperty() throws Exception {
         try {
-            System.setProperty("MYTEST_PROPERTY", "Abc123");
-            validateStringResult(parser, "${MYMISSING_PROPERTY}", null);
+            String str = "Abc123";
+            System.getProperties().put("MYTEST_PROPERTY1", str);
 
-            // By default, access to system and environment properties are disabled
-            validateStringResult(parser, "${MYTEST_PROPERTY}", null);
+            Boolean bool = Boolean.TRUE;
+            System.getProperties().put("MYTEST_PROPERTY2", bool);
+
+            Date date = new Date();
+            System.getProperties().put("MYTEST_PROPERTY3", date);
+
+            BigDecimal bd = BigDecimal.TEN;
+            System.getProperties().put("MYTEST_PROPERTY4", bd);
+
+            // By default, access to system and environment properties is disabled
+            validateStringResult(parser, "${MYTEST_PROPERTY1}", null);
 
             // Enable access to properties
             boolean oldValue = parser.setAllowProperties(true);
             assertFalse("no properties access", oldValue);
-            validateStringResult(parser, "${MYTEST_PROPERTY}", "Abc123");
+
+            validateStringResult(parser, "${MYMISSING_PROPERTY}", null);
+            validateStringResult(parser, "${MYTEST_PROPERTY1}", str);
+            validateBooleanResult(parser, "${MYTEST_PROPERTY2}", bool);
+            validateDateResult(parser, "${MYTEST_PROPERTY3}", date);
+            validateNumericResult(parser, "${MYTEST_PROPERTY4}", "10");
 
             // This checks the ENV, but only works under Windows
             String os = System.getProperty("os.name");
@@ -194,7 +210,10 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
                 validateStringResult(parser, "${username}", System.getenv("username"));
             }
         } finally {
-            System.clearProperty("MYTEST_PROPERTY");
+            System.getProperties().remove("MYTEST_PROPERTY1");
+            System.getProperties().remove("MYTEST_PROPERTY2");
+            System.getProperties().remove("MYTEST_PROPERTY3");
+            System.getProperties().remove("MYTEST_PROPERTY4");
         }
     }
 

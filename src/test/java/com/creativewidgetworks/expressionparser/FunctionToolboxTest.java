@@ -25,6 +25,37 @@ public class FunctionToolboxTest extends UnitTestBase {
         return cal.getTime();
     }
 
+    private void validateGUID(Parser parser, String expression, boolean upperCase, boolean dashes, boolean braces) {
+        String validSet = "0123456789abcdef";
+
+        if (upperCase) {
+            validSet = validSet.toUpperCase();
+        }
+
+        if (dashes) {
+            validSet += "-";
+        }
+
+        if (braces) {
+            validSet += "{}";
+        }
+
+        int len = dashes ? 36 : 32;
+        if (braces) {
+            len += 2;
+        }
+
+        String guid = parser.eval(expression).asString();
+
+        assertEquals("GUID length: " + guid, len, guid.length());
+
+        for (int i = 0; i < guid.length(); i++) {
+            if (validSet.indexOf(guid.charAt(i)) == -1) {
+                fail("Invalid character found in GUID: " + guid.charAt(i));
+            }
+        }
+    }
+
     @Test
     public void testABS() throws Exception {
         validatePattern(parser, "ABS");
@@ -327,6 +358,22 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testGUID() throws Exception {
+        validatePattern(parser, "GUID");
+
+        validateExceptionThrown(parser, "GUID(1, 2)", "GUID expected 0..1 parameter(s), but got 2", 1, 5);
+        validateExceptionThrown(parser, "GUID('A')", "GUID parameter 1 expected type NUMBER, but was STRING", 1, 5);
+
+        validateGUID(parser, "GUID()", false, false, false);
+        validateGUID(parser, "GUID(0)", false, false, false);
+        validateGUID(parser, "GUID(1)", true, false, false);
+        validateGUID(parser, "GUID(2)", false, true, false);
+        validateGUID(parser, "GUID(3)", true, true, false);
+        validateGUID(parser, "GUID(4)", false, true, true);
+        validateGUID(parser, "GUID(5)", true, true, true);
+    }
+
+    @Test
     public void testHEX() throws Exception {
         validatePattern(parser, "HEX");
 
@@ -500,6 +547,23 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "LEFT('12345', 3)", "123");
         validateStringResult(parser, "LEFT('12', 5)", "12");
         validateStringResult(parser, "LEFT(RIGHT('12', 2), 5)", "12");
+    }
+
+    @Test
+    public void testLEFTOF() throws Exception {
+        validatePattern(parser, "LEFTOF");
+
+        validateExceptionThrown(parser, "LEFTOF()", "LEFTOF expected 2 parameter(s), but got 0", 1, 7);
+        validateExceptionThrown(parser, "LEFTOF('test')", "LEFTOF expected 2 parameter(s), but got 1", 1, 7);
+        validateExceptionThrown(parser, "LEFTOF('riden@myemail.org', '@', 2)", "LEFTOF expected 2 parameter(s), but got 3", 1, 7);
+        validateExceptionThrown(parser, "LEFTOF(123, '@')", "LEFTOF parameter 1 expected type STRING, but was NUMBER", 1, 7);
+        validateExceptionThrown(parser, "LEFTOF('123', 123)", "LEFTOF parameter 2 expected type STRING, but was NUMBER", 1, 7);
+
+        validateStringResult(parser, "LEFTOF(null, '@')", null);
+        validateStringResult(parser, "LEFTOF('riden@myemail.org', null)", "riden@myemail.org");
+        validateStringResult(parser, "LEFTOF('riden@myemail.org', '@')", "riden");
+        validateStringResult(parser, "LEFTOF('riden@myemail.org', '<->')", "riden@myemail.org");
+        validateStringResult(parser, "LEFTOF('left<->right', '<->')", "left");
     }
 
     @Test
@@ -923,7 +987,6 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "REPLACEFIRST('abbbcabc 000 abc', 'ab+c', '123')","123abc 000 abc");
     }
 
-
     @Test
     public void testRIGHT() throws Exception {
         validatePattern(parser, "RIGHT");
@@ -943,6 +1006,23 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "RIGHT(LEFT('12345', 3), 2)","23");
     }
 
+    @Test
+    public void testRIGHTOF() throws Exception {
+        validatePattern(parser, "RIGHTOF");
+
+        validateExceptionThrown(parser, "RIGHTOF()", "RIGHTOF expected 2 parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "RIGHTOF('test')", "RIGHTOF expected 2 parameter(s), but got 1", 1, 8);
+        validateExceptionThrown(parser, "RIGHTOF('riden@myemail.org', '@', 2)", "RIGHTOF expected 2 parameter(s), but got 3", 1, 8);
+        validateExceptionThrown(parser, "RIGHTOF(123, '@')", "RIGHTOF parameter 1 expected type STRING, but was NUMBER", 1, 8);
+        validateExceptionThrown(parser, "RIGHTOF('123', 123)", "RIGHTOF parameter 2 expected type STRING, but was NUMBER", 1, 8);
+
+        validateStringResult(parser, "RIGHTOF(null, '@')", null);
+        validateStringResult(parser, "RIGHTOF('riden@myemail.org', null)", "");
+        validateStringResult(parser, "RIGHTOF('riden@myemail.org', '@')", "myemail.org");
+        validateStringResult(parser, "RIGHTOF('riden@myemail.org', '<->')", "");
+        validateStringResult(parser, "RIGHTOF('left<->right', '<->')", "right");
+    }
+    
     @Test
     public void testSIN() throws Exception {
         validatePattern(parser, "SIN");

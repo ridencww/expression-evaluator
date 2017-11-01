@@ -15,9 +15,10 @@ enum Operator {
     PERCENT      (2, Operator.RIGHT_ASSOCIATIVE, "%", "%"),
     UNARY_MINUS  (2, Operator.RIGHT_ASSOCIATIVE, "!", "!"),
     UNARY_PLUS   (2, Operator.RIGHT_ASSOCIATIVE, "!!", "!!"),
+    EXP          (2, Operator.RIGHT_ASSOCIATIVE, "^", "\\^"),
 
-    // Logicical NOT
-    NOT          (2, Operator.LEFT_ASSOCIATIVE, "NOT", "not"),
+    // Logical NOT
+    NOT          (2, Operator.RIGHT_ASSOCIATIVE, "NOT", "not"),
 
     // -- Math operators
     MULT         (4, Operator.LEFT_ASSOCIATIVE, "*", "\\*"),
@@ -38,9 +39,6 @@ enum Operator {
     GTE          (7, Operator.LEFT_ASSOCIATIVE, ">=", ">="),
     EQU          (8, Operator.LEFT_ASSOCIATIVE, "==", "=="),
     NEQ          (8, Operator.LEFT_ASSOCIATIVE, "!=", "!="),
-
-    // -- Exponentiation
-    EXP          (9, Operator.RIGHT_ASSOCIATIVE, "^", "\\^"),
 
     // Logical
     AND          (12, Operator.LEFT_ASSOCIATIVE, "AND", "and"),

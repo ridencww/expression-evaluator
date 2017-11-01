@@ -187,7 +187,7 @@ public class Parser {
     private Object getProperty(String name) {
         if (allowProperties) {
             Object obj = System.getenv(name);
-            return obj == null ? System.getProperty(name) : obj;
+            return obj == null ? System.getProperties().get(name) : obj;
         } else {
             return null;
         }
@@ -637,8 +637,6 @@ public class Parser {
 
                     // Identifier should always be found as it would have been created when parsing the RPN stack
                     variables.get(lhs.getText().toUpperCase()).set(rhs.getValue());
-                    result = new Token(rhs.getType(), rhs.getText(), token.getRow(), token.getColumn());
-                    result.getValue().set(rhs.getValue());
                 } else {
                     setStatusAndFail(lhs, "error.expected_identifier", lhs.getText());
                 }
@@ -776,14 +774,15 @@ public class Parser {
                     switch (value.getType()) {
                         case NUMBER:
                             value.setValue(value.asNumber().negate());
+                            stack.push(new Token(TokenType.NUMBER, value.asString(), token.getRow(), token.getColumn()));
                             break;
                         case BOOLEAN:
                             value.setValue(value.asBoolean() ? Boolean.FALSE : Boolean.TRUE);
+                            stack.push(new Token(TokenType.VALUE, value, token.getRow(), token.getColumn()));
                             break;
                         default:
                             setStatusAndFail(token, "error.type_mismatch", value.getType().name());
                     }
-                    stack.push(new Token(TokenType.NUMBER, value.asString(), token.getRow(), token.getColumn()));
                     continue;
                 } else if (op.equals(Operator.TIF)) {
                     tcount--;
@@ -801,7 +800,11 @@ public class Parser {
                     setStatusAndFail(token, "error.missing_telse", Operator.TIF.getText(), Operator.TELSE.getText());
                 }
 
-                stack.push(processOperators(token, stack));
+                // If an assignment has occurred, the result should not be pushed on the stack
+                Token result = processOperators(token, stack);
+                if (result != null) {
+                    stack.push(result);
+                }
             } else {
                 stack.push(token);
             }
@@ -812,7 +815,13 @@ public class Parser {
             setStatusAndFail(last_telse, "error.missing_tif", Operator.TELSE.getText(), Operator.TIF.getText());
         }
 
-        return stack.pop().getValue();
+        // Stack should have been consumed except for the final result
+        if (stack.size() > 1) {
+            setStatusAndFail(stack.get(0), "error.syntax");
+        }
+
+        // For variable assignment-only expressions, return Boolean.TRUE
+        return stack.size() == 0 ? new Value("empty result", Boolean.TRUE) : stack.pop().getValue();
     }
 
     /*----------------------------------------------------------------------------*/

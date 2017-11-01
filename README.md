@@ -39,7 +39,7 @@ If you're using Maven for your project, add the following to your project's pom.
     <dependency>
       <groupId>com.creativewidgetworks</groupId>
       <artifactId>expression-evaluator</artifactId>
-      <version>2.0.0</version>
+      <version>2.1.0</version>
     </dependency>
 
 ## Data types
@@ -65,7 +65,7 @@ A string to be parsed can contain multiple expressions. In the example that foll
      "A"                = 0
      "B"                = 456
      
-     parser.clearVariales()
+     parser.clearVariables()
      "A"                = 0
      "B"                = 0
     
@@ -79,14 +79,16 @@ A string to be parsed can contain multiple expressions. In the example that foll
     Property    ${<id>}
     DataSource  @<id>
     Constants   NULL PI
-    Functions   NOW PRECISION
+    Functions   CLEARGLOBAL, CLEARGLOBALS, GETGLOBAL, SETGLOBAL
+                NOW PRECISION
    
 ## Optional functions supplied by FunctionToolbox that can be bound to Parser  
  
     Functions   ABS ARCCOS ARCSIN ARCTAN ARRAYLEN AVERAGE CEILING CONTAINS CONTAINSALL CONTAINSANY
-                COS ENDSWITH EXP FACTORIAL FIND FLOOR HEX ISBLANK ISBOOLEAN ISDATE ISNULL ISNUMBER
-                LEFT LEN LOG LOG10 LOWER MAKEBOOLEAN MATCH MATCHBYLEN MAX MID MIN NAMECASE RANDOM
-                REPLACE REPLACEFIRST RIGHT SIN SPLIT SQR SQRT STARTSWITH STR STRING TAN TRIM TRIMLEFT
+                COS DATEBETWEEN DATEWITHIN ENDSWITH EXP FACTORIAL FIND FLOOR GUID HEX ISANYOF
+                ISBLANK ISBOOLEAN ISDATE ISNONEOF ISNULL ISNUMBER LEFT LEFTOF LEN LOG LOG10 LOWER
+                MAKEBOOLEAN MAKEDATE MATCH MATCHBYLEN MAX MID MIN NAMECASE RANDOM REPLACE REPLACEALL
+                REPLACEFIRST RIGHT RIGHTOF SIN SPLIT SQR SQRT STARTSWITH STR STRING TAN TRIM TRIMLEFT
                 TRIMRIGHT UPPER VAL
    
 ## Usage
@@ -125,6 +127,14 @@ Examples:
         RESULT: ABCDEF [string]
     
 ## Version History
+
+2.1.0
+* Updated README.md
+* Moved GUID, LEFTOF, and RIGHTOF into FunctionToolbox
+* Access to system properties and environment variables disabled by default
+* Fixed processing of NOT
+* Fixed precedence of exponentiation operator
+* Improved reporting of dangling operators 
  
 2.0.0  
 * Structural refactor
@@ -140,4 +150,4 @@ expression-parser is licensed under the [Modified BSD][1] license. Permission is
 
 
   [1]: http://www.opensource.org/licenses/BSD-3-Clause
-
+                                 |                                                |

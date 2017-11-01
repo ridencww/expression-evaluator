@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Stack;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -72,6 +73,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("FACTORIAL", toolbox, "_FACTORIAL", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("FIND", toolbox, "_FIND", 2, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("FLOOR", toolbox, "_FLOOR", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("GUID", toolbox, "_GUID", 0, 1, ValueType.NUMBER));
         parser.addFunction(new Function("HEX", toolbox, "_HEX", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("ISANYOF", toolbox, "_ISANYOF", 1, Integer.MAX_VALUE, ValueType.STRING, ValueType.UNDEFINED));
         parser.addFunction(new Function("ISBLANK", toolbox, "_ISBLANK", 1, 1));
@@ -81,6 +83,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("ISNULL", toolbox, "_ISNULL", 1, 1));
         parser.addFunction(new Function("ISNUMBER", toolbox, "_ISNUMBER", 1, 1));
         parser.addFunction(new Function("LEFT", toolbox, "_LEFT", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("LEFTOF", toolbox, "_LEFTOF", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("LEN", toolbox, "_LEN", 1, 1, ValueType.STRING));
         parser.addFunction(new Function("LOG", toolbox, "_LOG", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("LOG10", toolbox, "_LOG10", 1, 1, ValueType.NUMBER));
@@ -98,6 +101,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("REPLACEALL", toolbox, "_REPLACEALL", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("REPLACEFIRST", toolbox, "_REPLACEFIRST", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("RIGHT", toolbox, "_RIGHT", 2, 2, ValueType.STRING, ValueType.NUMBER));
+        parser.addFunction(new Function("RIGHTOF", toolbox, "_RIGHTOF", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("SIN", toolbox, "_SIN", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("SPLIT", toolbox, "_SPLIT", 1, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("SQR", toolbox, "_SQR", 1, 1, ValueType.NUMBER));
@@ -580,6 +584,38 @@ public class FunctionToolbox {
     }
 
     /*
+     * Generates a Type 4 (Randomized) Globally Unique Identifer
+     * Options:
+     *   guid()  -> "f5b803b03b9144d697f56fb032619118"
+     *   guid(0) -> "f5b803b03b9144d697f56fb032619118"
+     *   guid(1) -> "F5B803B03B9144D697F56FB032619118"
+     *   guid(2) -> "f5b803b0-3b91-44d6-97f5-6fb032619118"
+     *   guid(3) -> "F5B803B0-3B91-44D6-97F5-6FB032619118"
+     *   guid(4) -> "{f5b803b0-3b91-44d6-97f5-6fb032619118}"
+     *   guid(5) -> "{F5B803B0-3B91-44D6-97F5-6FB032619118}"
+     */
+    public Value _GUID(Token function, Stack<Token> stack) {
+        String guid = UUID.randomUUID().toString();
+
+        Token[] args = parser.popArguments(function, stack);
+        int option = args.length == 0 ? 0 : args[0].asNumber().intValue();
+
+        if (option == 0 || option == 1) {
+            guid = guid.replace("-", "");
+        }
+
+        if (option == 4 || option == 5) {
+            guid = "{" + guid + "}";
+        }
+
+        if (option == 1 || option == 3 || option == 5) {
+            guid = guid.toUpperCase();
+        }
+
+        return new Value(function.getText()).setValue(guid);
+    }
+
+    /*
      * Converts a number to a hex string
      * hex(0) -> "0"
      * hex(123.45) -> "123.45"
@@ -757,6 +793,28 @@ public class FunctionToolbox {
                 } else {
                     value.setValue("");
                 }
+            } else {
+                value.setValue(str);
+            }
+        }
+
+        return value;
+    }
+
+    /*
+     * Returns everything to the left of the match string or the entire string if no match is found
+     * leftOf("riden@mymail.org", "@") -> "riden"
+     * leftOf("riden@mymail.org", "<->") -> "riden@mymail.org"
+     */
+    public Value _LEFTOF(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
+        String toMatch = stack.pop().asString();
+        String str = stack.pop().asString();
+
+        if (str != null) {
+            if (toMatch != null && str.indexOf(toMatch) > 0) {
+                value.setValue(str.substring(0, str.indexOf(toMatch)));
             } else {
                 value.setValue(str);
             }
@@ -1314,6 +1372,29 @@ public class FunctionToolbox {
                 }
             } else {
                 value.setValue(str);
+            }
+        }
+
+        return value;
+    }
+
+    /*
+     * Returns everything to the right of the match string or an empty string if no match is found
+     * rightOf("riden@mymail.org", "@") -> "mymail.org"
+     * rightOf("riden@mymail.org", "<->") -> ""
+     */
+    public Value _RIGHTOF(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((String)null);
+
+        String toMatch = stack.pop().asString();
+        String str = stack.pop().asString();
+
+        if (str != null) {
+            if (toMatch != null && str.indexOf(toMatch) != -1) {
+                int offset = str.indexOf(toMatch) + toMatch.length();
+                value.setValue(str.substring(offset));
+            } else {
+                value.setValue("");
             }
         }
 

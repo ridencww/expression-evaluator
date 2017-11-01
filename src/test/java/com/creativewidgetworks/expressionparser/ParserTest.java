@@ -52,6 +52,7 @@ public class ParserTest extends UnitTestBase {
         // dangling tokens
         validateExceptionThrown(parser, "1 + 2 +", "Syntax error", 1, 7);
         validateExceptionThrown(parser, "(1 == 1) ==", "Syntax error", 1, 10);
+        validateExceptionThrown(parser, "1 + 3 4", "Syntax error", 1, 1);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -64,6 +65,8 @@ public class ParserTest extends UnitTestBase {
 
         // precedence
         validateNumericResult(parser, "10 + 20 * 30", "610");
+        validateNumericResult(parser, "1 + 2^3", "9");
+        validateBooleanResult(parser, "NOT 1 != 1", Boolean.TRUE);
 
         // parenthesis grouping
         validateNumericResult(parser, "12 / 3 + 1", "5");
@@ -193,19 +196,19 @@ public class ParserTest extends UnitTestBase {
     @Test
     public void testAssignment() throws Exception {
         // number
-        validateNumericResult(parser, "V1=123.45", "123.45");
+        validateBooleanResult(parser, "V1=123.45", Boolean.TRUE);
         validateNumericResult(parser, "V1", "123.45");
-        validateNumericResult(parser, "V1=1+5", "6");
+        validateBooleanResult(parser, "V1=1+5", Boolean.TRUE);
         validateNumericResult(parser, "V1", "6");
         // string
-        validateStringResult(parser, "V1=\"Ralph\"", "Ralph");
+        validateBooleanResult(parser, "V1=\"Ralph\"", Boolean.TRUE);
         validateStringResult(parser, "V1", "Ralph");
-        validateStringResult(parser, "V1='Jeremy'", "Jeremy");
+        validateBooleanResult(parser, "V1='Jeremy'", Boolean.TRUE);
         validateStringResult(parser, "V1", "Jeremy");
         // -- with embedded quotes
-        validateStringResult(parser, "V1=\"Robert 'Bob'\"", "Robert 'Bob'");
+        validateBooleanResult(parser, "V1=\"Robert 'Bob'\"", Boolean.TRUE);
         validateStringResult(parser, "V1", "Robert 'Bob'");
-        validateStringResult(parser, "V1='Robert \"Bob\"'", "Robert \"Bob\"");
+        validateBooleanResult(parser, "V1='Robert \"Bob\"'", Boolean.TRUE);
         validateStringResult(parser, "V1", "Robert \"Bob\"");
 
         // boolean
@@ -214,7 +217,7 @@ public class ParserTest extends UnitTestBase {
 
         // date
         Date now = new Date();
-        validateDateResult(parser, "V1=NOW()", now);
+        validateBooleanResult(parser, "V1=NOW()", Boolean.TRUE);
         validateDateResult(parser, "V1()", now);
     }
 

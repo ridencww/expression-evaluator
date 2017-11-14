@@ -122,8 +122,8 @@ public class FunctionToolboxTest extends UnitTestBase {
 
         validateExceptionThrown(parser, "ARRAYLEN()", "ARRAYLEN expected 1 parameter(s), but got 0", 1, 9);
         validateExceptionThrown(parser, "ARRAYLEN(V1,V2)", "ARRAYLEN expected 1 parameter(s), but got 2", 1, 9);
-        validateExceptionThrown(parser, "ARRAYLEN('test')", "Expected 'test' to be an array value", 1, 10);
-        validateExceptionThrown(parser, "ARRAYLEN(V1)", "Expected 'V1' to be an array value", 1, 10);
+        validateExceptionThrown(parser, "ARRAYLEN('test')", "Expected ARRAY type, but was STRING", 1, 10);
+        validateExceptionThrown(parser, "ARRAYLEN(V1)", "Expected ARRAY type, but was NUMBER", 1, 10);
 
         validateNumericResult(parser, "ARRAYLEN(null)", null);
         validateNumericResult(parser, "ARRAYLEN(V2)", "3");
@@ -750,7 +750,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "MATCH('A','B', 1)", "MATCH expected 2 parameter(s), but got 3", 1, 6);
         validateExceptionThrown(parser, "MATCH(1, '1.23')", "MATCH parameter 1 expected type STRING, but was NUMBER", 1, 6);
         validateExceptionThrown(parser, "MATCH('1.23', 1)", "MATCH parameter 2 expected type STRING, but was NUMBER", 1, 6);
-        validateExceptionThrown(parser, "MATCH('1.23', '[')", "Invalid regex pattern: [", 1, 15);
+        validateExceptionThrown(parser, "MATCH('1.23', '[')", "Syntax error, missing bracket. Expected ]", 1, 18);
 
         validateArray(parser, "MATCH(null, null)", null);
         validateArray(parser, "MATCH('a', null)", null);
@@ -771,7 +771,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "MATCHBYLEN(1, 'B', 'C')", "MATCHBYLEN parameter 1 expected type STRING, but was NUMBER", 1, 11);
         validateExceptionThrown(parser, "MATCHBYLEN('A', 1, 'C')", "MATCHBYLEN parameter 2 expected type STRING, but was NUMBER", 1, 11);
         validateExceptionThrown(parser, "MATCHBYLEN('A', 'B', 1)", "MATCHBYLEN parameter 3 expected type STRING, but was NUMBER", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A', '[', 'C')", "Invalid regex pattern: [", 1, 17);
+        validateExceptionThrown(parser, "MATCHBYLEN('A', '[', 'C')", "Syntax error, missing bracket. Expected ]", 1, 25);
 
         validateStringResult(parser, "MATCHBYLEN(null, null, null)", null);
         validateStringResult(parser, "MATCHBYLEN('a', null, null)", null);

@@ -11,14 +11,16 @@ enum Operator {
     LPAREN       (1, Operator.LEFT_ASSOCIATIVE, "(", "\\("),
     RPAREN       (1, Operator.LEFT_ASSOCIATIVE, ")", "\\)"),
 
+    // Exponentiation
+    EXP          (2, Operator.NONE_ASSOCIATIVE, "^", "\\^"),
+
     // Unary
-    PERCENT      (2, Operator.RIGHT_ASSOCIATIVE, "%", "%"),
-    UNARY_MINUS  (2, Operator.RIGHT_ASSOCIATIVE, "!", "!"),
-    UNARY_PLUS   (2, Operator.RIGHT_ASSOCIATIVE, "!!", "!!"),
-    EXP          (2, Operator.RIGHT_ASSOCIATIVE, "^", "\\^"),
+    PERCENT      (3, Operator.RIGHT_ASSOCIATIVE, "%", "%"),
+    UNARY_MINUS  (3, Operator.RIGHT_ASSOCIATIVE, "!", "!"),
+    UNARY_PLUS   (3, Operator.RIGHT_ASSOCIATIVE, "!!", "!!"),
 
     // Logical NOT
-    NOT          (2, Operator.RIGHT_ASSOCIATIVE, "NOT", "not"),
+    NOT          (3, Operator.RIGHT_ASSOCIATIVE, "NOT", "not"),
 
     // -- Math operators
     MULT         (4, Operator.LEFT_ASSOCIATIVE, "*", "\\*"),

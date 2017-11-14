@@ -143,6 +143,7 @@ public class Parser {
         functions.clear();
         addFunction(new Function("clearGlobal", this, "_CLEARGLOBAL", 1, 1));
         addFunction(new Function("clearGlobals", this, "_CLEARGLOBALS", 0, 0));
+        addFunction(new Function("dim", this, "_DIM", 1, 2, ValueType.NUMBER, ValueType.NUMBER));
         addFunction(new Function("getGlobal", this, "_GETGLOBAL", 1, 1, ValueType.STRING));
         addFunction(new Function("setGlobal", this, "_SETGLOBAL", 2, 2, ValueType.STRING));
         addFunction(new Function("now", this, "_NOW", 0, 1));
@@ -281,9 +282,15 @@ public class Parser {
     }
 
     private boolean shouldPopToken(Token token, Token topOfStack, boolean caseSensitive) throws ParserException {
-        return
-            (isType(token, Operator.LEFT_ASSOCIATIVE, caseSensitive) && compareTokens(token, topOfStack, caseSensitive) >= 0) ||
-            (isType(token, Operator.RIGHT_ASSOCIATIVE, caseSensitive) && compareTokens(token, topOfStack, caseSensitive) > 0);
+        // Unary minus/plus are handled differently if the top token is the exponentiation operator
+        Operator op = Operator.find(token, caseSensitive);
+        if (op.inSet(Operator.UNARY_MINUS, Operator.UNARY_PLUS) && Operator.EXP.getText().equals(topOfStack.getText())) {
+            return false;
+        } else {
+            return
+                    (isType(token, Operator.LEFT_ASSOCIATIVE, caseSensitive) && compareTokens(token, topOfStack, caseSensitive) >= 0) ||
+                            (isType(token, Operator.RIGHT_ASSOCIATIVE, caseSensitive) && compareTokens(token, topOfStack, caseSensitive) > 0);
+        }
     }
 
     /*----------------------------------------------------------------------------*/
@@ -441,19 +448,35 @@ public class Parser {
         Stack<Token> stack = new Stack<>();
         Stack<ArgCount> argStack = new Stack<>();
 
-        // To simplify processing later, a check for matching parenthesis is performed now
-        int count = 0;
+        // To simplify processing later, checks for matching brackets and parenthesis are performed now
+        int bcount = 0;
+        int pcount = 0;
         for (Token token : inputTokens) {
+            if (token.opEquals(Operator.LBRACKET)) {
+                bcount++;
+            } else if (token.opEquals(Operator.RBRACKET)) {
+                bcount--;
+                if (bcount < 0) {
+                    setStatusAndFail(token, "error.missing_bracket", Operator.LBRACKET.getText());
+                }
+            }
+
             if (token.opEquals(Operator.LPAREN)) {
-                count++;
+                pcount++;
             } else if (token.opEquals(Operator.RPAREN)) {
-                count--;
-                if (count < 0) {
+                pcount--;
+                if (pcount < 0) {
                     setStatusAndFail(token, "error.missing_parens", Operator.LPAREN.getText());
                 }
             }
         }
-        if (count != 0) {
+
+        if (bcount != 0) {
+            Token token = inputTokens.get(inputTokens.size() - 1);
+            setStatusAndFail(token, "error.missing_bracket", Operator.RBRACKET.getText());
+        }
+
+        if (pcount != 0) {
             Token token = inputTokens.get(inputTokens.size() - 1);
             setStatusAndFail(token, "error.missing_parens", Operator.RPAREN.getText());
         }
@@ -487,17 +510,28 @@ public class Parser {
                 argStack.push(new ArgCount());
 
             } else if (token.opEquals(Operator.COMMA)) {
-                // Copy tokens to output and bump argument count for function
-                while (!stack.empty() && !stack.peek().opEquals(Operator.LPAREN)) {
-                    outputTokens.add(stack.pop());
-                }
-                if (argStack.peek().haveArgs) {
-                    argStack.peek().count++;
+                // Ignore commas if inside brackets
+                if (bcount == 0) {
+                    // Copy tokens to output and bump argument count for function
+                    while (!stack.empty() && !stack.peek().opEquals(Operator.LPAREN)) {
+                        outputTokens.add(stack.pop());
+                    }
+                    if (argStack.peek().haveArgs) {
+                        argStack.peek().count++;
+                    }
                 }
 
+            } else if (token.opEquals(Operator.LBRACKET)) {
+                bcount++;
+                stack.push(token);
             } else if (token.opEquals(Operator.LPAREN)) {
                 stack.push(token);
-
+            } else if (token.opEquals(Operator.RBRACKET)) {
+                bcount--;
+                while (!stack.empty() && !stack.peek().opEquals(Operator.LBRACKET)) {
+                    outputTokens.add(stack.pop());
+                }
+                outputTokens.add(stack.pop());
             } else if (token.opEquals(Operator.RPAREN)) {
                 while (!stack.empty() && !stack.peek().opEquals(Operator.LPAREN)) {
                     outputTokens.add(stack.pop());
@@ -805,7 +839,68 @@ public class Parser {
                 if (result != null) {
                     stack.push(result);
                 }
-            } else {
+            } else if (token.getText().equals(Operator.LBRACKET.getText())) {
+                Token index = null;
+                Token subIndex = null;
+                if (stack.peek().getType().equals(TokenType.NUMBER)) {
+                    index = stack.pop();
+                    if (stack.size() == 0) {
+                        setStatusAndFail(index, "error.syntax");
+                    }
+                    if (stack.peek().getType().equals(TokenType.NUMBER)) {
+                        subIndex = index;
+                        index = stack.pop();
+                        if (!stack.peek().getType().equals(TokenType.IDENTIFIER)) {
+                            setStatusAndFail(subIndex, "Only one or two dimensional arrays are supported");
+                        }
+                    }
+                }
+
+                Token var = stack.pop();
+
+                if (!ValueType.ARRAY.equals(var.getValue().getType())) {
+                    setStatusAndFail(var, "error.expected_array", var.getValue().getType());
+                }
+
+                int idx = 0;
+                Value val = null;
+                if (index != null) {
+                    int len = var.getValue().getArray().size() - 1;
+                    idx = index.getValue().asNumber().intValue();
+                    if (idx < 0 || idx > len) {
+                        setStatusAndFail(index, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));
+                    }
+
+                    val = new Value();
+                    val.set(var.getValue().getArray().get(idx));
+
+                    if (subIndex != null) {
+                        if (!ValueType.ARRAY.equals(val.getType())) {
+                            setStatusAndFail(var, "error.expected_array", val.getType());
+                        }
+                        len = val.getArray().size() - 1;
+                        idx = subIndex.getValue().asNumber().intValue();
+                        if (idx < 0 || idx > len) {
+                            setStatusAndFail(subIndex, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));
+                        }
+                        val = val.getArray().get(idx);
+                    }
+                }
+
+                String strIdx = "";
+                if (index != null) {
+                    strIdx = subIndex == null ? index.asString() : index.asString() + "," + subIndex.asString();
+                }
+
+                // V[] = V[0]
+                if (val == null) {
+                    int len = var.getValue().getArray().size();
+                    val = len > 0 ? var.getValue().getArray().get(0) : var.getValue();
+                }
+
+                val.setName(var.getText() + "[" + strIdx + "]");
+                stack.push(new Token(TokenType.IDENTIFIER, val, var.getRow(), var.getColumn()));
+           } else {
                 stack.push(token);
             }
         }
@@ -868,6 +963,39 @@ public class Parser {
     }
 
     /*
+    * Sizes a one or two dimension array for use
+    *  DIM(10) -> One dimensional array of a size of 10 rows
+    *  DIM(10, 5) -> Two dimensional array of a size of 10 rows, each row containing 5 elements
+    */
+    public Value _DIM(Token function, Stack<Token> stack) throws ParserException {
+        Token[] args = popArguments(function, stack);
+
+        int numRows = args[0].asNumber().intValue();
+        if (numRows < 1 || numRows > 10000) {
+            setStatusAndFail(args[0], "error.function_value_out_of_range", "DIM", "numRows", "1", "10000", String.valueOf(numRows));
+        }
+
+        int numCols = 0;
+        if (args.length > 1) {
+            numCols = args[1].asNumber().intValue();
+            if (numCols < 1 || numCols > 256) {
+                setStatusAndFail(args[0], "error.function_value_out_of_range", "DIM", "numCols", "1", "256", String.valueOf(numCols));
+            }
+        }
+
+        Value value = new Value();
+        for (int i = 0; i < numRows; i++) {
+            Value newRow = new Value();
+            value.addValueToArray(newRow);
+            for (int j = 0; j < numCols; j++) {
+                newRow.addValueToArray(new Value());
+            }
+        }
+
+        return value;
+    }
+
+    /*
      * Returns a global variable or null if not found
      * parser.eval("SetGlobal('DOW', 1)");
      * getGlobal("DOW") ->  1 (NUMBER)
@@ -896,18 +1024,18 @@ public class Parser {
         return new Value(function.getText()).setValue(haveValues ? Boolean.TRUE : Boolean.FALSE);
     }
 
-     /*
-      * Returns the current date and time
-      * parameter_1: (no parameter = actual time)
-      *              0 = actual time
-      *              1 = beginning of today
-      *              2 = end of today
-      * date() ->   2009-08-31 13:32:02
-      * date(1) ->  2009-08-31 00:00:00
-      * date(2) ->  2009-08-31 23:59:59
-      * date("kdkdkd") -> expected number exception
-      *
-      */
+    /*
+     * Returns the current date and time
+     * parameter_1: (no parameter = actual time)
+     *              0 = actual time
+     *              1 = beginning of today
+     *              2 = end of today
+     * date() ->   2009-08-31 13:32:02
+     * date(1) ->  2009-08-31 00:00:00
+     * date(2) ->  2009-08-31 23:59:59
+     * date("kdkdkd") -> expected number exception
+     *
+     */
     public Value _NOW(Token function, Stack<Token> stack) throws ParserException {
         Calendar calendar = Calendar.getInstance();
         if (function.getArgc() > 0) {

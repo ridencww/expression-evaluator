@@ -60,6 +60,7 @@ public class Value {
             this.valueNum = var.valueNum == null ? null : new BigDecimal(var.valueNum.toPlainString());
             this.valueDate = var.valueDate == null ? null : new Date(var.valueDate.getTime());
             if (var.array != null) {
+                this.type = ValueType.ARRAY;
                 this.array = new ArrayList<>(var.array.size());
                 for (Value v : var.array) {
                     this.array.add(new Value(v));
@@ -86,7 +87,7 @@ public class Value {
         return type;
     }
 
-    private void setType(ValueType type) {
+    public void setType(ValueType type) {
         this.type = type;
     }
 

@@ -52,6 +52,17 @@ public class TokenTest extends UnitTestBase {
         assertTrue("'AND' is an operator",  new Token(TokenType.OPERATOR, "AND", 1, 1 ).isOperator());
         assertFalse("'(' is not an operator", new Token(TokenType.OPERATOR, "(", 1, 1 ).isOperator());
         assertFalse("')' is not an operator", new Token(TokenType.OPERATOR, ")", 1, 1 ).isOperator());
+        assertFalse("'(' is not an operator", new Token(TokenType.OPERATOR, "[", 1, 1 ).isOperator());
+        assertFalse("'(' is not an operator", new Token(TokenType.OPERATOR, "]", 1, 1 ).isOperator());
+    }
+
+    @Test
+    public void testOpEquals() {
+        Token token = new Token(TokenType.OPERATOR, "AND", 1, 1);
+        assertFalse(token.opEquals(null));
+        assertTrue(token.opEquals(Operator.AND));
+        assertTrue(token.opEquals(Operator.OR, Operator.AND));
+        assertFalse(token.opEquals(Operator.OR));
     }
 
 }

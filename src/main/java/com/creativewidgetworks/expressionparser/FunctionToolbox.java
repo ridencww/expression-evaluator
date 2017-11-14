@@ -296,7 +296,7 @@ public class FunctionToolbox {
         Value theValue = token.getValue();
         if (theValue.asObject() != null) {
             if (theValue.getArray() == null) {
-                String msg = ParserException.formatMessage("error.expected_array", token.getText());
+                String msg = ParserException.formatMessage("error.expected_array", token.getValue().getType());
                 throw new ParserException(msg, token.getRow(), token.getColumn());
             }
             value.setValue(BigDecimal.valueOf(theValue.getArray().size()));
@@ -445,6 +445,23 @@ public class FunctionToolbox {
      * DateBetween(Date2, dtFrom, dtThru) ->  TRUE
      */
     public Value _DATEBETWEEN(Token function, Stack<Token> stack) {
+        Date upper = stack.pop().asDate();
+        Date lower = stack.pop().asDate();
+        Date dateToTest = stack.pop().asDate();
+
+        // Any nulls returns FALSE
+        boolean inRange = upper != null && lower != null && dateToTest != null;
+        inRange = inRange && dateToTest.getTime() >= lower.getTime() && dateToTest.getTime() <= upper.getTime();
+
+        return new Value(function.getText()).setValue(inRange ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /*
+     * Formats or creates and formats a Date object
+     * DateFormat(formatString, dtdtFrom, dtThru) ->  FALSE
+     * DateFormat(formatString, mon, day, year, hour, min, sec) ->  TRUE
+     */
+    public Value _DATEFORMAT(Token function, Stack<Token> stack) {
         Date upper = stack.pop().asDate();
         Date lower = stack.pop().asDate();
         Date dateToTest = stack.pop().asDate();
@@ -1044,6 +1061,8 @@ public class FunctionToolbox {
                 value.setValue("");
             }
         }
+
+        value.setType(ValueType.ARRAY);
 
         return value;
     }

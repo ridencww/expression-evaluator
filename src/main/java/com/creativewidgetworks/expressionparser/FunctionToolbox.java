@@ -78,6 +78,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("FIND", toolbox, "_FIND", 2, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("FLOOR", toolbox, "_FLOOR", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("FORMAT", toolbox, "_FORMAT", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("FORMATBYLEN", toolbox, "_FORMATBYLEN", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("GUID", toolbox, "_GUID", 0, 1, ValueType.NUMBER));
         parser.addFunction(new Function("HEX", toolbox, "_HEX", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("ISANYOF", toolbox, "_ISANYOF", 1, Integer.MAX_VALUE, ValueType.STRING, ValueType.UNDEFINED));
@@ -96,7 +97,6 @@ public class FunctionToolbox {
         parser.addFunction(new Function("MAKEBOOLEAN", toolbox, "_MAKEBOOLEAN", 1, 1));
         parser.addFunction(new Function("MAKEDATE", toolbox, "_MAKEDATE", 1, 6, ValueType.UNDEFINED, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("MATCH", toolbox, "_MATCH", 2, 2, ValueType.STRING, ValueType.STRING));
-        parser.addFunction(new Function("MATCHBYLEN", toolbox, "_MATCHBYLEN", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("MAX", toolbox, "_MAX", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("MID", toolbox, "_MID", 2, 3, ValueType.STRING, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("MIN", toolbox, "_MIN", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
@@ -508,13 +508,17 @@ public class FunctionToolbox {
      * DateBOD(date) ->  03/15/2007 00:00:00
      */
     public Value _DATEBOD(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText(), (Date)null);
+
         Date date = stack.pop().asDate();
+        if (date != null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0, 0, 0);
+            value.setValue(cal.getTime());
+        }
 
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0, 0, 0);
-
-        return new Value(function.getText()).setValue(cal.getTime());
+        return value;
     }
 
     /*
@@ -523,13 +527,17 @@ public class FunctionToolbox {
      * DateBOD(date) ->  03/15/2007 23:59:59
      */
     public Value _DATEEOD(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText(), (Date)null);
+
         Date date = stack.pop().asDate();
+        if (date != null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 23, 59, 59);
+            value.setValue(cal.getTime());
+        }
 
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 23, 59, 59);
-
-        return new Value(function.getText()).setValue(cal.getTime());
+        return value;
     }
 
     /*
@@ -541,44 +549,52 @@ public class FunctionToolbox {
      * DateFormat(formatString, 3, 14, 2007, 12, 0, 0) -> '03/14/2007'
      */
     public Value _DATEFORMAT(Token function, Stack<Token> stack) throws ParserException {
+        Value value = new Value(function.getText()).setValue((Date)null);
+
         Token[] args = parser.popArguments(function, stack);
 
         String formatString = args[0].asString();
 
-        Date date;
-        Stack stk = new Stack<Token>();
-        ValueType type = args[1].getValue().getType();
-        if (ValueType.DATE.equals(type)) {
-            if (args.length > 2) {
-                throw new ParserException(ParserException.formatMessage("error.function_too_many_params"), args[2].getRow(), args[2].getColumn());
-            }
-            date = args[1].getValue().asDate();
-        } else if (ValueType.STRING.equals(type)) {
-            if (args.length > 2) {
-                throw new ParserException(ParserException.formatMessage("error.function_too_many_params"), args[2].getRow(), args[2].getColumn());
-            }
-            stk.push(args[1]);
-            Token func = new Token(function.getType(), function.getText(), function.getRow(), function.getColumn());
-            func.setArgc(1);
-            date = _MAKEDATE(func, stk).asDate();
-        } else if (ValueType.NUMBER.equals(type)) {
-            for (int i = 1; i < args.length; i++) {
-                Token token = args[i];
-                if (!ValueType.NUMBER.equals(token.getValue().getType())) {
-                    throw new ParserException(ParserException.formatMessage("error.function_type_mismatch", function.getText(), String.valueOf(i), ValueType.NUMBER.name(), token.getValue().getType()), args[i].getRow(), args[i].getColumn());
+        if (formatString != null) {
+            Date date;
+            Stack stk = new Stack<Token>();
+            ValueType type = args[1].getValue().getType();
+            if (ValueType.DATE.equals(type)) {
+                if (args.length > 2) {
+                    throw new ParserException(ParserException.formatMessage("error.function_too_many_params"), args[2].getRow(), args[2].getColumn());
                 }
-                stk.push(token);
+                date = args[1].getValue().asDate();
+            } else if (ValueType.STRING.equals(type)) {
+                if (args.length > 2) {
+                    throw new ParserException(ParserException.formatMessage("error.function_too_many_params"), args[2].getRow(), args[2].getColumn());
+                }
+                stk.push(args[1]);
+                Token func = new Token(function.getType(), function.getText(), function.getRow(), function.getColumn());
+                func.setArgc(1);
+                date = _MAKEDATE(func, stk).asDate();
+            } else if (ValueType.NUMBER.equals(type)) {
+                for (int i = 1; i < args.length; i++) {
+                    Token token = args[i];
+                    if (!ValueType.NUMBER.equals(token.getValue().getType())) {
+                        throw new ParserException(ParserException.formatMessage("error.function_type_mismatch", function.getText(), String.valueOf(i), ValueType.NUMBER.name(), token.getValue().getType()), args[i].getRow(), args[i].getColumn());
+                    }
+                    stk.push(token);
+                }
+                Token func = new Token(function.getType(), function.getText(), function.getRow(), function.getColumn());
+                func.setArgc(args.length - 1);
+                date = _MAKEDATE(func, stk).asDate();
+            } else {
+                throw new ParserException(ParserException.formatMessage("error.function_type_mismatch", function.getText(), String.valueOf(1), ValueType.NUMBER.name(), type.name()), args[1].getRow(), args[1].getColumn());
             }
-            Token func = new Token(function.getType(), function.getText(), function.getRow(), function.getColumn());
-            func.setArgc(args.length - 1);
-            date = _MAKEDATE(func, stk).asDate();
-        } else {
-            throw new ParserException(ParserException.formatMessage("error.function_type_mismatch", function.getText(), String.valueOf(1), ValueType.NUMBER.name(), type.name()), args[1].getRow(), args[1].getColumn());
+
+            SimpleDateFormat sdf = new SimpleDateFormat(formatString);
+
+            if (date != null) {
+                value.setValue(sdf.format(date));
+            }
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat(formatString);
-
-        return new Value(function.getText()).setValue(sdf.format(date));
+        return value;
     }
 
     /*
@@ -709,10 +725,125 @@ public class FunctionToolbox {
     }
 
     /*
-    * Applies a mask to format a string
+    * Applies basic formatting of a string using a mask. Any character positions in
+    * the mask that contain '#' will be replaced a character from the string to format.
+    *
+    * format('(###) ###-####', 8155551212) -> '(815) 555-1212'
     */
     public Value _FORMAT(Token function, Stack<Token> stack) {
-        return null;
+        String unformattedStr = stack.pop().asString();
+        String mask = stack.pop().asString();
+
+        int o = 0;
+        StringBuilder sb = new StringBuilder(mask);
+        for (int i = 0; i < sb.length() && o < unformattedStr.length(); i++) {
+            if (sb.charAt(i) == '#') {
+                sb.setCharAt(i, unformattedStr.charAt(o++));
+            }
+        }
+
+        return new Value(function.getText()).setValue(sb.toString());
+    }
+
+    /*
+    * Performs a match of the regular expression and returns a formatted string
+    * based on the matched pattern. This is a funky scheme that I devised to
+    * format strings, phone numbers in my example, based on the length of the
+    * matched pattern.
+    *
+    * formatByLen("8155551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
+    *     -> "(815) 555-1212"
+    *
+    * formatByLen("5551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
+    *     -> "      555-1212"
+    */
+    public Value _FORMATBYLEN(Token function, Stack<Token> stack) throws ParserException {
+        Value value = new Value(function.getText()).setValue((String)null);
+
+        // Create temp parser if one hasn't already been created
+        if (tmpParser == null) {
+            tmpParser = new Parser();
+        }
+
+        String variations = stack.pop().asString();
+
+        Token patternToken = stack.pop();
+        String pattern = patternToken.asString();
+
+        String str = stack.pop().asString();
+
+        if (str != null && pattern != null && variations != null) {
+            Pattern p = null;
+            try {
+                p = Pattern.compile(pattern);
+            } catch (PatternSyntaxException ex) {
+                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern), patternToken.getRow(), patternToken.getColumn());
+            }
+
+            Matcher m1 = p.matcher(str);
+            if (m1.find()) {
+                // Look for template variations based on number of chars matched
+                // e.g., 0=:4=####:7=###-####:?='(N/A)'
+                String key = m1.group(0).length() + "=";
+                int start = variations.indexOf(key);
+                int end = start;
+                if (start != -1) {
+                    end = variations.indexOf(MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER, start);
+                    if (end == -1) {
+                        // Case where this is the last choice in the string
+                        // and there isn't any trailing semicolon.
+                        end = variations.length();
+                    }
+
+                    String exp = variations.substring(start + key.length(), end);
+                    if (key.equals("0=") && exp.trim().length() > 0) {
+                        // If the match length is zero, run the substitution string
+                        // through an evaluator to allow more flexibility in what
+                        // to load for empty matches
+                        Value tmp = tmpParser.eval(exp.replace('\'', '"'));
+                        exp = tmp.asString();
+                    }
+
+                    // Replace '#' placeholders with group data
+                    int o = 0;
+                    StringBuilder sb = new StringBuilder(exp);
+                    for (int i = 0; i < sb.length() && o < m1.group(0).length(); i++) {
+                        if (sb.charAt(i) == '#') {
+                            // Substitute the actual matched data
+                            sb.setCharAt(i, m1.group(0).charAt(o++));
+                        }
+                    }
+
+                    value.setValue(sb.toString());
+                } else {
+                    // check for ?= and evaluate
+                    key = "?=";
+                    start = variations.indexOf(key);
+                    end = start;
+                    if (start != -1) {
+                        end = variations.indexOf(MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER, start);
+                        if (end == -1) {
+                            // Case where this is the last choice in the string
+                            // and there isn't any trailing semicolon.
+                            end = variations.length();
+                        }
+
+                        // Pull off default, unmatched expression and evaluate it
+                        String exp = variations.substring(start + key.length(), end);
+                        Value tmp = tmpParser.eval(exp.replace('\'', '"'));
+                        value.setValue(tmp.asString());
+                    } else {
+                        // no match and no default expression
+                        value.setValue("");
+                    }
+                }
+            } else {
+                // No matches, which isn't necessarily an error. Return empty string
+                value.setValue("");
+            }
+        }
+
+        return value;
     }
 
     /*
@@ -965,7 +1096,6 @@ public class FunctionToolbox {
         return new Value(function.getText()).setValue(BigDecimal.valueOf(str == null ? 0 : str.length()));
     }
 
-
     /*
      * Returns the natural log of the number
      * log(2) -> 0.69314
@@ -1178,107 +1308,6 @@ public class FunctionToolbox {
         }
 
         value.setType(ValueType.ARRAY);
-
-        return value;
-    }
-
-    /*
-     * Performs a match of the regular expression and returns a formatted string
-     * based on the matched pattern. This is a funky scheme that I devised to
-     * format strings, phone numbers in my example, based on the length of the
-     * matched pattern.
-     *
-     * matchByLen("8155551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
-     *     -> "(815) 555-1212"
-     *
-     * matchByLen("5551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
-     *     -> "      555-1212"
-     */
-    public Value _MATCHBYLEN(Token function, Stack<Token> stack) throws ParserException {
-        Value value = new Value(function.getText()).setValue((String)null);
-
-        // Create temp parser if one hasn't already been created
-        if (tmpParser == null) {
-            tmpParser = new Parser();
-        }
-
-        String variations = stack.pop().asString();
-
-        Token patternToken = stack.pop();
-        String pattern = patternToken.asString();
-
-        String str = stack.pop().asString();
-
-        if (str != null && pattern != null && variations != null) {
-            Pattern p = null;
-            try {
-                p = Pattern.compile(pattern);
-            } catch (PatternSyntaxException ex) {
-                throw new ParserException(ParserException.formatMessage("error.invalid_regex_pattern", pattern), patternToken.getRow(), patternToken.getColumn());
-            }
-
-            Matcher m1 = p.matcher(str);
-            if (m1.find()) {
-                // Look for template variations based on number of chars matched
-                // e.g., 0=:4=####:7=###-####:?='(N/A)'
-                String key = m1.group(0).length() + "=";
-                int start = variations.indexOf(key);
-                int end = start;
-                if (start != -1) {
-                    end = variations.indexOf(MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER, start);
-                    if (end == -1) {
-                        // Case where this is the last choice in the string
-                        // and there isn't any trailing semicolon.
-                        end = variations.length();
-                    }
-
-                    String exp = variations.substring(start + key.length(), end);
-                    if (key.equals("0=") && exp.trim().length() > 0) {
-                        // If the match length is zero, run the substitution string
-                        // through an evaluator to allow more flexibility in what
-                        // to load for empty matches
-                        Value tmp = tmpParser.eval(exp.replace('\'', '"'));
-                        exp = tmp.asString();
-                    }
-
-                    // Replace '#' placeholders with group data
-                    int o = 0;
-                    StringBuilder sb = new StringBuilder(exp);
-                    for (int i = 0; i < sb.length() && o < m1.group(0).length(); i++) {
-                        if (sb.charAt(i) == '#') {
-                            // Substitute the actual matched data
-                            sb.setCharAt(i, m1.group(0).charAt(o++));
-                        }
-                    }
-
-                    value.setValue(sb.toString());
-                } else {
-                    // check for ?= and evaluate
-                    key = "?=";
-                    start = variations.indexOf(key);
-                    end = start;
-                    if (start != -1) {
-                        end = variations.indexOf(MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER, start);
-                        if (end == -1) {
-                            // Case where this is the last choice in the string
-                            // and there isn't any trailing semicolon.
-                            end = variations.length();
-                        }
-
-                        // Pull off default, unmatched expression and evaluate it
-                        String exp = variations.substring(start + key.length(), end);
-                        Value tmp = tmpParser.eval(exp.replace('\'', '"'));
-                        value.setValue(tmp.asString());
-                    } else {
-                        // no match and no default expression
-                        value.setValue("");
-                    }
-                }
-            } else {
-                // No matches, which isn't necessarily an error. Return empty string
-                value.setValue("");
-            }
-        }
 
         return value;
     }

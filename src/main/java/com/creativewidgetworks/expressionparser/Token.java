@@ -12,8 +12,9 @@ public class Token {
 
     private final int row;
     private final int column;
-    private int argc;
     private String text;
+
+    private int argc;
 
     public Token(TokenType type, String text, int row, int column) {
         this(type, text, null, row, column);
@@ -43,7 +44,6 @@ public class Token {
 
     /*---------------------------------------------------------------------------------*/
 
-
     void saveOrgValue() {
         orgValue = new Value(value);
     }
@@ -53,7 +53,6 @@ public class Token {
     }
 
     /*---------------------------------------------------------------------------------*/
-
 
     public Boolean asBoolean() {
         return getValue() != null ? getValue().asBoolean() : null;

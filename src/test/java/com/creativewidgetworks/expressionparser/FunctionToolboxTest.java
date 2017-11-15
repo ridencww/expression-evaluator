@@ -420,6 +420,63 @@ public class FunctionToolboxTest extends UnitTestBase {
     @Test
     public void testFORMAT() throws Exception {
         validatePattern(parser, "FORMAT");
+
+        validateExceptionThrown(parser, "FORMAT()", "FORMAT expected 2 parameter(s), but got 0", 1, 7);
+        validateExceptionThrown(parser, "FORMAT(1, 'b')", "FORMAT parameter 1 expected type STRING, but was NUMBER", 1, 7);
+        validateExceptionThrown(parser, "FORMAT('a', 2)", "FORMAT parameter 2 expected type STRING, but was NUMBER", 1, 7);
+
+        validateStringResult(parser, "FORMAT('(###) ###-#### HOME', '8155551212')", "(815) 555-1212 HOME");
+    }
+
+    @Test
+    public void testFORMATBYLEN() throws Exception {
+        validatePattern(parser, "FORMATBYLEN");
+
+        validateExceptionThrown(parser, "FORMATBYLEN()", "FORMATBYLEN expected 3 parameter(s), but got 0", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A','B', 'C', 'D')", "FORMATBYLEN expected 3 parameter(s), but got 4", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN(1, 'B', 'C')", "FORMATBYLEN parameter 1 expected type STRING, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A', 1, 'C')", "FORMATBYLEN parameter 2 expected type STRING, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A', 'B', 1)", "FORMATBYLEN parameter 3 expected type STRING, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A', '[', 'C')", "Syntax error, missing bracket. Expected ]", 1, 26);
+
+        validateStringResult(parser, "FORMATBYLEN(null, null, null)", null);
+        validateStringResult(parser, "FORMATBYLEN('a', null, null)", null);
+        validateStringResult(parser, "FORMATBYLEN(null, 'b', null)", null);
+        validateStringResult(parser, "FORMATBYLEN(null, null, 'c')", null);
+
+        // No match -> "no value"
+        String variations = "0='no value':7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
+        validateStringResult(parser, "FORMATBYLEN('', '[0-9]*', \"" + variations + "\")", "no value");
+
+        // No match - > empty
+        variations = "0=:7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
+        validateStringResult(parser, "FORMATBYLEN('', '[0-9]*', \"" + variations + "\")", "");
+
+        // Match pattern of length 7
+        validateStringResult(parser, "FORMATBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "      555-1212");
+
+        // Match pattern of length 10
+        validateStringResult(parser, "FORMATBYLEN('8155551212', '[0-9]*', \"" + variations + "\")", "(815) 555-1212");
+
+        // Matched, but not one of the specified lengths uses default variation
+        validateStringResult(parser, "FORMATBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "Ralph Iden");
+
+        // Matched, but not one of the specified lengths and not default returns empty string
+        variations = "0=:7=      ###-####:10=(###) ###-####";
+        validateStringResult(parser, "FORMATBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
+
+        // Poorly formed variation patterns return empty strings -----------------------------------------------
+        // Match where variation is empty and at the end of the variations
+        variations = "7=";
+        validateStringResult(parser, "FORMATBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "");
+
+        // Match with a trailing colon in variation string
+        variations = "0=:7=      ###-####:10=(###) ###-####:";
+        validateStringResult(parser, "FORMATBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
+
+        // No matches with a trailing colon in variation string
+        variations = "0=:7=      ###-####:10=(###) ###-####:";
+        validateStringResult(parser, "FORMATBYLEN('A', 'B', \"" + variations + "\")", "");
     }
 
     @Test
@@ -825,57 +882,6 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateArray(parser, "MATCH('Phone: (815) 555-1212 x100 (Work)', '[\\(](\\d{3})\\D*(\\d{3})\\D*(\\d{4})\\D*(\\d*)')",
                 "(815) 555-1212 x100",  // asString
                 "(815) 555-1212 x100", "815", "555", "1212", "100");  // group 0..n
-    }
-
-    @Test
-    public void testMATCHBYLEN() throws Exception {
-        validatePattern(parser, "MATCHBYLEN");
-
-        validateExceptionThrown(parser, "MATCHBYLEN()", "MATCHBYLEN expected 3 parameter(s), but got 0", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A','B', 'C', 'D')", "MATCHBYLEN expected 3 parameter(s), but got 4", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN(1, 'B', 'C')", "MATCHBYLEN parameter 1 expected type STRING, but was NUMBER", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A', 1, 'C')", "MATCHBYLEN parameter 2 expected type STRING, but was NUMBER", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A', 'B', 1)", "MATCHBYLEN parameter 3 expected type STRING, but was NUMBER", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A', '[', 'C')", "Syntax error, missing bracket. Expected ]", 1, 25);
-
-        validateStringResult(parser, "MATCHBYLEN(null, null, null)", null);
-        validateStringResult(parser, "MATCHBYLEN('a', null, null)", null);
-        validateStringResult(parser, "MATCHBYLEN(null, 'b', null)", null);
-        validateStringResult(parser, "MATCHBYLEN(null, null, 'c')", null);
-
-        // No match -> "no value"
-        String variations = "0='no value':7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
-        validateStringResult(parser, "MATCHBYLEN('', '[0-9]*', \"" + variations + "\")", "no value");
-
-        // No match - > empty
-        variations = "0=:7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
-        validateStringResult(parser, "MATCHBYLEN('', '[0-9]*', \"" + variations + "\")", "");
-
-        // Match pattern of length 7
-        validateStringResult(parser, "MATCHBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "      555-1212");
-
-        // Match pattern of length 10
-        validateStringResult(parser, "MATCHBYLEN('8155551212', '[0-9]*', \"" + variations + "\")", "(815) 555-1212");
-
-        // Matched, but not one of the specified lengths uses default variation
-        validateStringResult(parser, "MATCHBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "Ralph Iden");
-
-        // Matched, but not one of the specified lengths and not default returns empty string
-        variations = "0=:7=      ###-####:10=(###) ###-####";
-        validateStringResult(parser, "MATCHBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
-
-        // Poorly formed variation patterns return empty strings -----------------------------------------------
-        // Match where variation is empty and at the end of the variations
-        variations = "7=";
-        validateStringResult(parser, "MATCHBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "");
-
-        // Match with a trailing colon in variation string
-        variations = "0=:7=      ###-####:10=(###) ###-####:";
-        validateStringResult(parser, "MATCHBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
-
-        // No matches with a trailing colon in variation string
-        variations = "0=:7=      ###-####:10=(###) ###-####:";
-        validateStringResult(parser, "MATCHBYLEN('A', 'B', \"" + variations + "\")", "");
     }
 
     @Test

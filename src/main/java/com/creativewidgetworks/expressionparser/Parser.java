@@ -13,6 +13,10 @@ public class Parser {
     // Default numeric precision (number of decimal places)
     public static final int DEFAULT_PRECISION = 5;
 
+    // Maximum size of arrays that can be created by DIM
+    public static int MAX_DIM_ROWS = 10000;
+    public static int MAX_DIM_COLS = 256;
+
     // By default, disable access to system and environment properties
     private boolean allowProperties = false;
 
@@ -971,14 +975,14 @@ public class Parser {
         Token[] args = popArguments(function, stack);
 
         int numRows = args[0].asNumber().intValue();
-        if (numRows < 1 || numRows > 10000) {
+        if (numRows < 1 || numRows > MAX_DIM_ROWS) {
             setStatusAndFail(args[0], "error.function_value_out_of_range", "DIM", "numRows", "1", "10000", String.valueOf(numRows));
         }
 
         int numCols = 0;
         if (args.length > 1) {
             numCols = args[1].asNumber().intValue();
-            if (numCols < 1 || numCols > 256) {
+            if (numCols < 1 || numCols > MAX_DIM_COLS) {
                 setStatusAndFail(args[0], "error.function_value_out_of_range", "DIM", "numCols", "1", "256", String.valueOf(numCols));
             }
         }

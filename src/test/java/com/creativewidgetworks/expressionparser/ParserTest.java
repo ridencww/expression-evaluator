@@ -536,7 +536,7 @@ public class ParserTest extends UnitTestBase {
     public void testTernary() throws Exception {
         validateExceptionThrown(parser, "(1==1) ? 'Y'", "Syntax error, ? without a matching :", 1, 8);
         validateExceptionThrown(parser, "(1==1) : 'N'", "Syntax error, : without preceding ?", 1, 8);
-        validateExceptionThrown(parser, "1 ? 'Y' : 'N'", "Expected boolean value, but was NUMBER", 1, 1);
+        validateExceptionThrown(parser, "1 ? 'Y' : 'N'", "Expected BOOLEAN value, but was NUMBER", 1, 1);
 
         validateStringResult(parser, "(1==1) ? 'Y' : 'N'", "Y");
         validateStringResult(parser, "(1==2) ? 'Y' : 'N'", "N");

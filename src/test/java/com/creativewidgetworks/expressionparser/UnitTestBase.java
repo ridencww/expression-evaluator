@@ -56,7 +56,7 @@ public class UnitTestBase extends Assert {
             if (result.asDate() == null) {
                 fail("Expected date would be parsed from: " + expression);
             }
-            assertTrue(expression + " = " + expected.toString(), Math.abs(expected.getTime() - result.asDate().getTime()) < 1000);
+            assertTrue(expression + " -> " + result.asDate() + " = " + expected.toString(), Math.abs(expected.getTime() - result.asDate().getTime()) < 1000);
         }
     }
 

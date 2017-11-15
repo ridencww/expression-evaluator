@@ -227,6 +227,31 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testDATEADD() throws Exception {
+        validatePattern(parser, "DATEADD");
+
+        validateExceptionThrown(parser, "DATEADD()", "DATEADD expected 2..3 parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(1, 2)", "DATEADD parameter 1 expected type DATE, but was NUMBER", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(NOW(), '2')", "DATEADD parameter 2 expected type NUMBER, but was STRING", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(NOW(), 2, 1)", "DATEADD parameter 3 expected type STRING, but was NUMBER", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(NOW(), 2, 'x')", "Expected period to be one of 'm', 'd', 'y', 'hr', 'mi', or 'se'", 1, 1);
+
+        // Add or subtract days
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1)", makeDate(3, 15, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), -1)", makeDate(3, 13, 2007, 0, 0, 0));
+
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'm')", makeDate(4, 14, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'd')", makeDate(3, 15, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'y')", makeDate(3, 14, 2008, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'hr')", makeDate(3, 14, 2007, 1, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'mi')", makeDate(3, 14, 2007, 0, 1, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'se')", makeDate(3, 14, 2007, 0, 0, 1));
+
+        // Rollover
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 10, 'm')", makeDate(1, 14, 2008, 0, 0, 0));
+    }
+
+    @Test
     public void testDATEBETWEEN() throws Exception {
         parser.eval("DATE1=MakeDate(5,1,2009)");
         parser.eval("DATE2=MakeDate(9,11,2009)");
@@ -248,6 +273,41 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, FROMDATE, null)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, THRUDATE)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, null)", Boolean.FALSE);
+    }
+
+    @Test
+    public void testDATEBOD() throws Exception {
+        validatePattern(parser, "DATEBOD");
+        validateExceptionThrown(parser, "DATEBOD()", "DATEBOD expected 1 parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "DATEBOD(1)", "DATEBOD parameter 1 expected type DATE, but was NUMBER", 1, 8);
+        validateDateResult(parser, "DATEBOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 0, 0, 0));
+    }
+
+    @Test
+    public void testDATEEOD() throws Exception {
+        validatePattern(parser, "DATEEOD");
+        validateExceptionThrown(parser, "DATEEOD()", "DATEEOD expected 1 parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "DATEEOD(1)", "DATEEOD parameter 1 expected type DATE, but was NUMBER", 1, 8);
+        validateDateResult(parser, "DATEEOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 23, 59, 59));
+    }
+
+    @Test
+    public void testDATEFORMAT() throws Exception {
+        validatePattern(parser, "DATEFORMAT");
+
+        validateExceptionThrown(parser, "DATEFORMAT()", "DATEFORMAT expected 2..7 parameter(s), but got 0", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT(1, 2)", "DATEFORMAT parameter 1 expected type STRING, but was NUMBER", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', MAKEBOOLEAN('1'))", "DATEFORMAT parameter 1 expected type NUMBER, but was BOOLEAN", 1, 26);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', '4', 1, 1997, 14, 10, 44)", "Too many parameters", 1, 31);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, '1', 1997, 14, 10, 44)", "DATEFORMAT parameter 3 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, '1997', 14, 10, 44)", "DATEFORMAT parameter 4 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, '14', 10, 44)", "DATEFORMAT parameter 5 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, 14, '10', 44)", "DATEFORMAT parameter 6 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, 14, 10, '44')", "DATEFORMAT parameter 7 expected type NUMBER, but was STRING", 1, 11);
+
+        validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007))", "03/14/2007");
+        validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', '2007-03-14')", "03/14/2007");
+        validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', 3, 14, 2007, 0, 0, 00)", "03/14/2007");
     }
 
     @Test
@@ -355,6 +415,11 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "FLOOR(null)", null);
         validateNumericResult(parser, "FLOOR(0.01)", "0.0");
         validateNumericResult(parser, "FLOOR(2.022)", "2.0");
+    }
+
+    @Test
+    public void testFORMAT() throws Exception {
+        validatePattern(parser, "FORMAT");
     }
 
     @Test

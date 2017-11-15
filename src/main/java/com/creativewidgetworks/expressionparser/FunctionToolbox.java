@@ -66,13 +66,18 @@ public class FunctionToolbox {
         parser.addFunction(new Function("CONTAINSALL", toolbox, "_CONTAINSALL", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("CONTAINSANY", toolbox, "_CONTAINSANY", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("COS", toolbox, "_COS", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("DATEADD", toolbox, "_DATEADD", 2, 3, ValueType.DATE, ValueType.NUMBER, ValueType.STRING));
         parser.addFunction(new Function("DATEBETWEEN", toolbox, "_DATEBETWEEN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.DATE));
+        parser.addFunction(new Function("DATEBOD", toolbox, "_DATEBOD", 1, 1, ValueType.DATE));
+        parser.addFunction(new Function("DATEEOD", toolbox, "_DATEEOD", 1, 1, ValueType.DATE));
+        parser.addFunction(new Function("DATEFORMAT", toolbox, "_DATEFORMAT", 2, 7, ValueType.STRING, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("DATEWITHIN", toolbox, "_DATEWITHIN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.NUMBER));
         parser.addFunction(new Function("ENDSWITH", toolbox, "_ENDSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("EXP", toolbox, "_EXP", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("FACTORIAL", toolbox, "_FACTORIAL", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("FIND", toolbox, "_FIND", 2, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("FLOOR", toolbox, "_FLOOR", 1, 1, ValueType.NUMBER));
+        parser.addFunction(new Function("FORMAT", toolbox, "_FORMAT", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("GUID", toolbox, "_GUID", 0, 1, ValueType.NUMBER));
         parser.addFunction(new Function("HEX", toolbox, "_HEX", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("ISANYOF", toolbox, "_ISANYOF", 1, Integer.MAX_VALUE, ValueType.STRING, ValueType.UNDEFINED));
@@ -434,6 +439,47 @@ public class FunctionToolbox {
 
         return value;
     }
+    /*
+     * Adds or subtracts a period of time to a Date value
+     * Period units: m=month, d=day, y=year, hr=hour, mi=minute, se=second (day is default)
+     * date = 03/14/2007 12:00:00
+     * DateAdd(date, 1) -> '03/15/2007 12:00:00'
+     * DateAdd(date, -1) -> '03/13/2007 12:00:00'
+     * DateAdd(date, 1, 'm') -> '04/15/2007 12:00:00'
+     * DateAdd(date, 1, 'd') -> '03/15/2007 12:00:00'
+     * DateAdd(date, 1, 'y') -> '03/15/2008 12:00:00'
+     * DateAdd(date, 1, 'hr') -> '03/15/2007 13:00:00'
+     * DateAdd(date, 1, 'mi') -> '03/15/2007 12:01:00'
+     * DateAdd(date, 1, 'se') -> '03/15/2008 12:00:01'
+     */
+    public Value _DATEADD(Token function, Stack<Token> stack) throws ParserException {
+        String period = (stack.size() <  3 ? "d" : stack.pop().asString()).toLowerCase();
+        int delta = stack.pop().asNumber().intValue();
+        Date date = stack.pop().asDate();
+
+        int field;
+        if (period.equals("m")) {
+            field = Calendar.MONTH;
+        } else if (period.equals("d")) {
+            field = Calendar.DAY_OF_MONTH;
+        } else if (period.equals("y")) {
+            field = Calendar.YEAR;
+        } else if (period.equals("hr")) {
+            field = Calendar.HOUR;
+        } else if (period.equals("mi")) {
+            field = Calendar.MINUTE;
+        } else if (period.equals("se")) {
+            field = Calendar.SECOND;
+        } else {
+            throw new ParserException(ParserException.formatMessage("error.expected_format_option"), function.getRow(), function.getColumn());
+        }
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(field, delta);
+
+        return new Value("DATEADD", cal.getTime());
+    }
 
     /*
      * Tests a datetime to see if it is between two values
@@ -457,28 +503,90 @@ public class FunctionToolbox {
     }
 
     /*
-     * Formats or creates and formats a Date object
-     * DateFormat(formatString, dtdtFrom, dtThru) ->  FALSE
-     * DateFormat(formatString, mon, day, year, hour, min, sec) ->  TRUE
+     * Sets the date to the beginning of the day
+     * date = 03/15/2007 13:14:15
+     * DateBOD(date) ->  03/15/2007 00:00:00
      */
-    public Value _DATEFORMAT(Token function, Stack<Token> stack) {
-        Date upper = stack.pop().asDate();
-        Date lower = stack.pop().asDate();
-        Date dateToTest = stack.pop().asDate();
+    public Value _DATEBOD(Token function, Stack<Token> stack) {
+        Date date = stack.pop().asDate();
 
-        // Any nulls returns FALSE
-        boolean inRange = upper != null && lower != null && dateToTest != null;
-        inRange = inRange && dateToTest.getTime() >= lower.getTime() && dateToTest.getTime() <= upper.getTime();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0, 0, 0);
 
-        return new Value(function.getText()).setValue(inRange ? Boolean.TRUE : Boolean.FALSE);
+        return new Value(function.getText()).setValue(cal.getTime());
+    }
+
+    /*
+     * Sets the date to the end of the day
+     * date = 03/15/2007 13:14:15
+     * DateBOD(date) ->  03/15/2007 23:59:59
+     */
+    public Value _DATEEOD(Token function, Stack<Token> stack) {
+        Date date = stack.pop().asDate();
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 23, 59, 59);
+
+        return new Value(function.getText()).setValue(cal.getTime());
+    }
+
+    /*
+     * Formats or creates and formats a Date value
+     * formatString = 'MM/dd/yyyy'
+     * DateFormat(formatString, NOW()) -> '03/14/2007'
+     * DateFormat(formatString, '2007/03/14') -> '03/14/2007'
+     * DateFormat(formatString, 3, 14, 2007) -> '03/14/2007'
+     * DateFormat(formatString, 3, 14, 2007, 12, 0, 0) -> '03/14/2007'
+     */
+    public Value _DATEFORMAT(Token function, Stack<Token> stack) throws ParserException {
+        Token[] args = parser.popArguments(function, stack);
+
+        String formatString = args[0].asString();
+
+        Date date;
+        Stack stk = new Stack<Token>();
+        ValueType type = args[1].getValue().getType();
+        if (ValueType.DATE.equals(type)) {
+            if (args.length > 2) {
+                throw new ParserException(ParserException.formatMessage("error.function_too_many_params"), args[2].getRow(), args[2].getColumn());
+            }
+            date = args[1].getValue().asDate();
+        } else if (ValueType.STRING.equals(type)) {
+            if (args.length > 2) {
+                throw new ParserException(ParserException.formatMessage("error.function_too_many_params"), args[2].getRow(), args[2].getColumn());
+            }
+            stk.push(args[1]);
+            Token func = new Token(function.getType(), function.getText(), function.getRow(), function.getColumn());
+            func.setArgc(1);
+            date = _MAKEDATE(func, stk).asDate();
+        } else if (ValueType.NUMBER.equals(type)) {
+            for (int i = 1; i < args.length; i++) {
+                Token token = args[i];
+                if (!ValueType.NUMBER.equals(token.getValue().getType())) {
+                    throw new ParserException(ParserException.formatMessage("error.function_type_mismatch", function.getText(), String.valueOf(i), ValueType.NUMBER.name(), token.getValue().getType()), args[i].getRow(), args[i].getColumn());
+                }
+                stk.push(token);
+            }
+            Token func = new Token(function.getType(), function.getText(), function.getRow(), function.getColumn());
+            func.setArgc(args.length - 1);
+            date = _MAKEDATE(func, stk).asDate();
+        } else {
+            throw new ParserException(ParserException.formatMessage("error.function_type_mismatch", function.getText(), String.valueOf(1), ValueType.NUMBER.name(), type.name()), args[1].getRow(), args[1].getColumn());
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat(formatString);
+
+        return new Value(function.getText()).setValue(sdf.format(date));
     }
 
     /*
      * Tests two dates to see if they are within x milliseconds of each other
      * Date1 = 2009-12-01 12:20:00
      * Date2 = 2009-12-01 12:20:30
-     * DateWithin(Date1, Date2, 10000) ->  FALSE
-     * DateWithin(Date1, Date2, 60000) ->  TRUE
+     * DateWithin(Date1, Date2, 10000) -> FALSE
+     * DateWithin(Date1, Date2, 60000) -> TRUE
      */
     public Value _DATEWITHIN(Token function, Stack<Token> stack) {
         BigDecimal millis = stack.pop().asNumber();
@@ -598,6 +706,13 @@ public class FunctionToolbox {
         }
 
         return value;
+    }
+
+    /*
+    * Applies a mask to format a string
+    */
+    public Value _FORMAT(Token function, Stack<Token> stack) {
+        return null;
     }
 
     /*

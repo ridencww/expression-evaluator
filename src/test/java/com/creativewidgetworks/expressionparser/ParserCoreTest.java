@@ -131,20 +131,21 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
     @Test
     public void testDim() throws Exception {
-        validateExceptionThrown(parser, "DIM()", "DIM expected 1..2 parameter(s), but got 0", 1, 4);
-        validateExceptionThrown(parser, "DIM('Hi')", "DIM parameter 1 expected type NUMBER, but was STRING", 1, 4);
-        validateExceptionThrown(parser, "DIM(1, 'Hi')", "DIM parameter 2 expected type NUMBER, but was STRING", 1, 4);
-        validateExceptionThrown(parser, "DIM(-1)", "DIM parameter numRows expected value to be in the range of 1..10000, but was -1", 1, 5);
-        validateExceptionThrown(parser, "DIM(11000)", "DIM parameter numRows expected value to be in the range of 1..10000, but was 11000", 1, 5);
-        validateExceptionThrown(parser, "DIM(1, -1)", "DIM parameter numCols expected value to be in the range of 1..256, but was -1", 1, 5);
-        validateExceptionThrown(parser, "DIM(1, 300)", "DIM parameter numCols expected value to be in the range of 1..256, but was 300", 1, 5);
+        validateExceptionThrown(parser, "DIM()", "DIM expected 2..3 parameter(s), but got 0", 1, 4);
+        validateExceptionThrown(parser, "DIM('A', 1, 1)", "Expected IDENTIFIER, but got STRING", 1, 5);
+        validateExceptionThrown(parser, "DIM(A, 'Hi')", "DIM parameter 2 expected type NUMBER, but was STRING", 1, 4);
+        validateExceptionThrown(parser, "DIM(A, 1, 'Hi')", "DIM parameter 3 expected type NUMBER, but was STRING", 1, 4);
+        validateExceptionThrown(parser, "DIM(A, -1)", "DIM parameter numRows expected value to be in the range of 1..10000, but was -1", 1, 8);
+        validateExceptionThrown(parser, "DIM(A, 11000)", "DIM parameter numRows expected value to be in the range of 1..10000, but was 11000", 1, 8);
+        validateExceptionThrown(parser, "DIM(A, 1, -1)", "DIM parameter numCols expected value to be in the range of 1..256, but was -1", 1, 11);
+        validateExceptionThrown(parser, "DIM(A, 1, 300)", "DIM parameter numCols expected value to be in the range of 1..256, but was 300", 1, 11);
 
-        Value value = parser.eval("DIM(15)");
+        Value value = parser.eval("DIM(A, 15)");
         assertNotNull(value.getArray());
         assertEquals(15, value.getArray().size());
         assertTrue(value.getArray().get(1) instanceof Value);
 
-        value = parser.eval("DIM(10,5)");
+        value = parser.eval("DIM(A, 10,5)");
         assertNotNull(value.getArray());
         assertEquals(10, value.getArray().size());
         assertTrue(value.getArray().get(1) instanceof Value);

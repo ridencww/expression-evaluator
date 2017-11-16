@@ -60,6 +60,32 @@ public class Parser {
 
     /*----------------------------------------------------------------------------*/
 
+    /**
+     * Examine the stack (list of function parameters) looking for any whose value
+     * is null. Returns null if all parameters are non-null or a comma-delimited
+     * list of parameter numbers that are null.
+     */
+    public String listOfNullParameters(Stack<Token> stack) {
+        return listOfNullParameters(stack, 0);
+    }
+
+    public String listOfNullParameters(Stack<Token> stack, int offset) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = offset; i < stack.size(); i++) {
+            if (stack.elementAt(i).getValue().asObject() == null) {
+                if (sb.length() > 0) {
+                    sb.append(", ");
+                }
+                sb.append(i);
+            }
+        }
+
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    /*----------------------------------------------------------------------------*/
+
     public void addConstant(String name, BigDecimal value) {
         if (name != null) {
             constants.put(caseSensitive ? name : name.toUpperCase(), value);
@@ -147,7 +173,7 @@ public class Parser {
         functions.clear();
         addFunction(new Function("clearGlobal", this, "_CLEARGLOBAL", 1, 1));
         addFunction(new Function("clearGlobals", this, "_CLEARGLOBALS", 0, 0));
-        addFunction(new Function("dim", this, "_DIM", 1, 2, ValueType.NUMBER, ValueType.NUMBER));
+        addFunction(new Function("dim", this, "_DIM", 2, 3, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER));
         addFunction(new Function("getGlobal", this, "_GETGLOBAL", 1, 1, ValueType.STRING));
         addFunction(new Function("setGlobal", this, "_SETGLOBAL", 2, 2, ValueType.STRING));
         addFunction(new Function("now", this, "_NOW", 0, 1));
@@ -247,6 +273,7 @@ public class Parser {
     public Map<String, Value> getVariables() {
         return variables;
     }
+
 
     /*----------------------------------------------------------------------------*/
     /*----------------------------------------------------------------------------*/
@@ -673,8 +700,18 @@ public class Parser {
                         setStatusAndFail(rhs, "error.expected_initialized", rhs.getText());
                     }
 
-                    // Identifier should always be found as it would have been created when parsing the RPN stack
-                    variables.get(lhs.getText().toUpperCase()).set(rhs.getValue());
+                    // Identifier should always be found as it would have been created when parsing the RPN
+                    // stack. Setting one and two dimensional array values is handled here as well.
+                    String[] varName = lhs.getText().split("[\\[,\\]]");
+                    Value val = variables.get(varName[0].toUpperCase());
+                    if (varName.length > 1) {
+                        val = val.getArray().get(Integer.valueOf(varName[1]).intValue());
+                        if (varName.length > 2) {
+                            val = val.getArray().get(Integer.valueOf(varName[2]).intValue());
+                        }
+                    }
+
+                    val.set(rhs.getValue());
                 } else {
                     setStatusAndFail(lhs, "error.expected_identifier", lhs.getText());
                 }
@@ -866,6 +903,13 @@ public class Parser {
                     setStatusAndFail(var, "error.expected_array", var.getValue().getType());
                 }
 
+                String strIdx = "";
+                if (index != null) {
+                    strIdx = subIndex == null ? index.asString() : index.asString() + "," + subIndex.asString();
+                    strIdx = "[" + strIdx + "]";
+                }
+                String valName = var.getText() + strIdx;
+
                 int idx = 0;
                 Value val = null;
                 if (index != null) {
@@ -877,6 +921,7 @@ public class Parser {
 
                     val = new Value();
                     val.set(var.getValue().getArray().get(idx));
+                    val.setName(valName);
 
                     if (subIndex != null) {
                         if (!ValueType.ARRAY.equals(val.getType())) {
@@ -891,19 +936,13 @@ public class Parser {
                     }
                 }
 
-                String strIdx = "";
-                if (index != null) {
-                    strIdx = subIndex == null ? index.asString() : index.asString() + "," + subIndex.asString();
-                }
-
-                // V[] = V[0]
+                // V[] is the same as V[0]
                 if (val == null) {
                     int len = var.getValue().getArray().size();
                     val = len > 0 ? var.getValue().getArray().get(0) : var.getValue();
                 }
 
-                val.setName(var.getText() + "[" + strIdx + "]");
-                stack.push(new Token(TokenType.IDENTIFIER, val, var.getRow(), var.getColumn()));
+                stack.push(new Token(TokenType.IDENTIFIER, valName, val, var.getRow(), var.getColumn()));
            } else {
                 stack.push(token);
             }
@@ -951,10 +990,12 @@ public class Parser {
      * Clears a global variable
      *  clearGlobal("DOW") -> Boolean.TRUE and "DOW" is removed, if present
      */
-
     public Value _CLEARGLOBAL(Token function, Stack<Token> stack) throws ParserException {
-        clearGlobalVariable(stack.pop().asString());
-        return new Value(function.getText()).setValue(Boolean.TRUE);
+        boolean haveParameters = listOfNullParameters(stack) == null;
+        if (haveParameters) {
+            clearGlobalVariable(stack.pop().asString());
+        }
+        return new Value(function.getText()).setValue(haveParameters ? Boolean.TRUE : Boolean.FALSE);
     }
 
     /*
@@ -967,27 +1008,36 @@ public class Parser {
     }
 
     /*
-    * Sizes a one or two dimension array for use
-    *  DIM(10) -> One dimensional array of a size of 10 rows
-    *  DIM(10, 5) -> Two dimensional array of a size of 10 rows, each row containing 5 elements
+    * Creates a one or two dimension array for use
+    *  DIM(V, 10) -> One dimensional array of a size of 10 rows is assigned to V
+    *  DIM(V, 10, 5) -> Two dimensional array of a size of 10 rows, each row containing 5 elements is assigned to V
     */
     public Value _DIM(Token function, Stack<Token> stack) throws ParserException {
+        String nullParams = listOfNullParameters(stack, 1);
+        if (nullParams != null) {
+            setStatusAndFail(function, "error.null_parameters", nullParams);
+        }
+
         Token[] args = popArguments(function, stack);
 
-        int numRows = args[0].asNumber().intValue();
+        if (!TokenType.IDENTIFIER.equals(args[0].getType())) {
+            setStatusAndFail(args[0], "error.expected_identifier", args[0].getType().name());
+        }
+
+        int numRows = args[1].asNumber().intValue();
         if (numRows < 1 || numRows > MAX_DIM_ROWS) {
-            setStatusAndFail(args[0], "error.function_value_out_of_range", "DIM", "numRows", "1", "10000", String.valueOf(numRows));
+            setStatusAndFail(args[1], "error.function_value_out_of_range", "DIM", "numRows", "1", "10000", String.valueOf(numRows));
         }
 
         int numCols = 0;
-        if (args.length > 1) {
-            numCols = args[1].asNumber().intValue();
+        if (args.length > 2) {
+            numCols = args[2].asNumber().intValue();
             if (numCols < 1 || numCols > MAX_DIM_COLS) {
-                setStatusAndFail(args[0], "error.function_value_out_of_range", "DIM", "numCols", "1", "256", String.valueOf(numCols));
+                setStatusAndFail(args[2], "error.function_value_out_of_range", "DIM", "numCols", "1", "256", String.valueOf(numCols));
             }
         }
 
-        Value value = new Value();
+        Value value = new Value("ARRAY", ValueType.ARRAY);
         for (int i = 0; i < numRows; i++) {
             Value newRow = new Value();
             value.addValueToArray(newRow);
@@ -995,6 +1045,9 @@ public class Parser {
                 newRow.addValueToArray(new Value());
             }
         }
+
+        args[0].setValue(value);
+        variables.put(args[0].getText().toUpperCase(), args[0].getValue());
 
         return value;
     }
@@ -1041,6 +1094,11 @@ public class Parser {
      *
      */
     public Value _NOW(Token function, Stack<Token> stack) throws ParserException {
+        String nullParams = listOfNullParameters(stack);
+        if (nullParams != null) {
+            setStatusAndFail(function, "error.null_parameters", nullParams);
+        }
+
         Calendar calendar = Calendar.getInstance();
         if (function.getArgc() > 0) {
             Token token = stack.pop();
@@ -1081,8 +1139,14 @@ public class Parser {
      * returns previous precision value
      */
     public Value _PRECISION(Token function, Stack<Token> stack) throws ParserException {
-        int oldValue = precision;
-        if (function.getArgc() > 0) {
+        String nullParams = listOfNullParameters(stack);
+        if (nullParams != null) {
+            setStatusAndFail(function, "error.null_parameters", nullParams);
+        }
+
+        Value value = new Value(function.getText()).setValue(BigDecimal.valueOf(precision));
+
+        if (listOfNullParameters(stack) == null) {
             Token token = stack.pop();
             int decimals = token.asNumber().intValue();
             if (decimals >= 0 && decimals <= 100) {
@@ -1093,7 +1157,8 @@ public class Parser {
                 throw new ParserException(msg, token.getRow(), token.getColumn() - 1);
             }
         }
-        return new Value(function.getText()).setValue(BigDecimal.valueOf(oldValue));
+
+        return value;
     }
 
 }

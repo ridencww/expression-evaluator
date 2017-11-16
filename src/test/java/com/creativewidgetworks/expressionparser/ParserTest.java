@@ -224,10 +224,18 @@ public class ParserTest extends UnitTestBase {
         validateBooleanResult(parser, "V1=NOW()", Boolean.TRUE);
         validateDateResult(parser, "V1()", now);
 
-        // array
+        // array - one dimension
         FunctionToolbox.register(parser);
         validateBooleanResult(parser, "V1=SPLIT('alpha,beta,gamma')", Boolean.TRUE);
-        validateArray(parser, "V1","alpha", "alpha", "beta", "gamma");
+        parser.eval("V1[1] = 'omega'");
+        validateArray(parser, "V1","alpha", "alpha", "omega", "gamma");
+
+        // array - two dimension
+        parser.eval("DIM(V2,10,5)");
+        parser.eval("V2[2,3] = 'epsilon'");
+        parser.eval("V2[2,4] = 'omega'");
+        validateStringResult(parser, "V2[2,3]", "epsilon");
+        validateStringResult(parser, "V2[2,4]", "omega");
     }
 
     /*----------------------------------------------------------------------------*/

@@ -72,12 +72,14 @@ public class Parser {
     public String listOfNullParameters(Stack<Token> stack, int offset) {
         StringBuilder sb = new StringBuilder();
 
-        for (int i = offset; i < stack.size(); i++) {
-            if (stack.elementAt(i).getValue().asObject() == null) {
-                if (sb.length() > 0) {
-                    sb.append(", ");
+        if (stack != null) {
+            for (int i = offset; i < stack.size(); i++) {
+                if (stack.elementAt(i).getValue().asObject() == null) {
+                    if (sb.length() > 0) {
+                        sb.append(", ");
+                    }
+                    sb.append(i);
                 }
-                sb.append(i);
             }
         }
 

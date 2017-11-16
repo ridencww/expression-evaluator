@@ -304,6 +304,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, '14', 10, 44)", "DATEFORMAT parameter 5 expected type NUMBER, but was STRING", 1, 11);
         validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, 14, '10', 44)", "DATEFORMAT parameter 6 expected type NUMBER, but was STRING", 1, 11);
         validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, 14, 10, '44')", "DATEFORMAT parameter 7 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007), 1)", "Too many parameters", 1, 49);
 
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007))", "03/14/2007");
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', '2007-03-14')", "03/14/2007");
@@ -438,6 +439,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "FORMATBYLEN('A', 1, 'C')", "FORMATBYLEN parameter 2 expected type STRING, but was NUMBER", 1, 12);
         validateExceptionThrown(parser, "FORMATBYLEN('A', 'B', 1)", "FORMATBYLEN parameter 3 expected type STRING, but was NUMBER", 1, 12);
         validateExceptionThrown(parser, "FORMATBYLEN('A', '[', 'C')", "Syntax error, missing bracket. Expected ]", 1, 26);
+        validateExceptionThrown(parser, "FORMATBYLEN('8155551212', '[0-9*', '?=0=')", "Invalid regex pattern: [0-9*", 1, 27);
 
         validateStringResult(parser, "FORMATBYLEN(null, null, null)", null);
         validateStringResult(parser, "FORMATBYLEN('a', null, null)", null);
@@ -873,6 +875,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "MATCH(1, '1.23')", "MATCH parameter 1 expected type STRING, but was NUMBER", 1, 6);
         validateExceptionThrown(parser, "MATCH('1.23', 1)", "MATCH parameter 2 expected type STRING, but was NUMBER", 1, 6);
         validateExceptionThrown(parser, "MATCH('1.23', '[')", "Syntax error, missing bracket. Expected ]", 1, 18);
+        validateExceptionThrown(parser, "MATCH('1.23', '+')", "Invalid regex pattern: +", 1, 15);
 
         validateArray(parser, "MATCH(null, null)", null);
         validateArray(parser, "MATCH('a', null)", null);

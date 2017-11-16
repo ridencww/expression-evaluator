@@ -104,7 +104,7 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     /*----------------------------------------------------------------------------*/
 
     @Test
-    public void testClearVariabl() {
+    public void testClearVariable() {
         parser.addVariable("A", new Value());
         assertNotNull(parser.getVariable("A"));
         assertEquals("wrong count", 1, parser.getVariables().size());
@@ -131,6 +131,7 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
     @Test
     public void testDim() throws Exception {
+        validateExceptionThrown(parser, "DIM(A,B,C)", "The following parameter(s) cannot be null: 1, 2", 1, 1);
         validateExceptionThrown(parser, "DIM()", "DIM expected 2..3 parameter(s), but got 0", 1, 4);
         validateExceptionThrown(parser, "DIM('A', 1, 1)", "Expected IDENTIFIER, but got STRING", 1, 5);
         validateExceptionThrown(parser, "DIM(A, 'Hi')", "DIM parameter 2 expected type NUMBER, but was STRING", 1, 4);
@@ -328,6 +329,17 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     }
 
     @Test
+    public void testListOfNullParameter() {
+        assertNull(parser.listOfNullParameters(null));
+
+        Stack<Token> stack = new Stack<Token>();
+        stack.push(new Token(TokenType.VALUE, "", 1, 1));
+        stack.push(new Token(TokenType.VALUE, "", 2, 1));
+        assertNotNull(parser.listOfNullParameters(stack));
+        assertEquals("0, 1", parser.listOfNullParameters(stack));
+    }
+
+    @Test
     public void testTokenize() throws Exception {
         Token[] expected = new Token[] {
                 new Token(TokenType.OPERATOR, "(", 1, 1),
@@ -390,11 +402,37 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
     /*----------------------------------------------------------------------------*/
 
+     @Test
+    public void testEval_emptySource() {
+        Value result = parser.eval("");
+        assertEquals("ERROR: EMPTY EXPRESSION", result.getName());
+        assertEquals("", result.asString());
+    }
+
+   /*----------------------------------------------------------------------------*/
+
     @Test
-   public void testEval_emptySource() {
-       Value result = parser.eval("");
-       assertEquals("ERROR: EMPTY EXPRESSION", result.getName());
-       assertEquals("", result.asString());
-   }
+    public void testUnbalancedBrackets() {
+        validateExceptionThrown(parser, "[1", "Syntax error, missing bracket. Expected ]", 1, 2);
+        validateExceptionThrown(parser, "1]", "Syntax error, missing bracket. Expected [", 1, 2);
+    }
+
+    @Test
+    public void testUnbalancedParens() {
+        validateExceptionThrown(parser, "(1", "Syntax error, missing parenthesis. Expected )", 1, 2);
+        validateExceptionThrown(parser, "1)", "Syntax error, missing parenthesis. Expected (", 1, 2);
+    }
+
+    @Test
+    public void testMissingTELSE() {
+        validateExceptionThrown(parser, "1 == 1 ? 2", "Syntax error, ? without a matching :", 1, 8);
+        validateExceptionThrown(parser, "1 != 1 ? 2", "Syntax error, ? without a matching :", 1, 8);
+    }
+
+    @Test
+    public void testMissingIF() {
+        validateExceptionThrown(parser, "1 == 1 : 2", "Syntax error, : without preceding ?", 1, 8);
+        validateExceptionThrown(parser, "1 != 1 : 2", "Syntax error, : without preceding ?", 1, 8);
+    }
 
 }

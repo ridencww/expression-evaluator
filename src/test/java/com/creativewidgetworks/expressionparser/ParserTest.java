@@ -153,6 +153,7 @@ public class ParserTest extends UnitTestBase {
         validateDateResult(parser, "NOW(1)", bod);
         validateDateResult(parser, "NOW(2)", eod);
 
+        validateExceptionThrown(parser, "NOW(A)", "The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2", 1, 4);
         validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3", 1, 4);
     }
@@ -166,6 +167,7 @@ public class ParserTest extends UnitTestBase {
         assertEquals(2, parser.getPrecision());
         assertEquals(oldPrecision, Parser.DEFAULT_PRECISION);
 
+        validateExceptionThrown(parser, "PRECISION(A)", "The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "PRECISION()", "PRECISION expected 1 parameter(s), but got 0", 1, 10);
         validateExceptionThrown(parser, "PRECISION('Hello')", "PRECISION parameter 1 expected type NUMBER, but was STRING", 1, 10);
         validateExceptionThrown(parser, "PRECISION(0,1)", "PRECISION expected 1 parameter(s), but got 2", 1, 10);

@@ -574,11 +574,7 @@ public class FunctionToolbox {
                 date = _MAKEDATE(func, stk).asDate();
             } else if (ValueType.NUMBER.equals(type)) {
                 for (int i = 1; i < args.length; i++) {
-                    Token token = args[i];
-                    if (!ValueType.NUMBER.equals(token.getValue().getType())) {
-                        throw new ParserException(ParserException.formatMessage("error.function_type_mismatch", function.getText(), String.valueOf(i), ValueType.NUMBER.name(), token.getValue().getType()), args[i].getRow(), args[i].getColumn());
-                    }
-                    stk.push(token);
+                    stk.push(args[i]);
                 }
                 Token func = new Token(function.getType(), function.getText(), function.getRow(), function.getColumn());
                 func.setArgc(args.length - 1);

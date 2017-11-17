@@ -527,6 +527,11 @@ public class Parser {
                 }
             }
 
+            // Addresses where a function name is mistyped and is recognized as an identifier
+            if (lastToken != null && lastToken.isIdentifer() && token.getText().equalsIgnoreCase(Operator.LPAREN.getText())) {
+                setStatusAndFail(lastToken, "error.expected_function", lastToken.getText());
+            }
+
             lastToken = token;
 
             if (token.isNumber() || token.isString() || token.isConstant() || token.isField() || token.isIdentifer() || token.isProperty()) {
@@ -549,7 +554,7 @@ public class Parser {
                     while (!stack.empty() && !stack.peek().opEquals(Operator.LPAREN)) {
                         outputTokens.add(stack.pop());
                     }
-                    if (argStack.peek().haveArgs) {
+                    if (argStack.size() > 0 && argStack.peek().haveArgs) {
                         argStack.peek().count++;
                     }
                 }

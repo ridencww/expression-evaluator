@@ -137,8 +137,8 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "AVERAGE()", "AVERAGE expected 1..n parameter(s), but got 0", 1, 8);
         validateExceptionThrown(parser, "AVERAGE('1.23')", "AVERAGE parameter 1 expected type NUMBER, but was STRING", 1, 8);
         validateExceptionThrown(parser, "AVERAGE(1,2,'3')", "Expected NUMBER value, but was STRING", 1, 13);
+        validateExceptionThrown(parser, "AVERAGE(null, null)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
 
-        validateNumericResult(parser, "AVERAGE(null)", null);
         validateNumericResult(parser, "AVERAGE(0)", "0");
         validateNumericResult(parser, "AVERAGE(2)", "2");
         validateNumericResult(parser, "AVERAGE(2, 4, 6, 8)", "5");
@@ -230,6 +230,7 @@ public class FunctionToolboxTest extends UnitTestBase {
     public void testDATEADD() throws Exception {
         validatePattern(parser, "DATEADD");
 
+        validateExceptionThrown(parser, "DATEADD(NULL, NULL)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
         validateExceptionThrown(parser, "DATEADD()", "DATEADD expected 2..3 parameter(s), but got 0", 1, 8);
         validateExceptionThrown(parser, "DATEADD(1, 2)", "DATEADD parameter 1 expected type DATE, but was NUMBER", 1, 8);
         validateExceptionThrown(parser, "DATEADD(NOW(), '2')", "DATEADD parameter 2 expected type NUMBER, but was STRING", 1, 8);
@@ -295,6 +296,7 @@ public class FunctionToolboxTest extends UnitTestBase {
     public void testDATEFORMAT() throws Exception {
         validatePattern(parser, "DATEFORMAT");
 
+        validateExceptionThrown(parser, "DATEFORMAT(NULL, NULL)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
         validateExceptionThrown(parser, "DATEFORMAT()", "DATEFORMAT expected 2..7 parameter(s), but got 0", 1, 11);
         validateExceptionThrown(parser, "DATEFORMAT(1, 2)", "DATEFORMAT parameter 1 expected type STRING, but was NUMBER", 1, 11);
         validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', MAKEBOOLEAN('1'))", "DATEFORMAT parameter 1 expected type NUMBER, but was BOOLEAN", 1, 26);
@@ -422,6 +424,7 @@ public class FunctionToolboxTest extends UnitTestBase {
     public void testFORMAT() throws Exception {
         validatePattern(parser, "FORMAT");
 
+        validateExceptionThrown(parser, "FORMAT(NULL, NULL)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
         validateExceptionThrown(parser, "FORMAT()", "FORMAT expected 2 parameter(s), but got 0", 1, 7);
         validateExceptionThrown(parser, "FORMAT(1, 'b')", "FORMAT parameter 1 expected type STRING, but was NUMBER", 1, 7);
         validateExceptionThrown(parser, "FORMAT('a', 2)", "FORMAT parameter 2 expected type STRING, but was NUMBER", 1, 7);
@@ -972,6 +975,7 @@ public class FunctionToolboxTest extends UnitTestBase {
     public void testRANDOM() throws Exception {
         validatePattern(parser, "RANDOM");
 
+        validateExceptionThrown(parser, "RANDOM(NULL)","The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "RANDOM(1,2,3)","RANDOM expected 0..2 parameter(s), but got 3", 1, 7);
         validateExceptionThrown(parser, "RANDOM('123', 2)","RANDOM parameter 1 expected type NUMBER, but was STRING", 1, 7);
         validateExceptionThrown(parser, "RANDOM(1, '123')","RANDOM parameter 2 expected type NUMBER, but was STRING", 1, 7);
@@ -1096,7 +1100,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "RIGHTOF('riden@myemail.org', '<->')", "");
         validateStringResult(parser, "RIGHTOF('left<->right', '<->')", "right");
     }
-    
+
     @Test
     public void testSIN() throws Exception {
         validatePattern(parser, "SIN");

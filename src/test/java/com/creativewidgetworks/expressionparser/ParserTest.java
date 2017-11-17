@@ -224,7 +224,7 @@ public class ParserTest extends UnitTestBase {
         // date
         Date now = new Date();
         validateBooleanResult(parser, "V1=NOW()", Boolean.TRUE);
-        validateDateResult(parser, "V1()", now);
+        validateDateResult(parser, "V1", now);
 
         // array - one dimension
         FunctionToolbox.register(parser);

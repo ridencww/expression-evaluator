@@ -130,6 +130,13 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     /*----------------------------------------------------------------------------*/
 
     @Test
+    public void testIdentifierAsFunctionCaught() {
+        validateExceptionThrown(parser, "TYPO(1)", "TYPO is not a function", 1, 1);
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
     public void testDim() throws Exception {
         validateExceptionThrown(parser, "DIM(A,B,C)", "The following parameter(s) cannot be null: 1, 2", 1, 1);
         validateExceptionThrown(parser, "DIM()", "DIM expected 2..3 parameter(s), but got 0", 1, 4);

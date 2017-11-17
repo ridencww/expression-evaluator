@@ -318,6 +318,11 @@ public class FunctionToolbox {
      * average(null) -> null
      */
     public Value _AVERAGE(Token function, Stack<Token> stack) throws ParserException {
+        String nullParams = parser.listOfNullParameters(stack);
+        if (nullParams != null) {
+            throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
+        }
+
         Value value = new Value(function.getText()).setValue((BigDecimal)null);
 
         Token[] args = parser.popArguments(function, stack);
@@ -372,7 +377,7 @@ public class FunctionToolbox {
         String matchStr = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = false;
-        if (str != null  && matchStr != null) {
+        if (str != null && matchStr != null) {
             b = str.contains(matchStr);
         }
         return new Value(function.getText()).setValue(b ? Boolean.TRUE : Boolean.FALSE);
@@ -389,7 +394,7 @@ public class FunctionToolbox {
         String matchStr = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = false;
-        if (str != null  && matchStr != null) {
+        if (str != null && matchStr != null) {
             b = str.length() > 0 && matchStr.length() > 0;
             for (int i = 0; i < matchStr.length(); i++) {
                 if (str.indexOf(matchStr.charAt(i)) == -1) {
@@ -412,7 +417,7 @@ public class FunctionToolbox {
         String matchStr = stack.pop().asString();
         String str = stack.pop().asString();
         boolean b = false;
-        if (str != null  && matchStr != null) {
+        if (str != null && matchStr != null) {
             for (int i = 0; i < matchStr.length(); i++) {
                 if (str.indexOf(matchStr.charAt(i)) != -1) {
                     b = true;
@@ -453,6 +458,11 @@ public class FunctionToolbox {
      * DateAdd(date, 1, 'se') -> '03/15/2008 12:00:01'
      */
     public Value _DATEADD(Token function, Stack<Token> stack) throws ParserException {
+        String nullParams = parser.listOfNullParameters(stack);
+        if (nullParams != null) {
+            throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
+        }
+
         String period = (stack.size() <  3 ? "d" : stack.pop().asString()).toLowerCase();
         int delta = stack.pop().asNumber().intValue();
         Date date = stack.pop().asDate();
@@ -506,6 +516,7 @@ public class FunctionToolbox {
      * Sets the date to the beginning of the day
      * date = 03/15/2007 13:14:15
      * DateBOD(date) ->  03/15/2007 00:00:00
+     * DateBOD(null) -> null
      */
     public Value _DATEBOD(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText(), (Date)null);
@@ -524,7 +535,8 @@ public class FunctionToolbox {
     /*
      * Sets the date to the end of the day
      * date = 03/15/2007 13:14:15
-     * DateBOD(date) ->  03/15/2007 23:59:59
+     * DateEOD(date) ->  03/15/2007 23:59:59
+     * DateEOD(null) -> null
      */
     public Value _DATEEOD(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText(), (Date)null);
@@ -549,6 +561,11 @@ public class FunctionToolbox {
      * DateFormat(formatString, 3, 14, 2007, 12, 0, 0) -> '03/14/2007'
      */
     public Value _DATEFORMAT(Token function, Stack<Token> stack) throws ParserException {
+        String nullParams = parser.listOfNullParameters(stack);
+        if (nullParams != null) {
+            throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
+        }
+
         Value value = new Value(function.getText()).setValue((Date)null);
 
         Token[] args = parser.popArguments(function, stack);
@@ -726,7 +743,12 @@ public class FunctionToolbox {
     *
     * format('(###) ###-####', 8155551212) -> '(815) 555-1212'
     */
-    public Value _FORMAT(Token function, Stack<Token> stack) {
+    public Value _FORMAT(Token function, Stack<Token> stack) throws ParserException {
+        String nullParams = parser.listOfNullParameters(stack);
+        if (nullParams != null) {
+            throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
+        }
+
         String unformattedStr = stack.pop().asString();
         String mask = stack.pop().asString();
 
@@ -857,18 +879,22 @@ public class FunctionToolbox {
         String guid = UUID.randomUUID().toString();
 
         Token[] args = parser.popArguments(function, stack);
-        int option = args.length == 0 ? 0 : args[0].asNumber().intValue();
+        BigDecimal mode = args.length == 0 ? BigDecimal.ZERO : args[0].asNumber();
 
-        if (option == 0 || option == 1) {
-            guid = guid.replace("-", "");
-        }
+        if (mode != null) {
+            int option = mode.intValue();
 
-        if (option == 4 || option == 5) {
-            guid = "{" + guid + "}";
-        }
+            if (option == 0 || option == 1) {
+                guid = guid.replace("-", "");
+            }
 
-        if (option == 1 || option == 3 || option == 5) {
-            guid = guid.toUpperCase();
+            if (option == 4 || option == 5) {
+                guid = "{" + guid + "}";
+            }
+
+            if (option == 1 || option == 3 || option == 5) {
+                guid = guid.toUpperCase();
+            }
         }
 
         return new Value(function.getText()).setValue(guid);
@@ -1123,8 +1149,8 @@ public class FunctionToolbox {
             value.setValue(BigDecimal.valueOf(d));
         }
 
-        return value;    }
-
+        return value;
+    }
 
     /*
      * Lower cases a string
@@ -1215,7 +1241,7 @@ public class FunctionToolbox {
                 try {
                     value.setValue(sdf.parse(args[0].asString()));
                     break;
-                } catch (ParseException ex) {
+                } catch (Exception ex) {
                     // Okay to ignore, try next pattern
                 }
             }
@@ -1419,7 +1445,12 @@ public class FunctionToolbox {
      * random(3) -> 3.2323  (range 0..5)
      * random(10, 15) -> 13.2323  (range 10..15)
      */
-    public Value _RANDOM(Token function, Stack<Token> stack) {
+    public Value _RANDOM(Token function, Stack<Token> stack) throws ParserException {
+        String nullParams = parser.listOfNullParameters(stack);
+        if (nullParams != null) {
+            throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
+        }
+
         Token[] args = parser.popArguments(function, stack);
         double d = 0;
         if (args.length == 0) {
@@ -1770,7 +1801,7 @@ public class FunctionToolbox {
 
         String str = args[0].asString();
         if (str != null) {
-            if (function.getArgc() == 2 && args[1].asString().length() > 0) {
+            if (function.getArgc() == 2 && args[1].asString() != null && args[1].asString().length() > 0) {
                 value.setValue(trim(str, args[1].asString().charAt(0)));
             } else {
                 value.setValue(str.trim());
@@ -1792,7 +1823,7 @@ public class FunctionToolbox {
 
         String str = args[0].asString();
         if (str != null) {
-            if (function.getArgc() == 2 && args[1].asString().length() > 0) {
+            if (function.getArgc() == 2 && args[1].asString() != null && args[1].asString().length() > 0) {
                 value.setValue(trimLeft(str, args[1].asString().charAt(0)));
             } else {
                 value.setValue(trimLeft(str, ' '));
@@ -1814,7 +1845,7 @@ public class FunctionToolbox {
 
         String str = args[0].asString();
         if (str != null) {
-            if (function.getArgc() == 2 && args[1].asString().length() > 0) {
+            if (function.getArgc() == 2 && args[1].asString() != null && args[1].asString().length() > 0) {
                 value.setValue(trimRight(str, args[1].asString().charAt(0)));
             } else {
                 value.setValue(trimRight(str, ' '));

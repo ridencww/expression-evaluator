@@ -1102,6 +1102,20 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testROUND() throws Exception {
+        validatePattern(parser, "ROUND");
+
+        validateExceptionThrown(parser, "ROUND()","ROUND expected 2 parameter(s), but got 0", 1, 6);
+        validateExceptionThrown(parser, "ROUND(NOW(), 2)","ROUND parameter 1 expected type NUMBER, but was DATE", 1, 6);
+        validateExceptionThrown(parser, "ROUND(123, NOW())","ROUND parameter 2 expected type NUMBER, but was DATE", 1, 6);
+
+        validateNumericResult(parser, "ROUND(123.455, 2)", "123.46");
+        validateNumericResult(parser, "ROUND(123.454, 2)", "123.45");
+        validateNumericResult(parser, "ROUND(-123.455, 2)", "-123.46");
+        validateNumericResult(parser, "ROUND(-123.454, 2)", "-123.45");
+    }
+
+    @Test
     public void testSIN() throws Exception {
         validatePattern(parser, "SIN");
 

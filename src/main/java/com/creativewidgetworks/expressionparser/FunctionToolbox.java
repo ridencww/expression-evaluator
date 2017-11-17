@@ -107,6 +107,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("REPLACEFIRST", toolbox, "_REPLACEFIRST", 3, 3, ValueType.STRING, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("RIGHT", toolbox, "_RIGHT", 2, 2, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("RIGHTOF", toolbox, "_RIGHTOF", 2, 2, ValueType.STRING, ValueType.STRING));
+        parser.addFunction(new Function("ROUND", toolbox, "_ROUND", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("SIN", toolbox, "_SIN", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("SPLIT", toolbox, "_SPLIT", 1, 3, ValueType.STRING, ValueType.STRING, ValueType.NUMBER));
         parser.addFunction(new Function("SQR", toolbox, "_SQR", 1, 1, ValueType.NUMBER));
@@ -1586,6 +1587,23 @@ public class FunctionToolbox {
             } else {
                 value.setValue("");
             }
+        }
+
+        return value;
+    }
+
+    /*
+     * Rounds the number to the specified number of decimal places
+     * round(45.1246, 2) -> 45.13
+     */
+    public Value _ROUND(Token function, Stack<Token> stack) {
+        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+
+        BigDecimal places = stack.pop().asNumber();
+        BigDecimal number = stack.pop().asNumber();
+
+        if (number != null && places != null) {
+            value.setValue(number.setScale(places.intValue(), BigDecimal.ROUND_HALF_UP));
         }
 
         return value;

@@ -11,10 +11,12 @@ public class UnitTestBase extends Assert {
     protected void validateArray(Parser parser, String expression, String baseValue, String... arrayValues) {
         Value result = parser.eval(expression);
         validateNoParserException(result);
+
         if (baseValue == null) {
             assertNull("expected null value", result.asString());
             assertNull("expected null list", result.getArray());
         } else {
+            assertEquals(expression, ValueType.ARRAY, result.getType());
             assertEquals("wrong value", baseValue, result.asString());
             if (arrayValues != null && arrayValues.length > 0) {
                 assertNotNull("Not an array value", result.getArray());
@@ -54,7 +56,7 @@ public class UnitTestBase extends Assert {
             if (result.asDate() == null) {
                 fail("Expected date would be parsed from: " + expression);
             }
-            assertTrue(expression + " = " + expected.toString(), Math.abs(expected.getTime() - result.asDate().getTime()) < 1000);
+            assertTrue(expression + " -> " + result.asDate() + " = " + expected.toString(), Math.abs(expected.getTime() - result.asDate().getTime()) < 1000);
         }
     }
 

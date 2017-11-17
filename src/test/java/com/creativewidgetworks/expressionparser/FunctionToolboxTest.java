@@ -122,8 +122,8 @@ public class FunctionToolboxTest extends UnitTestBase {
 
         validateExceptionThrown(parser, "ARRAYLEN()", "ARRAYLEN expected 1 parameter(s), but got 0", 1, 9);
         validateExceptionThrown(parser, "ARRAYLEN(V1,V2)", "ARRAYLEN expected 1 parameter(s), but got 2", 1, 9);
-        validateExceptionThrown(parser, "ARRAYLEN('test')", "Expected 'test' to be an array value", 1, 10);
-        validateExceptionThrown(parser, "ARRAYLEN(V1)", "Expected 'V1' to be an array value", 1, 10);
+        validateExceptionThrown(parser, "ARRAYLEN('test')", "Expected ARRAY type, but was STRING", 1, 10);
+        validateExceptionThrown(parser, "ARRAYLEN(V1)", "Expected ARRAY type, but was NUMBER", 1, 10);
 
         validateNumericResult(parser, "ARRAYLEN(null)", null);
         validateNumericResult(parser, "ARRAYLEN(V2)", "3");
@@ -137,8 +137,8 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "AVERAGE()", "AVERAGE expected 1..n parameter(s), but got 0", 1, 8);
         validateExceptionThrown(parser, "AVERAGE('1.23')", "AVERAGE parameter 1 expected type NUMBER, but was STRING", 1, 8);
         validateExceptionThrown(parser, "AVERAGE(1,2,'3')", "Expected NUMBER value, but was STRING", 1, 13);
+        validateExceptionThrown(parser, "AVERAGE(null, null)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
 
-        validateNumericResult(parser, "AVERAGE(null)", null);
         validateNumericResult(parser, "AVERAGE(0)", "0");
         validateNumericResult(parser, "AVERAGE(2)", "2");
         validateNumericResult(parser, "AVERAGE(2, 4, 6, 8)", "5");
@@ -227,6 +227,32 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testDATEADD() throws Exception {
+        validatePattern(parser, "DATEADD");
+
+        validateExceptionThrown(parser, "DATEADD(NULL, NULL)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
+        validateExceptionThrown(parser, "DATEADD()", "DATEADD expected 2..3 parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(1, 2)", "DATEADD parameter 1 expected type DATE, but was NUMBER", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(NOW(), '2')", "DATEADD parameter 2 expected type NUMBER, but was STRING", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(NOW(), 2, 1)", "DATEADD parameter 3 expected type STRING, but was NUMBER", 1, 8);
+        validateExceptionThrown(parser, "DATEADD(NOW(), 2, 'x')", "Expected period to be one of 'm', 'd', 'y', 'hr', 'mi', or 'se'", 1, 1);
+
+        // Add or subtract days
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1)", makeDate(3, 15, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), -1)", makeDate(3, 13, 2007, 0, 0, 0));
+
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'm')", makeDate(4, 14, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'd')", makeDate(3, 15, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'y')", makeDate(3, 14, 2008, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'hr')", makeDate(3, 14, 2007, 1, 0, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'mi')", makeDate(3, 14, 2007, 0, 1, 0));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'se')", makeDate(3, 14, 2007, 0, 0, 1));
+
+        // Rollover
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 10, 'm')", makeDate(1, 14, 2008, 0, 0, 0));
+    }
+
+    @Test
     public void testDATEBETWEEN() throws Exception {
         parser.eval("DATE1=MakeDate(5,1,2009)");
         parser.eval("DATE2=MakeDate(9,11,2009)");
@@ -248,6 +274,43 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, FROMDATE, null)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, THRUDATE)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, null)", Boolean.FALSE);
+    }
+
+    @Test
+    public void testDATEBOD() throws Exception {
+        validatePattern(parser, "DATEBOD");
+        validateExceptionThrown(parser, "DATEBOD()", "DATEBOD expected 1 parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "DATEBOD(1)", "DATEBOD parameter 1 expected type DATE, but was NUMBER", 1, 8);
+        validateDateResult(parser, "DATEBOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 0, 0, 0));
+    }
+
+    @Test
+    public void testDATEEOD() throws Exception {
+        validatePattern(parser, "DATEEOD");
+        validateExceptionThrown(parser, "DATEEOD()", "DATEEOD expected 1 parameter(s), but got 0", 1, 8);
+        validateExceptionThrown(parser, "DATEEOD(1)", "DATEEOD parameter 1 expected type DATE, but was NUMBER", 1, 8);
+        validateDateResult(parser, "DATEEOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 23, 59, 59));
+    }
+
+    @Test
+    public void testDATEFORMAT() throws Exception {
+        validatePattern(parser, "DATEFORMAT");
+
+        validateExceptionThrown(parser, "DATEFORMAT(NULL, NULL)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
+        validateExceptionThrown(parser, "DATEFORMAT()", "DATEFORMAT expected 2..7 parameter(s), but got 0", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT(1, 2)", "DATEFORMAT parameter 1 expected type STRING, but was NUMBER", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', MAKEBOOLEAN('1'))", "DATEFORMAT parameter 1 expected type NUMBER, but was BOOLEAN", 1, 26);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', '4', 1, 1997, 14, 10, 44)", "Too many parameters", 1, 31);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, '1', 1997, 14, 10, 44)", "DATEFORMAT parameter 3 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, '1997', 14, 10, 44)", "DATEFORMAT parameter 4 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, '14', 10, 44)", "DATEFORMAT parameter 5 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, 14, '10', 44)", "DATEFORMAT parameter 6 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', 4, 1, 1997, 14, 10, '44')", "DATEFORMAT parameter 7 expected type NUMBER, but was STRING", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007), 1)", "Too many parameters", 1, 49);
+
+        validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007))", "03/14/2007");
+        validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', '2007-03-14')", "03/14/2007");
+        validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', 3, 14, 2007, 0, 0, 00)", "03/14/2007");
     }
 
     @Test
@@ -355,6 +418,70 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "FLOOR(null)", null);
         validateNumericResult(parser, "FLOOR(0.01)", "0.0");
         validateNumericResult(parser, "FLOOR(2.022)", "2.0");
+    }
+
+    @Test
+    public void testFORMAT() throws Exception {
+        validatePattern(parser, "FORMAT");
+
+        validateExceptionThrown(parser, "FORMAT(NULL, NULL)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
+        validateExceptionThrown(parser, "FORMAT()", "FORMAT expected 2 parameter(s), but got 0", 1, 7);
+        validateExceptionThrown(parser, "FORMAT(1, 'b')", "FORMAT parameter 1 expected type STRING, but was NUMBER", 1, 7);
+        validateExceptionThrown(parser, "FORMAT('a', 2)", "FORMAT parameter 2 expected type STRING, but was NUMBER", 1, 7);
+
+        validateStringResult(parser, "FORMAT('(###) ###-#### HOME', '8155551212')", "(815) 555-1212 HOME");
+    }
+
+    @Test
+    public void testFORMATBYLEN() throws Exception {
+        validatePattern(parser, "FORMATBYLEN");
+
+        validateExceptionThrown(parser, "FORMATBYLEN()", "FORMATBYLEN expected 3 parameter(s), but got 0", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A','B', 'C', 'D')", "FORMATBYLEN expected 3 parameter(s), but got 4", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN(1, 'B', 'C')", "FORMATBYLEN parameter 1 expected type STRING, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A', 1, 'C')", "FORMATBYLEN parameter 2 expected type STRING, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A', 'B', 1)", "FORMATBYLEN parameter 3 expected type STRING, but was NUMBER", 1, 12);
+        validateExceptionThrown(parser, "FORMATBYLEN('A', '[', 'C')", "Syntax error, missing bracket. Expected ]", 1, 26);
+        validateExceptionThrown(parser, "FORMATBYLEN('8155551212', '[0-9*', '?=0=')", "Invalid regex pattern: [0-9*", 1, 27);
+
+        validateStringResult(parser, "FORMATBYLEN(null, null, null)", null);
+        validateStringResult(parser, "FORMATBYLEN('a', null, null)", null);
+        validateStringResult(parser, "FORMATBYLEN(null, 'b', null)", null);
+        validateStringResult(parser, "FORMATBYLEN(null, null, 'c')", null);
+
+        // No match -> "no value"
+        String variations = "0='no value':7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
+        validateStringResult(parser, "FORMATBYLEN('', '[0-9]*', \"" + variations + "\")", "no value");
+
+        // No match - > empty
+        variations = "0=:7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
+        validateStringResult(parser, "FORMATBYLEN('', '[0-9]*', \"" + variations + "\")", "");
+
+        // Match pattern of length 7
+        validateStringResult(parser, "FORMATBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "      555-1212");
+
+        // Match pattern of length 10
+        validateStringResult(parser, "FORMATBYLEN('8155551212', '[0-9]*', \"" + variations + "\")", "(815) 555-1212");
+
+        // Matched, but not one of the specified lengths uses default variation
+        validateStringResult(parser, "FORMATBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "Ralph Iden");
+
+        // Matched, but not one of the specified lengths and not default returns empty string
+        variations = "0=:7=      ###-####:10=(###) ###-####";
+        validateStringResult(parser, "FORMATBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
+
+        // Poorly formed variation patterns return empty strings -----------------------------------------------
+        // Match where variation is empty and at the end of the variations
+        variations = "7=";
+        validateStringResult(parser, "FORMATBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "");
+
+        // Match with a trailing colon in variation string
+        variations = "0=:7=      ###-####:10=(###) ###-####:";
+        validateStringResult(parser, "FORMATBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
+
+        // No matches with a trailing colon in variation string
+        variations = "0=:7=      ###-####:10=(###) ###-####:";
+        validateStringResult(parser, "FORMATBYLEN('A', 'B', \"" + variations + "\")", "");
     }
 
     @Test
@@ -750,7 +877,8 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "MATCH('A','B', 1)", "MATCH expected 2 parameter(s), but got 3", 1, 6);
         validateExceptionThrown(parser, "MATCH(1, '1.23')", "MATCH parameter 1 expected type STRING, but was NUMBER", 1, 6);
         validateExceptionThrown(parser, "MATCH('1.23', 1)", "MATCH parameter 2 expected type STRING, but was NUMBER", 1, 6);
-        validateExceptionThrown(parser, "MATCH('1.23', '[')", "Invalid regex pattern: [", 1, 15);
+        validateExceptionThrown(parser, "MATCH('1.23', '[')", "Syntax error, missing bracket. Expected ]", 1, 18);
+        validateExceptionThrown(parser, "MATCH('1.23', '+')", "Invalid regex pattern: +", 1, 15);
 
         validateArray(parser, "MATCH(null, null)", null);
         validateArray(parser, "MATCH('a', null)", null);
@@ -760,57 +888,6 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateArray(parser, "MATCH('Phone: (815) 555-1212 x100 (Work)', '[\\(](\\d{3})\\D*(\\d{3})\\D*(\\d{4})\\D*(\\d*)')",
                 "(815) 555-1212 x100",  // asString
                 "(815) 555-1212 x100", "815", "555", "1212", "100");  // group 0..n
-    }
-
-    @Test
-    public void testMATCHBYLEN() throws Exception {
-        validatePattern(parser, "MATCHBYLEN");
-
-        validateExceptionThrown(parser, "MATCHBYLEN()", "MATCHBYLEN expected 3 parameter(s), but got 0", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A','B', 'C', 'D')", "MATCHBYLEN expected 3 parameter(s), but got 4", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN(1, 'B', 'C')", "MATCHBYLEN parameter 1 expected type STRING, but was NUMBER", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A', 1, 'C')", "MATCHBYLEN parameter 2 expected type STRING, but was NUMBER", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A', 'B', 1)", "MATCHBYLEN parameter 3 expected type STRING, but was NUMBER", 1, 11);
-        validateExceptionThrown(parser, "MATCHBYLEN('A', '[', 'C')", "Invalid regex pattern: [", 1, 17);
-
-        validateStringResult(parser, "MATCHBYLEN(null, null, null)", null);
-        validateStringResult(parser, "MATCHBYLEN('a', null, null)", null);
-        validateStringResult(parser, "MATCHBYLEN(null, 'b', null)", null);
-        validateStringResult(parser, "MATCHBYLEN(null, null, 'c')", null);
-
-        // No match -> "no value"
-        String variations = "0='no value':7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
-        validateStringResult(parser, "MATCHBYLEN('', '[0-9]*', \"" + variations + "\")", "no value");
-
-        // No match - > empty
-        variations = "0=:7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
-        validateStringResult(parser, "MATCHBYLEN('', '[0-9]*', \"" + variations + "\")", "");
-
-        // Match pattern of length 7
-        validateStringResult(parser, "MATCHBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "      555-1212");
-
-        // Match pattern of length 10
-        validateStringResult(parser, "MATCHBYLEN('8155551212', '[0-9]*', \"" + variations + "\")", "(815) 555-1212");
-
-        // Matched, but not one of the specified lengths uses default variation
-        validateStringResult(parser, "MATCHBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "Ralph Iden");
-
-        // Matched, but not one of the specified lengths and not default returns empty string
-        variations = "0=:7=      ###-####:10=(###) ###-####";
-        validateStringResult(parser, "MATCHBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
-
-        // Poorly formed variation patterns return empty strings -----------------------------------------------
-        // Match where variation is empty and at the end of the variations
-        variations = "7=";
-        validateStringResult(parser, "MATCHBYLEN('5551212', '[0-9]*', \"" + variations + "\")", "");
-
-        // Match with a trailing colon in variation string
-        variations = "0=:7=      ###-####:10=(###) ###-####:";
-        validateStringResult(parser, "MATCHBYLEN('81555512121234', '[0-9]*', \"" + variations + "\")", "");
-
-        // No matches with a trailing colon in variation string
-        variations = "0=:7=      ###-####:10=(###) ###-####:";
-        validateStringResult(parser, "MATCHBYLEN('A', 'B', \"" + variations + "\")", "");
     }
 
     @Test
@@ -898,6 +975,7 @@ public class FunctionToolboxTest extends UnitTestBase {
     public void testRANDOM() throws Exception {
         validatePattern(parser, "RANDOM");
 
+        validateExceptionThrown(parser, "RANDOM(NULL)","The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "RANDOM(1,2,3)","RANDOM expected 0..2 parameter(s), but got 3", 1, 7);
         validateExceptionThrown(parser, "RANDOM('123', 2)","RANDOM parameter 1 expected type NUMBER, but was STRING", 1, 7);
         validateExceptionThrown(parser, "RANDOM(1, '123')","RANDOM parameter 2 expected type NUMBER, but was STRING", 1, 7);
@@ -1022,7 +1100,21 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "RIGHTOF('riden@myemail.org', '<->')", "");
         validateStringResult(parser, "RIGHTOF('left<->right', '<->')", "right");
     }
-    
+
+    @Test
+    public void testROUND() throws Exception {
+        validatePattern(parser, "ROUND");
+
+        validateExceptionThrown(parser, "ROUND()","ROUND expected 2 parameter(s), but got 0", 1, 6);
+        validateExceptionThrown(parser, "ROUND(NOW(), 2)","ROUND parameter 1 expected type NUMBER, but was DATE", 1, 6);
+        validateExceptionThrown(parser, "ROUND(123, NOW())","ROUND parameter 2 expected type NUMBER, but was DATE", 1, 6);
+
+        validateNumericResult(parser, "ROUND(123.455, 2)", "123.46");
+        validateNumericResult(parser, "ROUND(123.454, 2)", "123.45");
+        validateNumericResult(parser, "ROUND(-123.455, 2)", "-123.46");
+        validateNumericResult(parser, "ROUND(-123.454, 2)", "-123.45");
+    }
+
     @Test
     public void testSIN() throws Exception {
         validatePattern(parser, "SIN");

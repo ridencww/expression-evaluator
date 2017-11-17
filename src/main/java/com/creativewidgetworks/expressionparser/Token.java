@@ -12,8 +12,9 @@ public class Token {
 
     private final int row;
     private final int column;
-    private int argc;
     private String text;
+
+    private int argc;
 
     public Token(TokenType type, String text, int row, int column) {
         this(type, text, null, row, column);
@@ -43,7 +44,6 @@ public class Token {
 
     /*---------------------------------------------------------------------------------*/
 
-
     void saveOrgValue() {
         orgValue = new Value(value);
     }
@@ -53,7 +53,6 @@ public class Token {
     }
 
     /*---------------------------------------------------------------------------------*/
-
 
     public Boolean asBoolean() {
         return getValue() != null ? getValue().asBoolean() : null;
@@ -127,8 +126,8 @@ public class Token {
     }
 
     /**
-     * LPAREN and RPAREN are not considered operators, but the regex parses them as such. This
-     * routine must not return true for those two types
+     * LPAREN, RPAREN, LBRACKET, and RBRACKET are not considered operators, but the regex parses them
+     * as such. This routine must not return true for those four types
      * @return true if token is an operator and not an open or close parenthesis
      *
      * Instead of having to pass in caseSensitivity, departing from the other isXXX methods, the operator
@@ -141,7 +140,8 @@ public class Token {
             if (op == null) {
                 op = Operator.find(this, false);
             }
-            return !Operator.LPAREN.equals(op) && !Operator.RPAREN.equals(op);
+            return !Operator.LPAREN.equals(op) && !Operator.RPAREN.equals(op)  &&
+                    !Operator.LBRACKET.equals(op) && !Operator.RBRACKET.equals(op);
         } else {
             return false;
         }
@@ -181,9 +181,18 @@ public class Token {
 
     /*----------------------------------------------------------------------------*/
 
-    public boolean opEquals(Operator operator) {
-       return text != null && operator != null && text.equals(operator.getText());
-   }
+    public boolean opEquals(Operator... operators) {
+        boolean result = false;
+        if (text != null && operators != null) {
+            for (Operator operator : operators) {
+                result = operator != null && text.equals(operator.getText());
+                if (result) {
+                    break;
+                }
+            }
+        }
+        return result;
+    }
 
    /*----------------------------------------------------------------------------*/
 

@@ -66,12 +66,16 @@ public class ParserTest extends UnitTestBase {
         // precedence
         validateNumericResult(parser, "10 + 20 * 30", "610");
         validateNumericResult(parser, "1 + 2^3", "9");
+        validateNumericResult(parser, "6 / 2*3 + 4", "13");
+        validateNumericResult(parser, "6^2 / 2*3 + 4", "58");
         validateBooleanResult(parser, "NOT 1 != 1", Boolean.TRUE);
 
         // parenthesis grouping
         validateNumericResult(parser, "12 / 3 + 1", "5");
         validateNumericResult(parser, "12 / (3 + 1)", "3");
         validateNumericResult(parser, "((15 / 2) + .5) / (1.5 + .5)", "4");
+        validateNumericResult(parser, "6 / (2*3) + 4", "5");
+        validateNumericResult(parser, "6^2 / (2*3) + 4", "10");
     }
 
    /*----------------------------------------------------------------------------*/
@@ -149,6 +153,7 @@ public class ParserTest extends UnitTestBase {
         validateDateResult(parser, "NOW(1)", bod);
         validateDateResult(parser, "NOW(2)", eod);
 
+        validateExceptionThrown(parser, "NOW(A)", "The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2", 1, 4);
         validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3", 1, 4);
     }
@@ -162,6 +167,7 @@ public class ParserTest extends UnitTestBase {
         assertEquals(2, parser.getPrecision());
         assertEquals(oldPrecision, Parser.DEFAULT_PRECISION);
 
+        validateExceptionThrown(parser, "PRECISION(A)", "The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "PRECISION()", "PRECISION expected 1 parameter(s), but got 0", 1, 10);
         validateExceptionThrown(parser, "PRECISION('Hello')", "PRECISION parameter 1 expected type NUMBER, but was STRING", 1, 10);
         validateExceptionThrown(parser, "PRECISION(0,1)", "PRECISION expected 1 parameter(s), but got 2", 1, 10);
@@ -218,7 +224,71 @@ public class ParserTest extends UnitTestBase {
         // date
         Date now = new Date();
         validateBooleanResult(parser, "V1=NOW()", Boolean.TRUE);
-        validateDateResult(parser, "V1()", now);
+        validateDateResult(parser, "V1", now);
+
+        // array - one dimension
+        FunctionToolbox.register(parser);
+        validateBooleanResult(parser, "V1=SPLIT('alpha,beta,gamma')", Boolean.TRUE);
+        parser.eval("V1[1] = 'omega'");
+        validateArray(parser, "V1","alpha", "alpha", "omega", "gamma");
+
+        // array - two dimension
+        parser.eval("DIM(V2,10,5)");
+        parser.eval("V2[2,3] = 'epsilon'");
+        parser.eval("V2[2,4] = 'omega'");
+        validateStringResult(parser, "V2[2,3]", "epsilon");
+        validateStringResult(parser, "V2[2,4]", "omega");
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testArrayAccess() throws Exception {
+        FunctionToolbox.register(parser);
+        parser.eval("V1=SPLIT('alpha,beta,gamma')");
+
+        // Bad array index
+        validateExceptionThrown(parser, "V1[0-1]", "Index value of -1 is out of the range of 0..2", 1, 5);
+        validateExceptionThrown(parser, "V1[3]", "Index value of 3 is out of the range of 0..2", 1, 4);
+
+        validateStringResult(parser, "V1[]", "alpha");
+        validateStringResult(parser, "V1[0]", "alpha");
+        validateStringResult(parser, "V1[1]", "beta");
+        validateStringResult(parser, "V1[2]", "gamma");
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testArrayAccess_two_dimension() throws Exception {
+        Value row1 = new Value("row-1");
+        row1.addValueToArray(new Value("v1", "col-1"));
+        row1.addValueToArray(new Value("v2", "col-2"));
+        row1.addValueToArray(new Value("v3", "col-3"));
+
+        Value rows = new Value("rows");
+        rows.addValueToArray(row1);
+
+        parser.getVariables().put("V1", rows);
+
+        // Bad array index
+        validateExceptionThrown(parser, "V1[0,0-1]", "Index value of -1 is out of the range of 0..2", 1, 7);
+        validateExceptionThrown(parser, "V1[0,3]", "Index value of 3 is out of the range of 0..2", 1, 6);
+
+        validateStringResult(parser, "V1[0,0]", "col-1");
+        validateStringResult(parser, "V1[0,1]", "col-2");
+        validateStringResult(parser, "V1[0,2]", "col-3");
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testArrayAccess_set_value_not_allowed() throws Exception {
+        FunctionToolbox.register(parser);
+        parser.eval("V1=SPLIT('alpha,beta,gamma')");
+
+        // TODO - Unexpected NPE
+        //validateBooleanResult(parser, "V1[0]='omega'", Boolean.TRUE);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -476,7 +546,7 @@ public class ParserTest extends UnitTestBase {
     public void testTernary() throws Exception {
         validateExceptionThrown(parser, "(1==1) ? 'Y'", "Syntax error, ? without a matching :", 1, 8);
         validateExceptionThrown(parser, "(1==1) : 'N'", "Syntax error, : without preceding ?", 1, 8);
-        validateExceptionThrown(parser, "1 ? 'Y' : 'N'", "Expected boolean value, but was NUMBER", 1, 1);
+        validateExceptionThrown(parser, "1 ? 'Y' : 'N'", "Expected BOOLEAN value, but was NUMBER", 1, 1);
 
         validateStringResult(parser, "(1==1) ? 'Y' : 'N'", "Y");
         validateStringResult(parser, "(1==2) ? 'Y' : 'N'", "N");

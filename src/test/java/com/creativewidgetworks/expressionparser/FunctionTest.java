@@ -33,21 +33,21 @@ public class FunctionTest extends Assert {
 
     @Test
     public void testGetFunctionRegex_no_functions() {
-        assertEquals("setGlobal|precision|now|getGlobal|clearGlobals|clearGlobal", parser.getFunctionRegex());
+        assertEquals("setGlobal|precision|now|getGlobal|dim|clearGlobals|clearGlobal", parser.getFunctionRegex());
     }
 
     @Test
     public void testGetFunctionRegEx_case_insensitive() {
         parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
         parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
-        assertEquals("setGlobal|precision|now|getGlobal|clearGlobals|clearGlobal|beta|alpha", parser.getFunctionRegex());
+        assertEquals("setGlobal|precision|now|getGlobal|dim|clearGlobals|clearGlobal|beta|alpha", parser.getFunctionRegex());
     }
 
     @Test
     public void testGetFunctionRegEx_case_sensitive() {
         parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
         parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
-        assertEquals("setGlobal|precision|now|getGlobal|clearGlobals|clearGlobal|beta|alpha", parser.getFunctionRegex());
+        assertEquals("setGlobal|precision|now|getGlobal|dim|clearGlobals|clearGlobal|beta|alpha", parser.getFunctionRegex());
     }
 
     @Test
@@ -74,12 +74,12 @@ public class FunctionTest extends Assert {
 
     @Test
     public void testClearFunctions() {
-        assertEquals(6, parser.getFunctions().size());
+        assertEquals(7, parser.getFunctions().size());
         parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
         parser.addFunction(new Function("beta", this, "_BETA", 0, 0));
-        assertEquals(8, parser.getFunctions().size());
+        assertEquals(9, parser.getFunctions().size());
         parser.clearFunctions();
-        assertEquals(6, parser.getFunctions().size());
+        assertEquals(7, parser.getFunctions().size());
     }
 
     @Test

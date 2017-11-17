@@ -82,9 +82,9 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
     @Test
     public void testClearFunctions() {
-        assertEquals("basic constants present", 6, parser.getFunctions().size());
+        assertEquals("basic constants present", 7, parser.getFunctions().size());
         parser.clearFunctions();;
-        assertEquals("functions removed and defaults inserted", 6, parser.getFunctions().size());
+        assertEquals("functions removed and defaults inserted", 7, parser.getFunctions().size());
 
         // Really remove all and verify regex is not available
         parser.getFunctions().clear();
@@ -96,15 +96,15 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
     @Test
     public void testClearFunction() {
-        assertEquals("basic constants present", 6, parser.getFunctions().size());
+        assertEquals("basic constants present", 7, parser.getFunctions().size());
         parser.clearFunction("NOW");;
-        assertEquals("functions removed and defaults inserted", 5, parser.getFunctions().size());
+        assertEquals("functions removed and defaults inserted", 6, parser.getFunctions().size());
     }
 
     /*----------------------------------------------------------------------------*/
 
     @Test
-    public void testClearVariabl() {
+    public void testClearVariable() {
         parser.addVariable("A", new Value());
         assertNotNull(parser.getVariable("A"));
         assertEquals("wrong count", 1, parser.getVariables().size());
@@ -125,6 +125,40 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
         parser.clearVariables();
         assertEquals("should be empty", 0, parser.getVariables().size());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testIdentifierAsFunctionCaught() {
+        validateExceptionThrown(parser, "TYPO(1)", "TYPO is not a function", 1, 1);
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testDim() throws Exception {
+        validateExceptionThrown(parser, "DIM(A,B,C)", "The following parameter(s) cannot be null: 1, 2", 1, 1);
+        validateExceptionThrown(parser, "DIM()", "DIM expected 2..3 parameter(s), but got 0", 1, 4);
+        validateExceptionThrown(parser, "DIM('A', 1, 1)", "Expected IDENTIFIER, but got STRING", 1, 5);
+        validateExceptionThrown(parser, "DIM(A, 'Hi')", "DIM parameter 2 expected type NUMBER, but was STRING", 1, 4);
+        validateExceptionThrown(parser, "DIM(A, 1, 'Hi')", "DIM parameter 3 expected type NUMBER, but was STRING", 1, 4);
+        validateExceptionThrown(parser, "DIM(A, -1)", "DIM parameter numRows expected value to be in the range of 1..10000, but was -1", 1, 8);
+        validateExceptionThrown(parser, "DIM(A, 11000)", "DIM parameter numRows expected value to be in the range of 1..10000, but was 11000", 1, 8);
+        validateExceptionThrown(parser, "DIM(A, 1, -1)", "DIM parameter numCols expected value to be in the range of 1..256, but was -1", 1, 11);
+        validateExceptionThrown(parser, "DIM(A, 1, 300)", "DIM parameter numCols expected value to be in the range of 1..256, but was 300", 1, 11);
+
+        Value value = parser.eval("DIM(A, 15)");
+        assertNotNull(value.getArray());
+        assertEquals(15, value.getArray().size());
+        assertTrue(value.getArray().get(1) instanceof Value);
+
+        value = parser.eval("DIM(A, 10,5)");
+        assertNotNull(value.getArray());
+        assertEquals(10, value.getArray().size());
+        assertTrue(value.getArray().get(1) instanceof Value);
+        assertEquals(5, value.getArray().get(1).getArray().size());
+        assertTrue(value.getArray().get(1).getArray().get(1) instanceof Value);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -302,6 +336,17 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     }
 
     @Test
+    public void testListOfNullParameter() {
+        assertNull(parser.listOfNullParameters(null));
+
+        Stack<Token> stack = new Stack<Token>();
+        stack.push(new Token(TokenType.VALUE, "", 1, 1));
+        stack.push(new Token(TokenType.VALUE, "", 2, 1));
+        assertNotNull(parser.listOfNullParameters(stack));
+        assertEquals("0, 1", parser.listOfNullParameters(stack));
+    }
+
+    @Test
     public void testTokenize() throws Exception {
         Token[] expected = new Token[] {
                 new Token(TokenType.OPERATOR, "(", 1, 1),
@@ -364,11 +409,37 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
     /*----------------------------------------------------------------------------*/
 
+     @Test
+    public void testEval_emptySource() {
+        Value result = parser.eval("");
+        assertEquals("ERROR: EMPTY EXPRESSION", result.getName());
+        assertEquals("", result.asString());
+    }
+
+   /*----------------------------------------------------------------------------*/
+
     @Test
-   public void testEval_emptySource() {
-       Value result = parser.eval("");
-       assertEquals("ERROR: EMPTY EXPRESSION", result.getName());
-       assertEquals("", result.asString());
-   }
+    public void testUnbalancedBrackets() {
+        validateExceptionThrown(parser, "[1", "Syntax error, missing bracket. Expected ]", 1, 2);
+        validateExceptionThrown(parser, "1]", "Syntax error, missing bracket. Expected [", 1, 2);
+    }
+
+    @Test
+    public void testUnbalancedParens() {
+        validateExceptionThrown(parser, "(1", "Syntax error, missing parenthesis. Expected )", 1, 2);
+        validateExceptionThrown(parser, "1)", "Syntax error, missing parenthesis. Expected (", 1, 2);
+    }
+
+    @Test
+    public void testMissingTELSE() {
+        validateExceptionThrown(parser, "1 == 1 ? 2", "Syntax error, ? without a matching :", 1, 8);
+        validateExceptionThrown(parser, "1 != 1 ? 2", "Syntax error, ? without a matching :", 1, 8);
+    }
+
+    @Test
+    public void testMissingIF() {
+        validateExceptionThrown(parser, "1 == 1 : 2", "Syntax error, : without preceding ?", 1, 8);
+        validateExceptionThrown(parser, "1 != 1 : 2", "Syntax error, : without preceding ?", 1, 8);
+    }
 
 }

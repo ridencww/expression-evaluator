@@ -79,10 +79,12 @@ public class FieldInterfaceTest extends Assert implements FieldInterface {
 
     @Test
     public void testFieldExpressions() {
+        validateFieldParsed("@/name");
+        validateFieldParsed("@_name");
+        validateFieldParsed("@@name");
+        validateFieldParsed("@@@name");
         validateFieldParsed("@name_first");
         validateFieldParsed("@name:first");
         validateFieldParsed("@name/first");
-        validateFieldParsed("@/name");
-        validateFieldParsed("@_name");
     }
 }

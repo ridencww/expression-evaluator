@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class ParserTest extends UnitTestBase {
 
@@ -156,6 +157,24 @@ public class ParserTest extends UnitTestBase {
         validateExceptionThrown(parser, "NOW(A)", "The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2", 1, 4);
         validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3", 1, 4);
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testBuiltInFunction_NOW_timezone() {
+        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        Calendar expected = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        validateDateResult(parser, "NOW()", expected);
+
+        expected = Calendar.getInstance(TimeZone.getTimeZone("America/Chicago"));
+        try {
+            validateDateResult(parser, "NOW()", expected);
+            fail("Expected AssertionError as expected timezone is not the same as the parser timezone");
+        } catch (AssertionError ae) {
+            // Okay to ignore, this was expected
+        }
     }
 
     /*----------------------------------------------------------------------------*/

@@ -128,6 +128,12 @@ Examples:
     
 ## Version History
 
+2.2.1
+* Added ability to set the timezone to use by the parser
+* Allow additional @ at start of field name (e.g., @id, @@id, @@@id)
+* Make ParserException.formatMessage public so it can be used by function writers
+* Build test.jar to make UnitTestBase and other halpers available to developers writing functions
+
 2.2.0
 * Updated README.md
 * Support for two dimensional arrays up to 10000 x 256

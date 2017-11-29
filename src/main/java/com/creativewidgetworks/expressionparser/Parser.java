@@ -20,6 +20,9 @@ public class Parser {
     // By default, disable access to system and environment properties
     private boolean allowProperties = false;
 
+    // By default, use the JVM's timezone
+    private TimeZone localTimeZone = TimeZone.getDefault();
+
     private static final String DEFAULT_SPLIT_CHARACTER = ";";
     private static final String SPLIT_REGEX = "(?=([^\\\"\\']*[\\\"\\'][^\\\"\\']*[\\\"\\'])*[^\\\"\\']*$)";
 
@@ -56,6 +59,18 @@ public class Parser {
         boolean orgAllowProperties = this.allowProperties;
         this.allowProperties = allowProperties;
         return orgAllowProperties;
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    public TimeZone getTimeZone() {
+        return localTimeZone;
+    }
+
+    public TimeZone setTimeZone(TimeZone timezone) {
+        TimeZone orgTimeZone = this.localTimeZone;
+        this.localTimeZone = timezone;
+        return orgTimeZone;
     }
 
     /*----------------------------------------------------------------------------*/
@@ -1107,6 +1122,7 @@ public class Parser {
         }
 
         Calendar calendar = Calendar.getInstance();
+        calendar.setTimeZone(getTimeZone());
         if (function.getArgc() > 0) {
             Token token = stack.pop();
             int mode = token.asNumber().intValue();

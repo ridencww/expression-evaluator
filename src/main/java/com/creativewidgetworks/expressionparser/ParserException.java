@@ -57,7 +57,7 @@ public class ParserException extends Exception {
      *
      * @return String (with the resource message or the original message + parameters if no resource found)
      */
-     static String formatMessage( String message, Object... parameters) {
+     public static String formatMessage( String message, Object... parameters) {
         String formattedMessage = message;
 
         if (message != null) {

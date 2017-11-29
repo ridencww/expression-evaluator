@@ -485,7 +485,7 @@ public class FunctionToolbox {
             throw new ParserException(ParserException.formatMessage("error.expected_format_option"), function.getRow(), function.getColumn());
         }
 
-        Calendar cal = Calendar.getInstance();
+        Calendar cal = Calendar.getInstance(parser.getTimeZone());
         cal.setTime(date);
         cal.add(field, delta);
 
@@ -524,7 +524,7 @@ public class FunctionToolbox {
 
         Date date = stack.pop().asDate();
         if (date != null) {
-            Calendar cal = Calendar.getInstance();
+            Calendar cal = Calendar.getInstance(parser.getTimeZone());
             cal.setTime(date);
             cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0, 0, 0);
             value.setValue(cal.getTime());
@@ -544,7 +544,7 @@ public class FunctionToolbox {
 
         Date date = stack.pop().asDate();
         if (date != null) {
-            Calendar cal = Calendar.getInstance();
+            Calendar cal = Calendar.getInstance(parser.getTimeZone());
             cal.setTime(date);
             cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 23, 59, 59);
             value.setValue(cal.getTime());
@@ -602,6 +602,7 @@ public class FunctionToolbox {
             }
 
             SimpleDateFormat sdf = new SimpleDateFormat(formatString);
+            sdf.setTimeZone(parser.getTimeZone());
 
             if (date != null) {
                 value.setValue(sdf.format(date));
@@ -1239,6 +1240,7 @@ public class FunctionToolbox {
             for (String pattern : patterns) {
                 SimpleDateFormat sdf = new SimpleDateFormat(pattern);
                 sdf.setLenient(false);
+                sdf.setTimeZone(parser.getTimeZone());
                 try {
                     value.setValue(sdf.parse(args[0].asString()));
                     break;
@@ -1268,7 +1270,7 @@ public class FunctionToolbox {
                 }
             }
 
-            Calendar cal = Calendar.getInstance();
+            Calendar cal = Calendar.getInstance(parser.getTimeZone());
             cal.setLenient(false);
             try {
                 cal.set(year, mon, day, hour, min, sec);

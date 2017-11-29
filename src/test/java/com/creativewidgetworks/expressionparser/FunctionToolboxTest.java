@@ -13,14 +13,17 @@ public class FunctionToolboxTest extends UnitTestBase {
     private Parser parser;
     private FunctionToolbox toolbox;
 
+    private TimeZone testTimeZone;
+
     @Before
     public void beforeEach() {
         parser = new Parser();
         toolbox = FunctionToolbox.register(parser);
+        testTimeZone = TimeZone.getDefault();
     }
 
     private Date makeDate(int mon, int day, int year, int hr, int min, int sec) {
-        Calendar cal = Calendar.getInstance();
+        Calendar cal = Calendar.getInstance(testTimeZone);
         cal.set(year, mon - 1, day, hr, min, sec);
         return cal.getTime();
     }
@@ -253,6 +256,20 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testDATEADD_timezone() throws Exception {
+        testTimeZone = TimeZone.getTimeZone("UTC");
+        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+        parser.eval("D=MAKEDATE(3, 14, 2007, 0, 0, 0)");
+
+        validateDateResult(parser, "DATEADD(D, 1, 'm')", makeDate(4, 14, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(D, 1, 'd')", makeDate(3, 15, 2007, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(D, 1, 'y')", makeDate(3, 14, 2008, 0, 0, 0));
+        validateDateResult(parser, "DATEADD(D, 1, 'hr')", makeDate(3, 14, 2007, 1, 0, 0));
+        validateDateResult(parser, "DATEADD(D, 1, 'mi')", makeDate(3, 14, 2007, 0, 1, 0));
+        validateDateResult(parser, "DATEADD(D, 1, 'se')", makeDate(3, 14, 2007, 0, 0, 1));
+    }
+
+    @Test
     public void testDATEBETWEEN() throws Exception {
         parser.eval("DATE1=MakeDate(5,1,2009)");
         parser.eval("DATE2=MakeDate(9,11,2009)");
@@ -285,10 +302,26 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testDATEBOD_timezone() throws Exception {
+        testTimeZone = TimeZone.getTimeZone("America/Chicago");
+        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+        testTimeZone = TimeZone.getTimeZone("UTC");
+        validateDateResult(parser, "DATEBOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 0, 0, 0));
+    }
+
+    @Test
     public void testDATEEOD() throws Exception {
         validatePattern(parser, "DATEEOD");
         validateExceptionThrown(parser, "DATEEOD()", "DATEEOD expected 1 parameter(s), but got 0", 1, 8);
         validateExceptionThrown(parser, "DATEEOD(1)", "DATEEOD parameter 1 expected type DATE, but was NUMBER", 1, 8);
+        validateDateResult(parser, "DATEEOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 23, 59, 59));
+    }
+
+    @Test
+    public void testDATEEOD_timezone() throws Exception {
+        testTimeZone = TimeZone.getTimeZone("America/Chicago");
+        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+        testTimeZone = TimeZone.getTimeZone("UTC");
         validateDateResult(parser, "DATEEOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 23, 59, 59));
     }
 
@@ -311,6 +344,16 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007))", "03/14/2007");
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', '2007-03-14')", "03/14/2007");
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', 3, 14, 2007, 0, 0, 00)", "03/14/2007");
+    }
+
+    @Test
+    public void testDATEFORMAT_timezone() throws Exception {
+        // Set time using Chicago time, switch to UTC. Formatted time should be adjusted to UTC
+        testTimeZone = TimeZone.getTimeZone("America/Chicago");
+        parser.setTimeZone(TimeZone.getTimeZone("America/Chicago"));
+        parser.eval("D=MAKEDATE(3, 14, 2007, 20, 00, 00)");
+        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+        validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', D)", "03/15/2007");
     }
 
     @Test

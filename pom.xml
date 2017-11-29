@@ -52,7 +52,7 @@
       <activation>
         <property>
           <name>peformRelease</name>
-          <value>false</value>
+          <value>true</value>
         </property>
       </activation>
       <build>

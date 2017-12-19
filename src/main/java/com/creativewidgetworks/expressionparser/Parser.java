@@ -935,7 +935,8 @@ public class Parser {
                 int idx = 0;
                 Value val = null;
                 if (index != null) {
-                    int len = var.getValue().getArray().size() - 1;
+                    List<Value> array = var.getValue().getArray();
+                    int len = (array == null) ? 0 : array.size() - 1;
                     idx = index.getValue().asNumber().intValue();
                     if (idx < 0 || idx > len) {
                         setStatusAndFail(index, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));
@@ -949,7 +950,9 @@ public class Parser {
                         if (!ValueType.ARRAY.equals(val.getType())) {
                             setStatusAndFail(var, "error.expected_array", val.getType());
                         }
-                        len = val.getArray().size() - 1;
+
+                        array = val.getArray();
+                        len = (array == null) ? 0 : array.size() - 1;
                         idx = subIndex.getValue().asNumber().intValue();
                         if (idx < 0 || idx > len) {
                             setStatusAndFail(subIndex, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));

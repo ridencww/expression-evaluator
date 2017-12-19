@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 enum TokenType {
     COMMENT("/\\*[^*]*\\*+(?:[^*/][^*]*\\*+)*/", false),  //  // comment  /* comment */
     NUMBER("(?:\\b[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+\\b)(?:[eE][-+]?[0-9]+\\b)?", false),
-    STRING("\"([^\"\\r\\n]*?)\"|'([^\'\\r\\n]*?)'", true),  //  "string" 'string'
+    STRING("\"([^\"\\\r\n]*(?:\\.[^\"\\\r\n]*)*)\"|'([^'\\\r\n]*(?:\\.[^'\\\r\n]*)*)'", true),  //  "string" 'string'
     OPERATOR("~~dynamically-generated~~", false),
     CONSTANT("~~dynamically-generated~~", false),
     FUNCTION("~~dynamically-generated~~", false),

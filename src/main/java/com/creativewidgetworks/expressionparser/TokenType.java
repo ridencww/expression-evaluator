@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 enum TokenType {
     COMMENT("/\\*[^*]*\\*+(?:[^*/][^*]*\\*+)*/", false),  //  // comment  /* comment */
     NUMBER("(?:\\b[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+\\b)(?:[eE][-+]?[0-9]+\\b)?", false),
-    STRING("\"([^\"\\\r\n]*(?:\\.[^\"\\\r\n]*)*)\"|'([^'\\\r\n]*(?:\\.[^'\\\r\n]*)*)'", true),  //  "string" 'string'
+    STRING("\"((?:[^\"\\\\]|\\\\.)*)\"|'((?:[^'\\\\]|\\\\.)*)'", true),  //  "string" 'string'
     OPERATOR("~~dynamically-generated~~", false),
     CONSTANT("~~dynamically-generated~~", false),
     FUNCTION("~~dynamically-generated~~", false),
@@ -78,11 +78,13 @@ enum TokenType {
             if (matcher.find() && matcher.groupCount() > 0) {
                 for (int i = 1; i <= matcher.groupCount(); i++) {
                     if (matcher.group(i) != null) {
-                        return matcher.group(i);
+                        // Return the matched text, removing escape lead-in characters, if present
+                        return matcher.group(i).replace("\\\"", "\"").replace("\\'", "'");
                     }
                 }
             }
         }
+
         return text;
     }
 

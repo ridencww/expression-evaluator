@@ -6,7 +6,10 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ParserTest extends UnitTestBase {
 
@@ -580,6 +583,23 @@ public class ParserTest extends UnitTestBase {
         parser.setPrecision(15);
         validateNumericResult(parser, "-2", "-2");
         validateNumericResult(parser, "-2", "-2");
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testStringWithEscapedCharacters() {
+        // William 'Bill' Iden
+        List<Token> tokens = parser.tokenize("\"William 'Bill' Iden\"", false);
+        validateTokensTextOnly(tokens, "William 'Bill' Iden");
+
+        // William "Bill" Iden
+        tokens = parser.tokenize("\"William \\\"Bill\\\" Iden\"", false);
+        validateTokensTextOnly(tokens, "William \"Bill\" Iden");
+
+        // Clearance 13' 2"
+        tokens = parser.tokenize("'Clearance 13\\' 2\\\"'", false);
+        validateTokensTextOnly(tokens, "Clearance 13' 2\"");
     }
 
 }

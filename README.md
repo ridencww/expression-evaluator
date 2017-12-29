@@ -128,6 +128,10 @@ Examples:
     
 ## Version History
 
+2.2.2
+* Support backslash as escape lead-in character in STRING tokens (e.g., 6\" 3\')
+* Fix NullPointerException caused by dereferencing an empty array
+
 2.2.1
 * Added ability to set the timezone to use by the parser
 * Allow additional @ at start of field name (e.g., @id, @@id, @@@id)

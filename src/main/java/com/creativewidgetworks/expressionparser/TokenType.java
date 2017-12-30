@@ -61,6 +61,84 @@ enum TokenType {
         }
     }
 
+    public static String unescapeString(String str) {
+        if (str == null || str.trim().length() == 0) {
+            return str;
+        }
+
+        StringBuilder sb = new StringBuilder(str.length());
+
+        for (int i = 0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (ch == '\\') {
+                char nextChar = (i == str.length() - 1) ? '\\' : str.charAt(i + 1);
+
+                // For completeness, support Octal escape
+                if (nextChar >= '0' && nextChar <= '7') {
+                    String code = "" + nextChar;
+                    i++;
+                    if ((i < str.length() - 1) && str.charAt(i + 1) >= '0' && str.charAt(i + 1) <= '7') {
+                        code += str.charAt(i + 1);
+                        i++;
+                        if ((i < str.length() - 1) && str.charAt(i + 1) >= '0' && str.charAt(i + 1) <= '7') {
+                            code += str.charAt(i + 1);
+                            i++;
+                        }
+                    }
+                    sb.append(Character.toChars(Integer.parseInt(code, 8)));
+                    continue;
+                }
+
+                switch (nextChar) {
+                    case '\"':
+                        ch = '\"';
+                        break;
+                    case '\'':
+                        ch = '\'';
+                        break;
+                    case '\\':
+                        ch = '\\';
+                        break;
+                    case 'f':
+                        ch = '\f';
+                        break;
+                    case 'b':
+                        ch = '\b';
+                        break;
+                    case 'n':
+                        ch = '\n';
+                        break;
+                    case 'r':
+                        ch = '\r';
+                        break;
+                    case 't':
+                        ch = '\t';
+                        break;
+                    case 'u':
+                        if (i < str.length() - 5) {
+                            try {
+                                String code = "" + str.charAt(i + 2) + str.charAt(i + 3) + str.charAt(i + 4) + str.charAt(i + 5);
+                                sb.append(Character.toChars(Integer.parseInt(code, 16)));
+                            } catch (NumberFormatException ex) {
+                                // Ignore poorly formed Unicode escape sequence
+                            }
+                            i += 5;
+                            continue;
+                        } else {
+                            ch = 'u';
+                            break;
+                        }
+                    default:
+                        i--; // Cause the backslash and next character to be appended to output
+                        break;
+                }
+                i++;
+            }
+            sb.append(ch);
+        }
+        return sb.toString();
+    }
+
     /*---------------------------------------------------------------------------------*/
 
     /**
@@ -78,8 +156,7 @@ enum TokenType {
             if (matcher.find() && matcher.groupCount() > 0) {
                 for (int i = 1; i <= matcher.groupCount(); i++) {
                     if (matcher.group(i) != null) {
-                        // Return the matched text, removing escape lead-in characters, if present
-                        return matcher.group(i).replace("\\\"", "\"").replace("\\'", "'");
+                        return unescapeString(matcher.group(i));
                     }
                 }
             }
@@ -103,6 +180,7 @@ enum TokenType {
             }
 
             int options = parser.getCaseSensitive() ? Pattern.UNICODE_CASE : Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE;
+            options |= Pattern.UNICODE_CHARACTER_CLASS;
             combinedPattern = Pattern.compile(sb.substring(1), options);
         }
         return combinedPattern;

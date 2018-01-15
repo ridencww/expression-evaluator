@@ -12,6 +12,7 @@
   <groupId>com.creativewidgetworks</groupId>
   <artifactId>expression-evaluator</artifactId>
   <version>2.2.2</version>
+
   <packaging>jar</packaging>
 
   <name>expression-evaluator</name>

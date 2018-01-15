@@ -85,6 +85,26 @@ public class ParserTest extends UnitTestBase {
    /*----------------------------------------------------------------------------*/
 
     @Test
+    public void testTypeMismatch() {
+        // String concat "+" where lhs and/or rhs is a STRING is acceptable
+
+        validateExceptionThrown(parser, "'abc'*5", "Both values must be numeric: abc 5", 1, 7);
+        validateExceptionThrown(parser, "5*'abc'", "Both values must be numeric: 5 abc", 1, 3);
+        validateExceptionThrown(parser, "'abc'/5", "Both values must be numeric: abc 5", 1, 7);
+        validateExceptionThrown(parser, "5/'abc'", "Both values must be numeric: 5 abc", 1, 3);
+        validateExceptionThrown(parser, "'abc'-5", "Both values must be numeric: abc 5", 1, 7);
+        validateExceptionThrown(parser, "5-'abc'", "Both values must be numeric: 5 abc", 1, 3);
+        validateExceptionThrown(parser, "'abc' DIV 5", "Both values must be numeric: abc 5", 1, 11);
+        validateExceptionThrown(parser, "5 DIV 'abc'", "Both values must be numeric: 5 abc", 1, 7);
+        validateExceptionThrown(parser, "'abc' MOD 5", "Both values must be numeric: abc 5", 1, 11);
+        validateExceptionThrown(parser, "5 MOD 'abc'", "Both values must be numeric: 5 abc", 1, 7);
+        validateExceptionThrown(parser, "'abc' ^ 5", "Both values must be numeric: abc 5", 1, 9);
+        validateExceptionThrown(parser, "5 ^ 'abc'", "Both values must be numeric: 5 abc", 1, 5);
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
     public void testBuiltInConstants() {
         validateNumericResult(parser, "PI", "3.141592653589793");
         validateNumericResult(parser, "pi", "3.141592653589793");

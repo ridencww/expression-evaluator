@@ -685,30 +685,36 @@ public class Parser {
                 }
             } else if (op.equals(Operator.MINUS)) {
                 // Subtraction
+                assertBothNumbers(lhs, rhs);
                 BigDecimal bd = lhs.asNumber().subtract(rhs.asNumber());
                 bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.MULT)) {
                 // Multiplication
+                assertBothNumbers(lhs, rhs);
                 BigDecimal bd = lhs.asNumber().multiply(rhs.asNumber());
                 bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.DIV)) {
                 // Division
+                assertBothNumbers(lhs, rhs);
                 int divisorScale = rhs.asNumber().scale();
                 int scale = lhs.asNumber().equals(BigDecimal.ZERO) ? divisorScale : getPrecision();
                 BigDecimal bd = lhs.asNumber().divide(rhs.asNumber(), scale, BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.IDIV)) {
                 // Integer division
+                assertBothNumbers(lhs, rhs);
                 BigDecimal bd = lhs.asNumber().divideToIntegralValue(rhs.asNumber());
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.MODULUS)) {
                 // Modulus
+                assertBothNumbers(lhs, rhs);
                 BigDecimal bd = lhs.asNumber().remainder(rhs.asNumber());
                 result = new Token(TokenType.NUMBER, bd.toPlainString(), token.getRow(), token.getColumn());
             } else if (op.equals(Operator.EXP)) {
                 // Exponentiation x^y
+                assertBothNumbers(lhs, rhs);
                 MathContext mc = rhs.asNumber().compareTo(BigDecimal.ZERO) < 0 ? MathContext.DECIMAL128 : MathContext.UNLIMITED;
                 BigDecimal bd = lhs.asNumber().pow(rhs.asNumber().intValue(), mc);
                 bd = bd.setScale(getPrecision(), BigDecimal.ROUND_HALF_UP).stripTrailingZeros();

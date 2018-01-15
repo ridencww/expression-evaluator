@@ -6,7 +6,10 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ParserTest extends UnitTestBase {
 
@@ -80,6 +83,26 @@ public class ParserTest extends UnitTestBase {
     }
 
    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testTypeMismatch() {
+        // String concat "+" where lhs and/or rhs is a STRING is acceptable
+
+        validateExceptionThrown(parser, "'abc'*5", "Both values must be numeric: abc 5", 1, 7);
+        validateExceptionThrown(parser, "5*'abc'", "Both values must be numeric: 5 abc", 1, 3);
+        validateExceptionThrown(parser, "'abc'/5", "Both values must be numeric: abc 5", 1, 7);
+        validateExceptionThrown(parser, "5/'abc'", "Both values must be numeric: 5 abc", 1, 3);
+        validateExceptionThrown(parser, "'abc'-5", "Both values must be numeric: abc 5", 1, 7);
+        validateExceptionThrown(parser, "5-'abc'", "Both values must be numeric: 5 abc", 1, 3);
+        validateExceptionThrown(parser, "'abc' DIV 5", "Both values must be numeric: abc 5", 1, 11);
+        validateExceptionThrown(parser, "5 DIV 'abc'", "Both values must be numeric: 5 abc", 1, 7);
+        validateExceptionThrown(parser, "'abc' MOD 5", "Both values must be numeric: abc 5", 1, 11);
+        validateExceptionThrown(parser, "5 MOD 'abc'", "Both values must be numeric: 5 abc", 1, 7);
+        validateExceptionThrown(parser, "'abc' ^ 5", "Both values must be numeric: abc 5", 1, 9);
+        validateExceptionThrown(parser, "5 ^ 'abc'", "Both values must be numeric: 5 abc", 1, 5);
+    }
+
+    /*----------------------------------------------------------------------------*/
 
     @Test
     public void testBuiltInConstants() {
@@ -580,6 +603,23 @@ public class ParserTest extends UnitTestBase {
         parser.setPrecision(15);
         validateNumericResult(parser, "-2", "-2");
         validateNumericResult(parser, "-2", "-2");
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    @Test
+    public void testStringWithEscapedCharacters() {
+        // William 'Bill' Iden
+        List<Token> tokens = parser.tokenize("\"William 'Bill' Iden\"", false);
+        validateTokensTextOnly(tokens, "William 'Bill' Iden");
+
+        // William "Bill" Iden
+        tokens = parser.tokenize("\"William \\\"Bill\\\" Iden\"", false);
+        validateTokensTextOnly(tokens, "William \"Bill\" Iden");
+
+        // Clearance 13' 2"
+        tokens = parser.tokenize("'Clearance 13\\' 2\\\"'", false);
+        validateTokensTextOnly(tokens, "Clearance 13' 2\"");
     }
 
 }

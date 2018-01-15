@@ -151,4 +151,12 @@ public class UnitTestBase extends Assert {
         }
     }
 
+    protected void validateTokensTextOnly(List<Token> actual, String... expected) {
+        assertEquals("token count", expected.length, actual.size());
+        int row = 0;
+        for (String tokenText : expected) {
+            assertEquals("row " + row + " value", expected[row], actual.get(row).getText());
+            row++;
+        }
+    }
 }

@@ -65,4 +65,10 @@ public class TokenTest extends UnitTestBase {
         assertFalse(token.opEquals(Operator.OR));
     }
 
+    @Test
+    public void testToString() {
+        Token token = new Token(TokenType.OPERATOR, "AND", 1, 25);
+        assertEquals("1,25   OPERATOR   AND ", token.toString());
+    }
+
 }

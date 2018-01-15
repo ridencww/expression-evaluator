@@ -44,7 +44,7 @@ If you're using Maven for your project, add the following to your project's pom.
 
 ## Data types
 
-    STRING     "" and '' styles
+    STRING     "" and '' styles, supports \ as the escape lead-in character.
     NUMBER     Number of decimal places configurable
     BOOLEAN
     DATE
@@ -127,6 +127,11 @@ Examples:
         RESULT: ABCDEF [string]
     
 ## Version History
+
+2.2.2
+* Support backslash as escape lead-in character in STRING tokens (e.g., 6\" 3\')
+* Fix NullPointerException caused by dereferencing an empty array
+* Flag type mismatches and throw ParseException
 
 2.2.1
 * Added ability to set the timezone to use by the parser

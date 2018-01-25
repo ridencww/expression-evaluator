@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -205,11 +206,24 @@ public class ParserTest extends UnitTestBase {
     @Test
     public void testBuiltInFunction_PRECISION() {
         int oldPrecision = parser.getPrecision();
+
+        // Default precision is 5 decimal places
+        assertEquals("default precision", 5, oldPrecision);
+        validateNumericResult(parser, "1/6", "0.16667");
+
+        // Switch to two decimal places
         validateNumericResult(parser, "PRECISION(2)", "5");
-        assertEquals(2, parser.getPrecision());
+        validateNumericResult(parser, "1/6", "0.17");
+
+        // Initialized variable
+        validateNumericResult(parser, "A=3;PRECISION(A);1/6", "0.167");
+
+        // Restore default
+        parser.setPrecision(oldPrecision);
+        assertEquals(oldPrecision, parser.getPrecision());
         assertEquals(oldPrecision, Parser.DEFAULT_PRECISION);
 
-        validateExceptionThrown(parser, "PRECISION(A)", "The following parameter(s) cannot be null: 0", 1, 1);
+        validateExceptionThrown(parser, "PRECISION(B)", "The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "PRECISION()", "PRECISION expected 1 parameter(s), but got 0", 1, 10);
         validateExceptionThrown(parser, "PRECISION('Hello')", "PRECISION parameter 1 expected type NUMBER, but was STRING", 1, 10);
         validateExceptionThrown(parser, "PRECISION(0,1)", "PRECISION expected 1 parameter(s), but got 2", 1, 10);
@@ -234,6 +248,8 @@ public class ParserTest extends UnitTestBase {
 
     @Test
     public void testMultipleExpressions() throws Exception {
+        validateNumericResult(parser, "PRECISION(2);1/6", "0.17");
+        validateNumericResult(parser, "foo = PRECISION(2); 1.234", "1.234");
         validateNumericResult(parser, "A=3;B=7;A*B", "21");
         validateStringResult(parser, "A='Test;';B=' me';A+B", "Test; me");
         validateExceptionThrown(parser, "A=3;B=0;A/B", "/ by zero", 1, 2);
@@ -325,12 +341,11 @@ public class ParserTest extends UnitTestBase {
     /*----------------------------------------------------------------------------*/
 
     @Test
-    public void testArrayAccess_set_value_not_allowed() throws Exception {
+    public void testArrayAccess_set_value() throws Exception {
         FunctionToolbox.register(parser);
         parser.eval("V1=SPLIT('alpha,beta,gamma')");
-
-        // TODO - Unexpected NPE
-        //validateBooleanResult(parser, "V1[0]='omega'", Boolean.TRUE);
+        validateBooleanResult(parser, "V1[0]='omega'", Boolean.TRUE);
+        validateStringResult(parser, "V1[0]", "omega");
     }
 
     /*----------------------------------------------------------------------------*/

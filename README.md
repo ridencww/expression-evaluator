@@ -128,6 +128,13 @@ Examples:
     
 ## Version History
 
+2.2.3
+* Improved cacheing and use of pre-parsed expressions, especially with strings containing multiple expressions
+* Added option in DATEADD to add/subtract a number of milliseconds
+^ Added optional milliseconds parameter to MAKEDATE, default to zero if not provided
+* Fixed issue in MAKEDATE where milliseconds were set to current time and not zero
+* Fixed issue with ISBOOLEAN that resulted in false negative detections of BOOLEAN values
+
 2.2.2
 * Support backslash as escape lead-in character in STRING tokens (e.g., 6\" 3\')
 * Fix NullPointerException caused by dereferencing an empty array

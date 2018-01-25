@@ -23,8 +23,13 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     private Date makeDate(int mon, int day, int year, int hr, int min, int sec) {
+        return makeDate(mon, day, year, hr, min, sec, 0);
+    }
+
+    private Date makeDate(int mon, int day, int year, int hr, int min, int sec, int ms) {
         Calendar cal = Calendar.getInstance(testTimeZone);
         cal.set(year, mon - 1, day, hr, min, sec);
+        cal.set(Calendar.MILLISECOND, ms);
         return cal.getTime();
     }
 
@@ -250,6 +255,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'hr')", makeDate(3, 14, 2007, 1, 0, 0));
         validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'mi')", makeDate(3, 14, 2007, 0, 1, 0));
         validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'se')", makeDate(3, 14, 2007, 0, 0, 1));
+        validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 500, 'ms')", makeDate(3, 14, 2007, 0, 0, 0, 500));
 
         // Rollover
         validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 10, 'm')", makeDate(1, 14, 2008, 0, 0, 0));
@@ -330,7 +336,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validatePattern(parser, "DATEFORMAT");
 
         validateExceptionThrown(parser, "DATEFORMAT(NULL, NULL)", "The following parameter(s) cannot be null: 0, 1", 1, 1);
-        validateExceptionThrown(parser, "DATEFORMAT()", "DATEFORMAT expected 2..7 parameter(s), but got 0", 1, 11);
+        validateExceptionThrown(parser, "DATEFORMAT()", "DATEFORMAT expected 2..8 parameter(s), but got 0", 1, 11);
         validateExceptionThrown(parser, "DATEFORMAT(1, 2)", "DATEFORMAT parameter 1 expected type STRING, but was NUMBER", 1, 11);
         validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', MAKEBOOLEAN('1'))", "DATEFORMAT parameter 1 expected type NUMBER, but was BOOLEAN", 1, 26);
         validateExceptionThrown(parser, "DATEFORMAT('MM/dd/yyyy', '4', 1, 1997, 14, 10, 44)", "Too many parameters", 1, 31);
@@ -344,6 +350,7 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007))", "03/14/2007");
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', '2007-03-14')", "03/14/2007");
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', 3, 14, 2007, 0, 0, 00)", "03/14/2007");
+        validateStringResult(parser, "DATEFORMAT('M/d/yyyy hh:mm:ss', DATEADD(MAKEDATE('3/14/2017 12:00:00'), 1))", "3/15/2017 12:00:00");
     }
 
     @Test
@@ -354,6 +361,20 @@ public class FunctionToolboxTest extends UnitTestBase {
         parser.eval("D=MAKEDATE(3, 14, 2007, 20, 00, 00)");
         parser.setTimeZone(TimeZone.getTimeZone("UTC"));
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', D)", "03/15/2007");
+    }
+
+    @Test
+    public void testDATEFORMAT_ms_default() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            validateStringResult(parser, "DATEFORMAT(\"yyyy-MM-dd'T'HH:mm:ss.SSS\", 4, 23, 2012, 18, 25, 43)", "2012-04-23T18:25:43.000");
+        }
+    }
+
+    @Test
+    public void testDATEFORMAT_ms_specified() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            validateStringResult(parser, "DATEFORMAT(\"yyyy-MM-dd'T'HH:mm:ss.SSS\", 4, 23, 2012, 18, 25, 43, 123)", "2012-04-23T18:25:43.123");
+        }
     }
 
     @Test
@@ -605,16 +626,25 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "ISBOOLEAN('')", Boolean.FALSE);
         validateBooleanResult(parser, "ISBOOLEAN('Noway')", Boolean.FALSE);
         validateBooleanResult(parser, "ISBOOLEAN(1.000000000000001)", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN(0)", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN('0')", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN('0.0')", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN('off')", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN('OFF')", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN('false')", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN('False')", Boolean.FALSE);
-        validateBooleanResult(parser, "ISBOOLEAN(1==0)", Boolean.FALSE);
+
+        // From variable
+        validateBooleanResult(parser, "ISBOOLEAN(A)", Boolean.FALSE); // Undefined variable
+        parser.eval("B=(1 == 1)");
+        validateBooleanResult(parser, "ISBOOLEAN(B)", Boolean.TRUE);
+        parser.eval("C=(1 == 0)");
+        validateBooleanResult(parser, "ISBOOLEAN(C)", Boolean.TRUE);
+        parser.eval("D='noway'");
+        validateBooleanResult(parser, "ISBOOLEAN(D)", Boolean.FALSE);
+
+        validateBooleanResult(parser, "ISBOOLEAN(0)", Boolean.TRUE);
+        validateBooleanResult(parser, "ISBOOLEAN('0')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISBOOLEAN('0.0')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISBOOLEAN('off')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISBOOLEAN('OFF')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISBOOLEAN('false')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISBOOLEAN('False')", Boolean.TRUE);
+        validateBooleanResult(parser, "ISBOOLEAN(1!=1)", Boolean.TRUE);
         validateBooleanResult(parser, "ISBOOLEAN(1)", Boolean.TRUE);
-        validateBooleanResult(parser, "ISBOOLEAN(2-1)", Boolean.TRUE);
         validateBooleanResult(parser, "ISBOOLEAN('1.000')", Boolean.TRUE);
         validateBooleanResult(parser, "ISBOOLEAN('on')", Boolean.TRUE);
         validateBooleanResult(parser, "ISBOOLEAN('ON')", Boolean.TRUE);
@@ -822,8 +852,8 @@ public class FunctionToolboxTest extends UnitTestBase {
     @Test
     public void testMAKEDATE_mdyhms() throws Exception {
         validatePattern(parser, "MAKEDATE");
-        validateExceptionThrown(parser, "MAKEDATE()", "MAKEDATE expected 1..6 parameter(s), but got 0", 1, 9);
-        validateExceptionThrown(parser, "MAKEDATE(1,2,3,4,5,6,7)", "MAKEDATE expected 1..6 parameter(s), but got 7", 1, 9);
+        validateExceptionThrown(parser, "MAKEDATE()", "MAKEDATE expected 1..7 parameter(s), but got 0", 1, 9);
+        validateExceptionThrown(parser, "MAKEDATE(1,2,3,4,5,6,7,8)", "MAKEDATE expected 1..7 parameter(s), but got 8", 1, 9);
 
         validateExceptionThrown(parser, "MAKEDATE(0, 3, 2009)", "Error: Invalid value MONTH", 1, 10);
         validateExceptionThrown(parser, "MAKEDATE(4, 53, 2009)", "Error: Invalid value DAY_OF_MONTH", 1, 13);

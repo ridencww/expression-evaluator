@@ -28,26 +28,26 @@ public class FunctionToolbox {
      * the more general case will match first and precision will be lost.
      */
     public static final String[] DEFAULT_DATE_PATTERNS = {
-        // specialized formats or timedate forms with milliseconds
-        "yyyy-MM-dd'T'HH:mm:ss.S",   // Excel XML export format
-        "MMM dd yyyy hh:mm:ss.S a",  // MS SQL Server with millis
-        "yyyy-MM-dd HH:mm:ss.S",
+            // specialized formats or timedate forms with milliseconds
+            "yyyy-MM-dd'T'HH:mm:ss.S",   // Excel XML export format
+            "MMM dd yyyy hh:mm:ss.S a",  // MS SQL Server with millis
+            "yyyy-MM-dd HH:mm:ss.S",
 
-        // general dates
-        "yyyyMMdd",
-        "yyyy/MM/dd",
-        "MM/dd/yyyy",
-        "MMMM dd, yyyy",
+            // general dates
+            "yyyyMMdd",
+            "yyyy/MM/dd",
+            "MM/dd/yyyy",
+            "MMMM dd, yyyy",
 
-        // MS SQL server
-        "MMM dd yyyy hh:mm:ss a",
+            // MS SQL server
+            "MMM dd yyyy hh:mm:ss a",
 
-        // ISO
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ssz",
-        "yyyy-MM-dd HH:mm:ss",
-        "yyyy-MM-dd",
-        "HH:mm:ss"                    // Time only (date part 1-1-1970)
+            // ISO
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ssz",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd",
+            "HH:mm:ss"                    // Time only (date part 1-1-1970)
     };
 
     public static FunctionToolbox register(Parser parser) {
@@ -70,7 +70,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("DATEBETWEEN", toolbox, "_DATEBETWEEN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.DATE));
         parser.addFunction(new Function("DATEBOD", toolbox, "_DATEBOD", 1, 1, ValueType.DATE));
         parser.addFunction(new Function("DATEEOD", toolbox, "_DATEEOD", 1, 1, ValueType.DATE));
-        parser.addFunction(new Function("DATEFORMAT", toolbox, "_DATEFORMAT", 2, 7, ValueType.STRING, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("DATEFORMAT", toolbox, "_DATEFORMAT", 2, 8, ValueType.STRING, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("DATEWITHIN", toolbox, "_DATEWITHIN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.NUMBER));
         parser.addFunction(new Function("ENDSWITH", toolbox, "_ENDSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("EXP", toolbox, "_EXP", 1, 1, ValueType.NUMBER));
@@ -95,7 +95,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("LOG10", toolbox, "_LOG10", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("LOWER", toolbox, "_LOWER", 1, 1, ValueType.STRING));
         parser.addFunction(new Function("MAKEBOOLEAN", toolbox, "_MAKEBOOLEAN", 1, 1));
-        parser.addFunction(new Function("MAKEDATE", toolbox, "_MAKEDATE", 1, 6, ValueType.UNDEFINED, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
+        parser.addFunction(new Function("MAKEDATE", toolbox, "_MAKEDATE", 1, 7, ValueType.UNDEFINED, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("MATCH", toolbox, "_MATCH", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("MAX", toolbox, "_MAX", 2, 2, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("MID", toolbox, "_MID", 2, 3, ValueType.STRING, ValueType.NUMBER, ValueType.NUMBER));
@@ -157,7 +157,7 @@ public class FunctionToolbox {
 
         // Take a random number with precision digits then divide by the multiplier to turn it into a decimal value.
         multiplier = Math.pow(10.0, precision);  // 10 ^ precision
-        int decimal = (int)(Math.random() * multiplier);
+        int decimal = (int) (Math.random() * multiplier);
         result += (decimal / multiplier);
 
         return result;
@@ -179,7 +179,7 @@ public class FunctionToolbox {
         StringBuilder sb = new StringBuilder(str);
         if (str.length() > 0) {
             while ((sb.length() > 0) && isTrimableCharacter(sb.charAt(0), characterToRemove)) {
-                sb.deleteCharAt( 0 );
+                sb.deleteCharAt(0);
             }
         }
         return sb.toString();
@@ -229,7 +229,7 @@ public class FunctionToolbox {
      * abs(-1) -> 1
      */
     public Value _ABS(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -246,7 +246,7 @@ public class FunctionToolbox {
      * arccos(null) -> null
      */
     public Value _ARCCOS(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -263,7 +263,7 @@ public class FunctionToolbox {
      * arcsin(null) -> null
      */
     public Value _ARCSIN(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -280,7 +280,7 @@ public class FunctionToolbox {
      * arctan(null) -> null
      */
     public Value _ARCTAN(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -307,7 +307,7 @@ public class FunctionToolbox {
             }
             value.setValue(BigDecimal.valueOf(theValue.getArray().size()));
         } else {
-            value.setValue((BigDecimal)null);
+            value.setValue((BigDecimal) null);
         }
 
         return value;
@@ -324,7 +324,7 @@ public class FunctionToolbox {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }
 
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         Token[] args = parser.popArguments(function, stack);
 
@@ -356,7 +356,7 @@ public class FunctionToolbox {
      * ceiling(null) -> null
      */
     public Value _CEILING(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -435,7 +435,7 @@ public class FunctionToolbox {
      * cos(null) -> null
      */
     public Value _COS(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -445,6 +445,7 @@ public class FunctionToolbox {
 
         return value;
     }
+
     /*
      * Adds or subtracts a period of time to a Date value
      * Period units: m=month, d=day, y=year, hr=hour, mi=minute, se=second (day is default)
@@ -457,14 +458,15 @@ public class FunctionToolbox {
      * DateAdd(date, 1, 'hr') -> '03/15/2007 13:00:00'
      * DateAdd(date, 1, 'mi') -> '03/15/2007 12:01:00'
      * DateAdd(date, 1, 'se') -> '03/15/2008 12:00:01'
+     * DateAdd(date, 500, 'ms') -> '03/15/2008 12:00:01.500'
      */
     public Value _DATEADD(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = parser.listOfNullParameters(stack);
+        String nullParams = parser.listOfNullParameters(stack, stack.size() - function.getArgc());
         if (nullParams != null) {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }
 
-        String period = (stack.size() <  3 ? "d" : stack.pop().asString()).toLowerCase();
+        String period = (function.getArgc() < 3 ? "d" : stack.pop().asString()).toLowerCase();
         int delta = stack.pop().asNumber().intValue();
         Date date = stack.pop().asDate();
 
@@ -481,6 +483,8 @@ public class FunctionToolbox {
             field = Calendar.MINUTE;
         } else if (period.equals("se")) {
             field = Calendar.SECOND;
+        } else if (period.equals("ms")) {
+            field = Calendar.MILLISECOND;
         } else {
             throw new ParserException(ParserException.formatMessage("error.expected_format_option"), function.getRow(), function.getColumn());
         }
@@ -520,7 +524,7 @@ public class FunctionToolbox {
      * DateBOD(null) -> null
      */
     public Value _DATEBOD(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText(), (Date)null);
+        Value value = new Value(function.getText(), (Date) null);
 
         Date date = stack.pop().asDate();
         if (date != null) {
@@ -540,7 +544,7 @@ public class FunctionToolbox {
      * DateEOD(null) -> null
      */
     public Value _DATEEOD(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText(), (Date)null);
+        Value value = new Value(function.getText(), (Date) null);
 
         Date date = stack.pop().asDate();
         if (date != null) {
@@ -562,12 +566,12 @@ public class FunctionToolbox {
      * DateFormat(formatString, 3, 14, 2007, 12, 0, 0) -> '03/14/2007'
      */
     public Value _DATEFORMAT(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = parser.listOfNullParameters(stack);
+        String nullParams = parser.listOfNullParameters(stack, stack.size() - function.getArgc());
         if (nullParams != null) {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }
 
-        Value value = new Value(function.getText()).setValue((Date)null);
+        Value value = new Value(function.getText()).setValue((Date) null);
 
         Token[] args = parser.popArguments(function, stack);
 
@@ -649,7 +653,7 @@ public class FunctionToolbox {
      * exp(null) -> null
      */
     public Value _EXP(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -669,7 +673,7 @@ public class FunctionToolbox {
      * FACTORIAL(5) = 120
      */
     public Value _FACTORIAL(Token function, Stack<Token> stack) throws ParserException {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         Token numberToken = stack.pop();
         BigDecimal number = numberToken.asNumber();
@@ -728,7 +732,7 @@ public class FunctionToolbox {
      * floor(null) -> null
      */
     public Value _FLOOR(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -740,11 +744,11 @@ public class FunctionToolbox {
     }
 
     /*
-    * Applies basic formatting of a string using a mask. Any character positions in
-    * the mask that contain '#' will be replaced a character from the string to format.
-    *
-    * format('(###) ###-####', 8155551212) -> '(815) 555-1212'
-    */
+     * Applies basic formatting of a string using a mask. Any character positions in
+     * the mask that contain '#' will be replaced a character from the string to format.
+     *
+     * format('(###) ###-####', 8155551212) -> '(815) 555-1212'
+     */
     public Value _FORMAT(Token function, Stack<Token> stack) throws ParserException {
         String nullParams = parser.listOfNullParameters(stack);
         if (nullParams != null) {
@@ -766,19 +770,19 @@ public class FunctionToolbox {
     }
 
     /*
-    * Performs a match of the regular expression and returns a formatted string
-    * based on the matched pattern. This is a funky scheme that I devised to
-    * format strings, phone numbers in my example, based on the length of the
-    * matched pattern.
-    *
-    * formatByLen("8155551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
-    *     -> "(815) 555-1212"
-    *
-    * formatByLen("5551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
-    *     -> "      555-1212"
-    */
+     * Performs a match of the regular expression and returns a formatted string
+     * based on the matched pattern. This is a funky scheme that I devised to
+     * format strings, phone numbers in my example, based on the length of the
+     * matched pattern.
+     *
+     * formatByLen("8155551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
+     *     -> "(815) 555-1212"
+     *
+     * formatByLen("5551212", "[0-9]*", "?='invalid':0=:7=      ###-####:10=(###) ###-####")
+     *     -> "      555-1212"
+     */
     public Value _FORMATBYLEN(Token function, Stack<Token> stack) throws ParserException {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         // Create temp parser if one hasn't already been created
         if (tmpParser == null) {
@@ -915,7 +919,7 @@ public class FunctionToolbox {
         final int hexWordLen = 4;
         final int hexLongLen = 8;
 
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         int l = 0;
         String str = "";
@@ -925,7 +929,7 @@ public class FunctionToolbox {
             long d = number.longValue();
             if (Math.abs(d) < wordMax) {
                 l = Math.abs(d) < byteMax ? hexByteLen : hexWordLen;
-                str = Integer.toHexString((int)d);
+                str = Integer.toHexString((int) d);
             } else {
                 l = hexLongLen;
                 str = Long.toHexString(d);
@@ -952,7 +956,7 @@ public class FunctionToolbox {
      * isAnyOf("beta", "alpha", "beta", "gamma") -> true
      * isAnyOf("BETA", "alpha", "beta", "gamma") -> false
      * isAnyOf("omega", "alpha", "beta", "gamma") -> false
-    */
+     */
     public Value _ISANYOF(Token function, Stack<Token> stack) {
         Token[] args = parser.popArguments(function, stack);
 
@@ -984,7 +988,7 @@ public class FunctionToolbox {
     }
 
     /*
-     * Returns whether or not the string can be parsed into a number into a date.  Note that this
+     * Returns whether or not the value of the expression is of the type BOOLEAN.  Note that this
      * method calls MakeBoolean and then tests the result
      * isBoolean("1") -> true
      * makeBoolean("1.0") -> true
@@ -999,7 +1003,7 @@ public class FunctionToolbox {
      */
     public Value _ISBOOLEAN(Token function, Stack<Token> stack) {
         Value value = _MAKEBOOLEAN(function, stack);
-        value.setValue(value.asObject() != null && value.asBoolean().booleanValue() ? Boolean.TRUE : Boolean.FALSE);
+        value.setValue(value.asObject() != null && ValueType.BOOLEAN.equals(value.getType()) ? Boolean.TRUE : Boolean.FALSE);
         return value;
     }
 
@@ -1026,7 +1030,7 @@ public class FunctionToolbox {
      * isAnyOf("omega", "alpha", "beta", "gamma") -> true
      * isAnyOf("BETA", "alpha", "beta", "gamma") -> true
      * isAnyOf("beta", "alpha", "beta", "gamma") -> false
-    */
+     */
     public Value _ISNONEOF(Token function, Stack<Token> stack) {
         Value value = _ISANYOF(function, stack);
         return new Value(function.getText()).setValue(value.asBoolean().booleanValue() ? Boolean.FALSE : Boolean.TRUE);
@@ -1063,7 +1067,7 @@ public class FunctionToolbox {
      * left("Ra", 3) -> "Ra"
      */
     public Value _LEFT(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         BigDecimal bdCount = stack.pop().asNumber();
         String str = stack.pop().asString();
@@ -1094,7 +1098,7 @@ public class FunctionToolbox {
      * leftOf("riden@mymail.org", "<->") -> "riden@mymail.org"
      */
     public Value _LEFTOF(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         String toMatch = stack.pop().asString();
         String str = stack.pop().asString();
@@ -1126,7 +1130,7 @@ public class FunctionToolbox {
      * log(null) -> null
      */
     public Value _LOG(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -1143,7 +1147,7 @@ public class FunctionToolbox {
      * log10(null) -> null
      */
     public Value _LOG10(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -1177,7 +1181,7 @@ public class FunctionToolbox {
      * makeBoolean("2.0") -> null
      */
     public Value _MAKEBOOLEAN(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((Boolean)null);
+        Value value = new Value(function.getText()).setValue((Boolean) null);
 
         Token token = stack.pop();
         if (token.asString() != null && token.getValue().getType() != ValueType.DATE) {
@@ -1192,9 +1196,9 @@ public class FunctionToolbox {
                 str = token.asString();
                 if (pattern_NUMBER.matcher(str).find()) {
                     BigDecimal bd = new BigDecimal(str);
-                    if (bd.compareTo(BigDecimal.ZERO) == 0 ) {
+                    if (bd.compareTo(BigDecimal.ZERO) == 0) {
                         value.setValue(Boolean.FALSE);
-                    } else if (bd.compareTo(BigDecimal.ONE) == 0 ) {
+                    } else if (bd.compareTo(BigDecimal.ONE) == 0) {
                         value.setValue(Boolean.TRUE);
                     }
                 }
@@ -1215,7 +1219,7 @@ public class FunctionToolbox {
      * MakeDate(12, 1, 2008, 2, 3, 30) -> 2008-12-01 02:03:30.0
      */
     public Value _MAKEDATE(Token function, Stack<Token> stack) throws ParserException {
-        Value value = new Value(function.getText()).setValue((Date)null);
+        Value value = new Value(function.getText()).setValue((Date) null);
 
         Token[] args = parser.popArguments(function, stack);
 
@@ -1234,7 +1238,7 @@ public class FunctionToolbox {
                     // empty format not allowed
                     throw new ParserException(ParserException.formatMessage("error.empty", "format string"), args[1].getRow(), args[1].getColumn());
                 }
-                patterns = new String[] {args[1].asString()};
+                patterns = new String[]{args[1].asString()};
             }
 
             for (String pattern : patterns) {
@@ -1249,7 +1253,7 @@ public class FunctionToolbox {
                 }
             }
         } else {
-            int mon, day, year, hour, min, sec;
+            int mon, day, year, hour, min, sec, ms;
             try {
                 mon = args[0].asNumber().intValue() - 1;
                 day = args[1].asNumber().intValue();
@@ -1257,6 +1261,7 @@ public class FunctionToolbox {
                 hour = args.length > 3 ? args[3].asNumber().intValue() : 0;
                 min = args.length > 4 ? args[4].asNumber().intValue() : 0;
                 sec = args.length > 5 ? args[5].asNumber().intValue() : 0;
+                ms = args.length > 6 ? args[6].asNumber().intValue() : 0;
             } catch (Exception ex) {
                 // Handles null values that may have been passed in as parameters
                 return value;
@@ -1274,6 +1279,7 @@ public class FunctionToolbox {
             cal.setLenient(false);
             try {
                 cal.set(year, mon, day, hour, min, sec);
+                cal.set(Calendar.MILLISECOND, ms);
                 value.setValue(cal.getTime());
             } catch (Exception ex) {
                 String msg = ex.getMessage();
@@ -1299,7 +1305,7 @@ public class FunctionToolbox {
      * match("(815) 555-1212 x100","(\d{3})\D*(\d{3})\D*(\d{4})\D*(\d*)$") -> [815][555][1212][100]
      */
     public Value _MATCH(Token function, Stack<Token> stack) throws ParserException {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         Token patternToken = stack.pop();
         String pattern = patternToken.asString();
@@ -1345,7 +1351,7 @@ public class FunctionToolbox {
      * min(1, null) -> null
      */
     public Value _MAX(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal rhs = stack.pop().asNumber();
         BigDecimal lhs = stack.pop().asNumber();
@@ -1363,7 +1369,7 @@ public class FunctionToolbox {
      * mid("Ralph",2,100) -> "alph"
      */
     public Value _MID(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         Token[] args = parser.popArguments(function, stack);
 
@@ -1405,7 +1411,7 @@ public class FunctionToolbox {
      * min(1, null) -> null
      */
     public Value _MIN(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal rhs = stack.pop().asNumber();
         BigDecimal lhs = stack.pop().asNumber();
@@ -1473,7 +1479,7 @@ public class FunctionToolbox {
      * replace("Ralph", null, null) -> Ralph
      */
     public Value _REPLACE(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         String replaceWith = stack.pop().asString();
         String searchFor = stack.pop().asString();
@@ -1498,7 +1504,7 @@ public class FunctionToolbox {
      * replaceAll("Ralph", null, null) -> Ralph
      */
     public Value _REPLACEALL(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         String replaceWith = stack.pop().asString();
         String searchFor = stack.pop().asString();
@@ -1523,7 +1529,7 @@ public class FunctionToolbox {
      * replaceFirst("Ralph", null, null) -> Ralph
      */
     public Value _REPLACEFIRST(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         String replaceWith = stack.pop().asString();
         String searchFor = stack.pop().asString();
@@ -1546,7 +1552,7 @@ public class FunctionToolbox {
      * right("Ra", 3) -> "Ra"
      */
     public Value _RIGHT(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         BigDecimal bdCount = stack.pop().asNumber();
         String str = stack.pop().asString();
@@ -1577,7 +1583,7 @@ public class FunctionToolbox {
      * rightOf("riden@mymail.org", "<->") -> ""
      */
     public Value _RIGHTOF(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         String toMatch = stack.pop().asString();
         String str = stack.pop().asString();
@@ -1599,7 +1605,7 @@ public class FunctionToolbox {
      * round(45.1246, 2) -> 45.13
      */
     public Value _ROUND(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal places = stack.pop().asNumber();
         BigDecimal number = stack.pop().asNumber();
@@ -1617,7 +1623,7 @@ public class FunctionToolbox {
      * sin(null) -> null
      */
     public Value _SIN(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -1637,7 +1643,7 @@ public class FunctionToolbox {
      * parameter.
      */
     public Value _SPLIT(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         Token[] args = parser.popArguments(function, stack);
         if (args[0].asString() != null) {
@@ -1662,7 +1668,7 @@ public class FunctionToolbox {
      * sqr(9) -> 81
      */
     public Value _SQR(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -1678,7 +1684,7 @@ public class FunctionToolbox {
      * sqrt(81) -> 9
      */
     public Value _SQRT(Token function, Stack<Token> stack) throws ParserException {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         Token token = stack.pop();
 
@@ -1719,7 +1725,7 @@ public class FunctionToolbox {
      * str("kdkdkd") -> 0 or not a number exception if "ignoreErrors" is true
      */
     public Value _STR(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         Token[] args = parser.popArguments(function, stack);
 
@@ -1777,7 +1783,7 @@ public class FunctionToolbox {
      * replicate("RI", 2) -> "RIRI"
      */
     public Value _STRING(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         BigDecimal count = stack.pop().asNumber();
         String str = stack.pop().asString();
@@ -1798,7 +1804,7 @@ public class FunctionToolbox {
      * tan(null) -> null
      */
     public Value _TAN(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((BigDecimal)null);
+        Value value = new Value(function.getText()).setValue((BigDecimal) null);
 
         BigDecimal number = stack.pop().asNumber();
         if (number != null) {
@@ -1815,7 +1821,7 @@ public class FunctionToolbox {
      * trim("**Ralph**", "*") -> "Ralph"
      */
     public Value _TRIM(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         Token[] args = parser.popArguments(function, stack);
 
@@ -1837,7 +1843,7 @@ public class FunctionToolbox {
      * trim("**Ralph**", "*") -> "Ralph**"
      */
     public Value _TRIMLEFT(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         Token[] args = parser.popArguments(function, stack);
 
@@ -1859,7 +1865,7 @@ public class FunctionToolbox {
      * trim("**Ralph**", "*") -> "**Ralph"
      */
     public Value _TRIMRIGHT(Token function, Stack<Token> stack) {
-        Value value = new Value(function.getText()).setValue((String)null);
+        Value value = new Value(function.getText()).setValue((String) null);
 
         Token[] args = parser.popArguments(function, stack);
 

@@ -399,40 +399,34 @@ public class Parser {
         source += ";";
 
         // Clear results of last parse
-        Value value;
         lastException = null;
+        Value value =  new Value("ERROR: EMPTY EXPRESSION");;
 
         try {
-            // See if this expression has been previously parsed
-            List<Token> tokens = tokenizedExpressions.get(source);
+            String[] expressions = source.split(expressionDelimiter + SPLIT_REGEX);
 
-            // If expression isn't in the map then tokenize, generate RPN stack, and store the result
-            if (tokens == null) {
-                tokens = new ArrayList<>();
-                String[] expressions = source.split(expressionDelimiter + SPLIT_REGEX);
-                for (String expression : expressions) {
-                    if (expression.trim().length() > 0) {
+            for (String expression : expressions) {
+                if (expression.trim().length() > 0) {
+                    List<Token> tokens = tokenizedExpressions.get(expression);
+                    if (tokens == null) {
                         lastExpression = expression;
+                        tokens = new ArrayList<Token>();
                         List<Token> list = tokenize(expression, false);
                         if (list.size() > 0) {
                             tokens.addAll(infixToRPN(list));
+                            tokenizedExpressions.put(expression, tokens);
                         }
                     }
-                }
 
-                // Save the parsed tokens in the cache
-                if (tokens.size() > 0) {
-                    tokenizedExpressions.put(source, tokens);
-                }
-            } else {
-                // Restore any token values that may have been updated so cached expressions will continue to work
-                for (Token token : tokens) {
-                    token.restoreOrgValue();
+                    // Restore any token values that may have been updated so cached expressions will continue to work
+                    for (Token token : tokens) {
+                        token.restoreOrgValue();
+                    }
+
+                    // Evaluate the expression
+                    value = (tokens.size() > 0) ? RPNtoValue(tokens) : new Value("ERROR: EMPTY EXPRESSION");
                 }
             }
-
-            // Evaluate the expression
-            value = (tokens.size() > 0) ? RPNtoValue(tokens) : new Value("ERROR: EMPTY EXPRESSION");
         } catch (ParserException ex) {
             lastException = ex;
             value = new Value().setValue(lastException);
@@ -1171,26 +1165,23 @@ public class Parser {
      * returns previous precision value
      */
     public Value _PRECISION(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = listOfNullParameters(stack);
+        String nullParams = listOfNullParameters(stack, stack.size() - function.getArgc());
         if (nullParams != null) {
             setStatusAndFail(function, "error.null_parameters", nullParams);
         }
 
         Value value = new Value(function.getText()).setValue(BigDecimal.valueOf(precision));
 
-        if (listOfNullParameters(stack) == null) {
-            Token token = stack.pop();
-            int decimals = token.asNumber().intValue();
-            if (decimals >= 0 && decimals <= 100) {
-                precision = decimals;
-            } else {
-                String msg = ParserException.formatMessage("error.function_value_out_of_range",
-                        function.getText(), "1", "0", "100", String.valueOf(decimals));
-                throw new ParserException(msg, token.getRow(), token.getColumn() - 1);
-            }
+        Token token = stack.pop();
+        int decimals = token.asNumber().intValue();
+        if (decimals >= 0 && decimals <= 100) {
+            precision = decimals;
+        } else {
+            String msg = ParserException.formatMessage("error.function_value_out_of_range",
+                    function.getText(), "1", "0", "100", String.valueOf(decimals));
+            throw new ParserException(msg, token.getRow(), token.getColumn() - 1);
         }
 
         return value;
     }
-
 }

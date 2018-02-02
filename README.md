@@ -128,6 +128,10 @@ Examples:
     
 ## Version History
 
+2.2.4
+* Find now returns 1 instead of 0 for empty search strings (e.g., find("abc", """) == 1)
+* Refactor MAKEBOOLEAN to use a set of valid boolean expressions that can be parsed.
+
 2.2.3
 * Improved cacheing and use of pre-parsed expressions, especially with strings containing multiple expressions
 * Added option in DATEADD to add/subtract a number of milliseconds

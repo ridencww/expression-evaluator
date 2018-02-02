@@ -4,16 +4,16 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Stack;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class FunctionToolbox {
     private Parser parser;
+
+    private static final Set<String> SET_TRUE = new HashSet<String>(Arrays.asList(new String[] {"1","on","t","true","y","yes"}));
+    private static final Set<String> SET_FALSE = new HashSet<String>(Arrays.asList(new String[] {"0","off","f","false","n","no"}));
 
     // Used for isNumber
     private final Pattern pattern_NUMBER = Pattern.compile(TokenType.NUMBER.getRegex(new Parser()), Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
@@ -700,8 +700,8 @@ public class FunctionToolbox {
 
     /*
      * Returns a 1 based index of search within target string
-     * find("Ralph", "") -> 0
      * find("", "lp") -> 0
+     * find("Ralph", "") -> 1
      * find("Ralph", "lp") -> 3
      * find("RalphRalph", "lp", 5) -> 8
      */
@@ -713,12 +713,17 @@ public class FunctionToolbox {
         String str = args[0].asString();
         String searchFor = args[1].asString();
         BigDecimal start = function.getArgc() == 3 ? args[2].asNumber() : BigDecimal.ONE;
-        if (str != null && searchFor != null &&
-                str.length() > 0 && searchFor.length() > 0) {
-            int startAt = start.intValue();
-            if (startAt < str.length()) {
-                BigDecimal bd = new BigDecimal(str.indexOf(searchFor, --startAt));
-                value.setValue(bd.add(BigDecimal.ONE));
+        if (str != null) {
+            if (searchFor == null || searchFor.length() == 0) {
+                value.setValue(BigDecimal.ONE);
+            } else {
+                if (str.length() > 0) {
+                    int startAt = start.intValue();
+                    if (startAt < str.length()) {
+                        BigDecimal bd = new BigDecimal(str.indexOf(searchFor, --startAt));
+                        value.setValue(bd.add(BigDecimal.ONE));
+                    }
+                }
             }
         }
 
@@ -989,17 +994,30 @@ public class FunctionToolbox {
 
     /*
      * Returns whether or not the value of the expression is of the type BOOLEAN.  Note that this
-     * method calls MakeBoolean and then tests the result
+     * method calls MakeBoolean and then tests the result.
+     * isBoolean(1) -> true
+     * isBoolean(1==1) -> true
      * isBoolean("1") -> true
-     * makeBoolean("1.0") -> true
-     * makeBoolean("0") -> false
-     * makeBoolean("0.0") -> false
-     * makeBoolean("true") -> true
-     * makeBoolean("yes") -> true
-     * makeBoolean("on") -> true
-     * makeBoolean("X") -> false
-     * makeBoolean("<null>") -> false
-     * makeBoolean("2.0") -> false
+     * isBoolean("1.0") -> true
+     * isBoolean("on") -> true
+     * isBoolean("t") -> true
+     * isBoolean("true") -> true
+     * isBoolean("y") -> true
+     * isBoolean("yes") -> true
+     *
+     * isBoolean(0) -> true
+     * isBoolean(1==0) -> true
+     * isBoolean("0") -> true
+     * isBoolean("0.0") -> true
+     * isBoolean("off") -> true
+     * isBoolean("f") -> true
+     * isBoolean("false") -> true
+     * isBoolean("n") -> true
+     * isBoolean("no") -> true
+     *
+     * isBoolean("<null>") -> false
+     * isBoolean("") -> false
+     * isBoolean("noway") -> false     *
      */
     public Value _ISBOOLEAN(Token function, Stack<Token> stack) {
         Value value = _MAKEBOOLEAN(function, stack);
@@ -1168,38 +1186,51 @@ public class FunctionToolbox {
     }
 
     /*
-     * Create a BOOLEAN value from an input string
+     * Create a BOOLEAN value from an input string - DATE types always return NULL/FALSE
+     * makeBoolean(1) -> true
+     * makeBoolean(1==1) -> true
      * makeBoolean("1") -> true
      * makeBoolean("1.0") -> true
+     * makeBoolean("on") -> true
+     * makeBoolean("t") -> true
+     * makeBoolean("true") -> true
+     * makeBoolean("y") -> true
+     * makeBoolean("yes") -> true
+     *
+     * makeBoolean(0) -> false
+     * makeBoolean(1==0) -> false
      * makeBoolean("0") -> false
      * makeBoolean("0.0") -> false
-     * makeBoolean("true") -> true
-     * makeBoolean("yes") -> true
-     * makeBoolean("on") -> true
-     * makeBoolean("X") -> null
+     * makeBoolean("off") -> false
+     * makeBoolean("f") -> false
+     * makeBoolean("false") -> false
+     * makeBoolean("n") -> false
+     * makeBoolean("no") -> false
+     *
      * makeBoolean("<null>") -> null
-     * makeBoolean("2.0") -> null
+     * makeBoolean("") -> null
+     * makeBoolean("noway") -> null
      */
     public Value _MAKEBOOLEAN(Token function, Stack<Token> stack) {
         Value value = new Value(function.getText()).setValue((Boolean) null);
 
         Token token = stack.pop();
         if (token.asString() != null && token.getValue().getType() != ValueType.DATE) {
-            // Try conversion of boolean-like strings
-            String str = token.asString() + "~";
-            if (str.length() > 1 && ("1~true~yes~on~").contains(str.toLowerCase())) {
-                value.setValue(Boolean.TRUE);
-            } else if (str.length() > 1 && ("0~false~no~off~").contains(str.toLowerCase())) {
-                value.setValue(Boolean.FALSE);
-            } else {
-                // probe for variations of 0 and 1
-                str = token.asString();
-                if (pattern_NUMBER.matcher(str).find()) {
-                    BigDecimal bd = new BigDecimal(str);
-                    if (bd.compareTo(BigDecimal.ZERO) == 0) {
-                        value.setValue(Boolean.FALSE);
-                    } else if (bd.compareTo(BigDecimal.ONE) == 0) {
-                        value.setValue(Boolean.TRUE);
+            String str = token.asString();
+            if (str != null) {
+                str = str.toLowerCase();
+                if (SET_TRUE.contains(str)) {
+                    value.setValue(Boolean.TRUE);
+                } else if (SET_FALSE.contains(str)) {
+                    value.setValue(Boolean.FALSE);
+                } else {
+                    if (pattern_NUMBER.matcher(str).find()) {
+                        BigDecimal bd = new BigDecimal(str);
+                        if (bd.compareTo(BigDecimal.ZERO) == 0) {
+                            value.setValue(Boolean.FALSE);
+                        } else if (bd.compareTo(BigDecimal.ONE) == 0) {
+                            value.setValue(Boolean.TRUE);
+                        }
                     }
                 }
             }

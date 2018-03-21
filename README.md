@@ -129,47 +129,48 @@ Examples:
 ## Version History
 
 2.2.4
-* Find now returns 1 instead of 0 for empty search strings (e.g., find("abc", """) == 1)
+* Find now returns 1 instead of 0 for empty search strings (e.g., find("abc", """) == 1).
 * Refactor MAKEBOOLEAN to use a set of valid boolean expressions that can be parsed.
+* Improved detection of syntax errors, especially for tenary statements.
 
 2.2.3
-* Improved cacheing and use of pre-parsed expressions, especially with strings containing multiple expressions
-* Added option in DATEADD to add/subtract a number of milliseconds
-^ Added optional milliseconds parameter to MAKEDATE, default to zero if not provided
-* Fixed issue in MAKEDATE where milliseconds were set to current time and not zero
-* Fixed issue with ISBOOLEAN that resulted in false negative detections of BOOLEAN values
+* Improved cacheing and use of pre-parsed expressions, especially with strings containing multiple expressions.
+* Added option in DATEADD to add/subtract a number of milliseconds.
+^ Added optional milliseconds parameter to MAKEDATE, default to zero if not provided.
+* Fixed issue in MAKEDATE where milliseconds were set to current time and not zero.
+* Fixed issue with ISBOOLEAN that resulted in false negative detections of BOOLEAN values.
 
 2.2.2
-* Support backslash as escape lead-in character in STRING tokens (e.g., 6\" 3\')
-* Fix NullPointerException caused by dereferencing an empty array
-* Flag type mismatches and throw ParseException
+* Support backslash as escape lead-in character in STRING tokens (e.g., 6\" 3\').
+* Fix NullPointerException caused by dereferencing an empty array.
+* Flag type mismatches and throw ParseException.
 
 2.2.1
-* Added ability to set the timezone to use by the parser
-* Allow additional @ at start of field name (e.g., @id, @@id, @@@id)
-* Make ParserException.formatMessage public so it can be used by function writers
-* Build test.jar to make UnitTestBase and other halpers available to developers writing functions
+* Added ability to set the timezone to use by the parser.
+* Allow additional @ at start of field name (e.g., @id, @@id, @@@id).
+* Make ParserException.formatMessage public so it can be used by function writers.
+* Build test.jar to make UnitTestBase and other halpers available to developers writing functions.
 
 2.2.0
 * Updated README.md
-* Support for two dimensional arrays up to 10000 x 256
-* Moved date functions (DATEADD, DATEFORMAT. etc.) into FunctionToolbox
+* Support for two dimensional arrays up to 10000 x 256.
+* Moved date functions (DATEADD, DATEFORMAT. etc.) into FunctionToolbox.
 
 2.1.0
-* Updated README.md
-* Moved GUID, LEFTOF, and RIGHTOF into FunctionToolbox
-* Access to system properties and environment variables disabled by default
-* Fixed processing of NOT
-* Fixed precedence of exponentiation operator
-* Improved reporting of dangling operators 
+* Updated README.md.
+* Moved GUID, LEFTOF, and RIGHTOF into FunctionToolbox.
+* Access to system properties and environment variables disabled by default.
+* Fixed processing of NOT.
+* Fixed precedence of exponentiation operator.
+* Improved reporting of dangling operators.
  
 2.0.0  
-* Structural refactor
+* Structural refactor.
 * Provided a set of TokenType operators that most can use as-is.
 * Supplied a toolbox of functions that can be optionally used by the basic Parser. Users can continue to define their own custom functions.
 * Fixed shallow copy issue with token values for expressions that were cached.
 
-1.0.0 Initial release to GitHub
+1.0.0 Initial release to GitHub.
     
 ## License
 

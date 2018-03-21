@@ -437,7 +437,7 @@ public class Parser {
 
     /*----------------------------------------------------------------------------*/
 
-    public List<Token> tokenize(String input, boolean wantWhitespace) {
+    public List<Token> tokenize(String input, boolean wantWhitespace) throws ParserException {
         int offset = 0;
         int row = 1;
 
@@ -466,9 +466,16 @@ public class Parser {
         // Remove the NOMATCH signifying end-of-expression
         if (tokens.size() > 1) {
             int last = tokens.size() - 1;
-            Token token = tokens.get(last);
-            if (TokenType.NOMATCH.equals(token.getType())) {
+            Token lastToken = tokens.get(last);
+            if (TokenType.NOMATCH.equals(lastToken.getType())) {
                 tokens.remove(last);
+            }
+
+            // Check for invalid tokens in the expression
+            for (Token token : tokens) {
+                if (TokenType.NOMATCH.equals(token.getType())) {
+                    setStatusAndFail(token, "error.invalid_token");
+                }
             }
         }
 

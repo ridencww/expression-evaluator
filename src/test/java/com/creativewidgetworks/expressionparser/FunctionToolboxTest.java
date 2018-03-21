@@ -460,12 +460,12 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "FIND('A','B','C')", "FIND parameter 3 expected type NUMBER, but was STRING", 1, 5);
 
         validateNumericResult(parser, "FIND(null,'abc')", "0");
-        validateNumericResult(parser, "FIND('AbCdEfG', null)", "0");
-        validateNumericResult(parser, "FIND('', '')", "0");
-        validateNumericResult(parser, "FIND('AbCdEfG', '')", "0");
         validateNumericResult(parser, "FIND('AbCdEfG', 'cd')", "0");
         validateNumericResult(parser, "FIND('AbCdEfG', 'CD')", "0");
         validateNumericResult(parser, "FIND('AbCdEfG', 'Cd')", "3");
+        validateNumericResult(parser, "FIND('AbCdEfG', null)", "1");
+        validateNumericResult(parser, "FIND('', '')", "1");
+        validateNumericResult(parser, "FIND('AbCdEfG', '')", "1");
         validateNumericResult(parser, "FIND('AbCdEfGCd', 'Cd', 5)", "8");
         validateNumericResult(parser, "FIND('AbCdEfGCd', 'Cd', -15)", "3");
         validateNumericResult(parser, "FIND('AbCdEfGCd', 'Cd', 15)", "0");
@@ -825,28 +825,41 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "MAKEBOOLEAN()", "MAKEBOOLEAN expected 1 parameter(s), but got 0", 1, 12);
         validateExceptionThrown(parser, "MAKEBOOLEAN('test', 'test')", "MAKEBOOLEAN expected 1 parameter(s), but got 2", 1, 12);
 
+        // Not really boolean evaluations
         validateBooleanResult(parser, "MAKEBOOLEAN(NOW())", Boolean.FALSE);
         validateBooleanResult(parser, "MAKEBOOLEAN(null)", Boolean.FALSE);
         validateBooleanResult(parser, "MAKEBOOLEAN('')", Boolean.FALSE);
         validateBooleanResult(parser, "MAKEBOOLEAN('Noway')", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN(1.000000000000001)", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN(0)", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('0')", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('0.0')", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('off')", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('OFF')", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('false')", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('False')", Boolean.FALSE);
-        validateBooleanResult(parser, "MAKEBOOLEAN(1==0)", Boolean.FALSE);
+
+        // Boolean.TRUE values
         validateBooleanResult(parser, "MAKEBOOLEAN(1)", Boolean.TRUE);
-        validateBooleanResult(parser, "MAKEBOOLEAN(2-1)", Boolean.TRUE);
+        validateBooleanResult(parser, "MAKEBOOLEAN(1==1)", Boolean.TRUE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('1')", Boolean.TRUE);
         validateBooleanResult(parser, "MAKEBOOLEAN('1.000')", Boolean.TRUE);
         validateBooleanResult(parser, "MAKEBOOLEAN('on')", Boolean.TRUE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('ON')", Boolean.TRUE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('t')", Boolean.TRUE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('true')", Boolean.TRUE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('y')", Boolean.TRUE);
         validateBooleanResult(parser, "MAKEBOOLEAN('yes')", Boolean.TRUE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('TRUE')", Boolean.TRUE);
-        validateBooleanResult(parser, "MAKEBOOLEAN('trUe')", Boolean.TRUE);
-        validateBooleanResult(parser, "MAKEBOOLEAN(1==1)", Boolean.TRUE);
+
+        // Boolean.FALSE values
+        validateBooleanResult(parser, "MAKEBOOLEAN(0)", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN(1==0)", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('0')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('0.000')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('off')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('f')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('false')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('n')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('no')", Boolean.FALSE);
+
+        // Verify case insensitive
+        validateBooleanResult(parser, "MAKEBOOLEAN('tRuE')", Boolean.TRUE);
+
+        // Verify exact, case-insensitive match required
+        validateBooleanResult(parser, "MAKEBOOLEAN('yep')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('atrue')", Boolean.FALSE);
+        validateBooleanResult(parser, "MAKEBOOLEAN('truefact')", Boolean.FALSE);
     }
 
     @Test

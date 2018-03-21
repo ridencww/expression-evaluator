@@ -604,6 +604,10 @@ public class ParserTest extends UnitTestBase {
         validateExceptionThrown(parser, "(1==1) ? 'Y'", "Syntax error, ? without a matching :", 1, 8);
         validateExceptionThrown(parser, "(1==1) : 'N'", "Syntax error, : without preceding ?", 1, 8);
         validateExceptionThrown(parser, "1 ? 'Y' : 'N'", "Expected BOOLEAN value, but was NUMBER", 1, 1);
+        validateExceptionThrown(parser, "1==1 ? 'Hi : 'Hello'", "Syntax error, bad token", 1, 20);
+        validateExceptionThrown(parser, "1==0 ? Hi' : 'Hello'", "Syntax error, bad token", 1, 20);
+        validateExceptionThrown(parser, "1==0 ? 'Hi' : 'Hello", "Syntax error, bad token", 1, 15);
+        validateExceptionThrown(parser, "1==0 ? 'Hi' : Hello'", "Syntax error, bad token", 1, 20);
 
         validateStringResult(parser, "(1==1) ? 'Y' : 'N'", "Y");
         validateStringResult(parser, "(1==2) ? 'Y' : 'N'", "N");
@@ -623,7 +627,7 @@ public class ParserTest extends UnitTestBase {
     /*----------------------------------------------------------------------------*/
 
     @Test
-    public void testStringWithEscapedCharacters() {
+    public void testStringWithEscapedCharacters() throws Exception {
         // William 'Bill' Iden
         List<Token> tokens = parser.tokenize("\"William 'Bill' Iden\"", false);
         validateTokensTextOnly(tokens, "William 'Bill' Iden");

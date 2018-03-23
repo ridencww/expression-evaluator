@@ -128,6 +128,8 @@ Examples:
     
 ## Version History
 
+2.2.5
+
 2.2.4
 * Find now returns 1 instead of 0 for empty search strings (e.g., find("abc", """) == 1).
 * Refactor MAKEBOOLEAN to use a set of valid boolean expressions that can be parsed.

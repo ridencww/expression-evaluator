@@ -254,7 +254,7 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     /*----------------------------------------------------------------------------*/
 
     @Test
-    public void testRowColumn() {
+    public void testRowColumn() throws Exception {
         List<Token> tokens = parser.tokenize("1 2\n 3  4", false);
         validateTokens(tokens,
                 new Token(TokenType.NUMBER, "1", 1, 1),
@@ -265,18 +265,23 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     }
 
     @Test
-    public void testString() {
+    public void testString() throws Exception {
         // Unclosed quotes
-        List<Token> tokens = parser.tokenize("'hello", false);
-        validateTokens(tokens,
-                new Token(TokenType.NOMATCH, "", 1, 1),
-                new Token(TokenType.IDENTIFIER, "hello", 1, 2));
+        List<Token> tokens;
 
+        try {
+            tokens = parser.tokenize("'hello", false);
+            fail("ParserException expected");
+        } catch (ParserException ex) {
+            assertEquals("Syntax error, bad token", ex.getMessage());
+        }
 
-        tokens = parser.tokenize("\"hello", false);
-        validateTokens(tokens,
-                new Token(TokenType.NOMATCH, "", 1, 1),
-                new Token(TokenType.IDENTIFIER, "hello", 1, 2));
+        try {
+            tokens = parser.tokenize("hello'", false);
+            fail("ParserException expected");
+        } catch (ParserException ex) {
+            assertEquals("Syntax error, bad token", ex.getMessage());
+        }
 
         // Empty strings
         tokens = parser.tokenize("\"\"", false);
@@ -294,7 +299,7 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
     }
 
     @Test
-    public void testWhitespace() {
+    public void testWhitespace() throws Exception {
         List<Token> tokens = parser.tokenize("1 2", false);
         validateTokens(tokens,
                 new Token(TokenType.NUMBER, "1", 1, 1),

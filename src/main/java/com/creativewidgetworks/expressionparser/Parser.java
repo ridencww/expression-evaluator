@@ -84,10 +84,11 @@ public class Parser {
         return listOfNullParameters(stack, 0);
     }
 
-    public String listOfNullParameters(Stack<Token> stack, int offset) {
+    public String listOfNullParameters(Stack<Token> stack, int argCount) {
         StringBuilder sb = new StringBuilder();
 
         if (stack != null) {
+            int offset = argCount == 0 ? 0 : stack.size() - argCount;
             for (int i = offset; i < stack.size(); i++) {
                 if (stack.elementAt(i).getValue().asObject() == null) {
                     if (sb.length() > 0) {
@@ -813,7 +814,6 @@ public class Parser {
     }
 
     private Token processField(Token field, Stack<Token> stack) throws ParserException {
-        Value value = getField(field.getText());
         return new Token(TokenType.VALUE, getField(field.getText()), field.getRow(), field.getColumn());
     }
 
@@ -1045,7 +1045,8 @@ public class Parser {
     *  DIM(V, 10, 5) -> Two dimensional array of a size of 10 rows, each row containing 5 elements is assigned to V
     */
     public Value _DIM(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = listOfNullParameters(stack, 1);
+        // Skip first parameter (variable) because its value will be null and that is okay
+        String nullParams = listOfNullParameters(stack, function.getArgc() - 1);
         if (nullParams != null) {
             setStatusAndFail(function, "error.null_parameters", nullParams);
         }
@@ -1126,7 +1127,7 @@ public class Parser {
      *
      */
     public Value _NOW(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = listOfNullParameters(stack);
+        String nullParams = listOfNullParameters(stack, function.getArgc());
         if (nullParams != null) {
             setStatusAndFail(function, "error.null_parameters", nullParams);
         }
@@ -1172,7 +1173,7 @@ public class Parser {
      * returns previous precision value
      */
     public Value _PRECISION(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = listOfNullParameters(stack, stack.size() - function.getArgc());
+        String nullParams = listOfNullParameters(stack, function.getArgc());
         if (nullParams != null) {
             setStatusAndFail(function, "error.null_parameters", nullParams);
         }

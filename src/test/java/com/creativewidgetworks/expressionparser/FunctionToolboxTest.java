@@ -79,6 +79,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "ABS(0)", "0");
         validateNumericResult(parser, "ABS(1.2345)", "1.2345");
         validateNumericResult(parser, "ABS(-123.45)", "123.45");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ABS(-123.45)", Boolean.TRUE);
     }
 
     @Test
@@ -92,6 +95,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "ARCCOS(null)", null);
         validateNumericResult(parser, "ARCCOS(0.9271838546)", "22");
         validateNumericResult(parser, "ARCCOS(0.7071068)", "45");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ARCCOS(0.7071068)", Boolean.TRUE);
     }
 
     @Test
@@ -105,6 +111,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "ARCSIN(null)", null);
         validateNumericResult(parser, "ARCSIN(0.3746065934)", "22");
         validateNumericResult(parser, "ARCSIN(0.7071068)", "45");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ARCSIN(0.7071068)", Boolean.TRUE);
     }
 
     @Test
@@ -119,6 +128,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "ARCTAN(0)", "0");
         validateNumericResult(parser, "ARCTAN(0.4040262258)", "22");
         validateNumericResult(parser, "ARCTAN(1)", "45");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ARCTAN(1)", Boolean.TRUE);
     }
 
     @Test
@@ -136,6 +148,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "ARRAYLEN(null)", null);
         validateNumericResult(parser, "ARRAYLEN(V2)", "3");
         validateNumericResult(parser, "ARRAYLEN(SPLIT('00,10,11,100'))", "4");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ARRAYLEN(SPLIT('00,10,11,100'))", Boolean.TRUE);
     }
 
     @Test
@@ -150,6 +165,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "AVERAGE(0)", "0");
         validateNumericResult(parser, "AVERAGE(2)", "2");
         validateNumericResult(parser, "AVERAGE(2, 4, 6, 8)", "5");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=AVERAGE(2, 4, 6, 8)", Boolean.TRUE);
     }
 
     @Test
@@ -163,6 +181,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "CEILING(null)", null);
         validateNumericResult(parser, "CEILING(0.01)", "1.0");
         validateNumericResult(parser, "CEILING(2.022)", "3.0");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=CEILING(2.022)", Boolean.TRUE);
     }
 
     @Test
@@ -181,6 +202,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "CONTAINS('Ralph', 'Ph')", Boolean.FALSE);
         validateBooleanResult(parser, "CONTAINS('Ralph', 'ph')", Boolean.TRUE);
         validateBooleanResult(parser, "CONTAINS('Ralph', Upper('ph'))", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=CONTAINS('Ralph', Upper('ph'))", Boolean.TRUE);
     }
 
     @Test
@@ -199,6 +223,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "CONTAINSALL('Ralph', 'hR')", Boolean.TRUE);
         validateBooleanResult(parser, "CONTAINSALL('Ralph', 'ph')", Boolean.TRUE);
         validateBooleanResult(parser, "CONTAINSALL('Ralph', 'pH')", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=CONTAINSALL('Ralph', 'pH')", Boolean.TRUE);
     }
 
     @Test
@@ -217,6 +244,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "CONTAINSANY('Ralph', 'XhR')", Boolean.TRUE);
         validateBooleanResult(parser, "CONTAINSANY('Ralph', 'Xph')", Boolean.TRUE);
         validateBooleanResult(parser, "CONTAINSANY('Ralph', 'XpH')", Boolean.TRUE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=CONTAINSANY('Ralph', 'XpH')", Boolean.TRUE);
     }
 
     @Test
@@ -232,6 +262,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "COS(1)", "0.99985");
         validateNumericResult(parser, "COS(22)", "0.92718");
         validateNumericResult(parser, "COS(45)", "0.70711");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=COS(45)", Boolean.TRUE);
     }
 
     @Test
@@ -257,6 +290,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 1, 'se')", makeDate(3, 14, 2007, 0, 0, 1));
         validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 500, 'ms')", makeDate(3, 14, 2007, 0, 0, 0, 500));
 
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEADD(MAKEDATE(3, 14, 2007), 500, 'ms')", Boolean.TRUE);
+
         // Rollover
         validateDateResult(parser, "DATEADD(MAKEDATE(3, 14, 2007), 10, 'm')", makeDate(1, 14, 2008, 0, 0, 0));
     }
@@ -273,6 +309,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateDateResult(parser, "DATEADD(D, 1, 'hr')", makeDate(3, 14, 2007, 1, 0, 0));
         validateDateResult(parser, "DATEADD(D, 1, 'mi')", makeDate(3, 14, 2007, 0, 1, 0));
         validateDateResult(parser, "DATEADD(D, 1, 'se')", makeDate(3, 14, 2007, 0, 0, 1));
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEADD(D, 1, 'se')", Boolean.TRUE);
     }
 
     @Test
@@ -297,6 +336,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, FROMDATE, null)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, THRUDATE)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEBETWEEN(DATE2, null, null)", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEBETWEEN(DATE2, null, null)", Boolean.TRUE);
     }
 
     @Test
@@ -305,6 +347,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "DATEBOD()", "DATEBOD expected 1 parameter(s), but got 0", 1, 8);
         validateExceptionThrown(parser, "DATEBOD(1)", "DATEBOD parameter 1 expected type DATE, but was NUMBER", 1, 8);
         validateDateResult(parser, "DATEBOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 0, 0, 0));
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEBOD(MAKEDATE(3,14,2007,14,15,40))", Boolean.TRUE);
     }
 
     @Test
@@ -313,6 +358,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         parser.setTimeZone(TimeZone.getTimeZone("UTC"));
         testTimeZone = TimeZone.getTimeZone("UTC");
         validateDateResult(parser, "DATEBOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 0, 0, 0));
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEBOD(MAKEDATE(3,14,2007,14,15,40))", Boolean.TRUE);
     }
 
     @Test
@@ -321,6 +369,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "DATEEOD()", "DATEEOD expected 1 parameter(s), but got 0", 1, 8);
         validateExceptionThrown(parser, "DATEEOD(1)", "DATEEOD parameter 1 expected type DATE, but was NUMBER", 1, 8);
         validateDateResult(parser, "DATEEOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 23, 59, 59));
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEEOD(MAKEDATE(3,14,2007,14,15,40))", Boolean.TRUE);
     }
 
     @Test
@@ -329,6 +380,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         parser.setTimeZone(TimeZone.getTimeZone("UTC"));
         testTimeZone = TimeZone.getTimeZone("UTC");
         validateDateResult(parser, "DATEEOD(MAKEDATE(3,14,2007,14,15,40))", makeDate(3, 14, 2007, 23, 59, 59));
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEEOD(MAKEDATE(3,14,2007,14,15,40))", Boolean.TRUE);
     }
 
     @Test
@@ -351,6 +405,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', '2007-03-14')", "03/14/2007");
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', 3, 14, 2007, 0, 0, 00)", "03/14/2007");
         validateStringResult(parser, "DATEFORMAT('M/d/yyyy hh:mm:ss', DATEADD(MAKEDATE('3/14/2017 12:00:00'), 1))", "3/15/2017 12:00:00");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEFORMAT('MM/dd/yyyy', MAKEDATE(3, 14, 2007))", Boolean.TRUE);
     }
 
     @Test
@@ -361,6 +418,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         parser.eval("D=MAKEDATE(3, 14, 2007, 20, 00, 00)");
         parser.setTimeZone(TimeZone.getTimeZone("UTC"));
         validateStringResult(parser, "DATEFORMAT('MM/dd/yyyy', D)", "03/15/2007");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEFORMAT('MM/dd/yyyy', D)", Boolean.TRUE);
     }
 
     @Test
@@ -397,6 +457,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "DATEWITHIN(null, null, 1000)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEWITHIN(DATE1, DATE2, null)", Boolean.FALSE);
         validateBooleanResult(parser, "DATEWITHIN(null, null, null)", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=DATEWITHIN(null, null, null)", Boolean.TRUE);
     }
 
     @Test
@@ -415,6 +478,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "ENDSWITH('Ralph', 'Ph')", Boolean.FALSE);
         validateBooleanResult(parser, "ENDSWITH('Ralph', 'ph')", Boolean.TRUE);
         validateBooleanResult(parser, "ENDSWITH('Ralph', Upper('ph'))", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ENDSWITH('Ralph', Upper('ph'))", Boolean.TRUE);
     }
 
     @Test
@@ -429,6 +495,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "EXP(0)", "1.00000");
         validateNumericResult(parser, "EXP(1)", "2.71828");
         validateNumericResult(parser, "EXP(2)", "7.38906");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=EXP(2)", Boolean.TRUE);
     }
 
     @Test
@@ -447,6 +516,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "FACTORIAL(5)", "120");
         validateNumericResult(parser, "FACTORIAL(6)", "720");
         validateNumericResult(parser, "FACTORIAL(30)", "265252859812191058636308480000000");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=FACTORIAL(30)", Boolean.TRUE);
     }
 
     @Test
@@ -469,6 +541,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "FIND('AbCdEfGCd', 'Cd', 5)", "8");
         validateNumericResult(parser, "FIND('AbCdEfGCd', 'Cd', -15)", "3");
         validateNumericResult(parser, "FIND('AbCdEfGCd', 'Cd', 15)", "0");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=FIND('AbCdEfGCd', 'Cd', 15)", Boolean.TRUE);
     }
 
     @Test
@@ -482,6 +557,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "FLOOR(null)", null);
         validateNumericResult(parser, "FLOOR(0.01)", "0.0");
         validateNumericResult(parser, "FLOOR(2.022)", "2.0");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=FLOOR(2.022)", Boolean.TRUE);
     }
 
     @Test
@@ -494,6 +572,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateExceptionThrown(parser, "FORMAT('a', 2)", "FORMAT parameter 2 expected type STRING, but was NUMBER", 1, 7);
 
         validateStringResult(parser, "FORMAT('(###) ###-#### HOME', '8155551212')", "(815) 555-1212 HOME");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=FORMAT('(###) ###-#### HOME', '8155551212')", Boolean.TRUE);
     }
 
     @Test
@@ -546,6 +627,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         // No matches with a trailing colon in variation string
         variations = "0=:7=      ###-####:10=(###) ###-####:";
         validateStringResult(parser, "FORMATBYLEN('A', 'B', \"" + variations + "\")", "");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=FORMATBYLEN(null, null, null)", Boolean.TRUE);
     }
 
     @Test
@@ -562,6 +646,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateGUID(parser, "GUID(3)", true, true, false);
         validateGUID(parser, "GUID(4)", false, true, true);
         validateGUID(parser, "GUID(5)", true, true, true);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=GUID(5)", Boolean.TRUE);
     }
 
     @Test
@@ -578,6 +665,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "HEX(-10)", "F6");
         validateStringResult(parser, "HEX(-1000)", "FC18");
         validateStringResult(parser, "HEX(-125000)", "FFFE17B8");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=HEX(-125000)", Boolean.TRUE);
     }
 
     @Test
@@ -597,6 +687,9 @@ public class FunctionToolboxTest extends UnitTestBase {
 
         // Case sensitive comparisons
         validateBooleanResult(parser, "ISANYOF('BETA', 'alpha', 'beta', 'gamma')", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISANYOF('123', 123)", Boolean.TRUE);
     }
 
     @Test
@@ -612,6 +705,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "ISBLANK('  ')", Boolean.TRUE);
         validateBooleanResult(parser, "ISBLANK('  \t  ')", Boolean.TRUE);
         validateBooleanResult(parser, "ISBLANK(' test ')", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISBLANK(' test ')", Boolean.TRUE);
     }
 
     @Test
@@ -652,6 +748,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "ISBOOLEAN('TRUE')", Boolean.TRUE);
         validateBooleanResult(parser, "ISBOOLEAN('trUe')", Boolean.TRUE);
         validateBooleanResult(parser, "ISBOOLEAN(1==1)", Boolean.TRUE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISBOOLEAN(1==1)", Boolean.TRUE);
     }
 
     @Test
@@ -673,6 +772,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "ISDATE('2009')", Boolean.FALSE);
         validateBooleanResult(parser, "ISDATE('2009','')", Boolean.FALSE);
         validateBooleanResult(parser, "ISDATE('2009','yyyy')", Boolean.TRUE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISDATE('2009','yyyy')", Boolean.TRUE);
     }
 
     @Test
@@ -692,6 +794,9 @@ public class FunctionToolboxTest extends UnitTestBase {
 
         // Case sensitive comparisons
         validateBooleanResult(parser, "ISNONEOF('BETA', 'alpha', 'beta', 'gamma')", Boolean.TRUE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISNONEOF('123', 123)", Boolean.TRUE);
     }
 
     @Test
@@ -705,6 +810,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "ISNULL(NULL)", Boolean.TRUE);
         validateBooleanResult(parser, "ISNULL('')", Boolean.FALSE);
         validateBooleanResult(parser, "ISNULL('  ')", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISNULL('  ')", Boolean.TRUE);
     }
 
     @Test
@@ -728,6 +836,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "ISNUMBER('1.4E12')", Boolean.TRUE);
         validateBooleanResult(parser, "ISNUMBER(PI)", Boolean.TRUE);
         validateBooleanResult(parser, "ISNUMBER(N)", Boolean.TRUE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISNUMBER(N)", Boolean.TRUE);
     }
 
     @Test
@@ -747,6 +858,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "LEFT('12345', 3)", "123");
         validateStringResult(parser, "LEFT('12', 5)", "12");
         validateStringResult(parser, "LEFT(RIGHT('12', 2), 5)", "12");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=LEFT('', 3)", Boolean.TRUE);
     }
 
     @Test
@@ -764,6 +878,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "LEFTOF('riden@myemail.org', '@')", "riden");
         validateStringResult(parser, "LEFTOF('riden@myemail.org', '<->')", "riden@myemail.org");
         validateStringResult(parser, "LEFTOF('left<->right', '<->')", "left");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=LEFTOF('riden@myemail.org', '@')", Boolean.TRUE);
     }
 
     @Test
@@ -777,6 +894,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "LEN('')", "0");
         validateNumericResult(parser, "LEN(null)", "0");
         validateNumericResult(parser, "LEN('Hello')", "5");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=LEN('Hello')", Boolean.TRUE);
     }
 
     @Test
@@ -790,6 +910,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "LOG(null)", null);
         validateNumericResult(parser, "LOG(1)", "0.0");
         validateNumericResult(parser, "LOG(2)", "0.6931471805599453");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=LOG(2)", Boolean.TRUE);
     }
 
     @Test
@@ -803,6 +926,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "LOG10(null)", null);
         validateNumericResult(parser, "LOG10(1)", "0.0");
         validateNumericResult(parser, "LOG10(2)", "0.3010299956639812");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=LOG10(2)", Boolean.TRUE);
     }
 
     @Test
@@ -816,6 +942,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "LOWER(null)", null);
         validateStringResult(parser, "LOWER('')", "");
         validateStringResult(parser, "LOWER('HellO, WORLD')", "hello, world");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=LOWER('HellO, WORLD')", Boolean.TRUE);
     }
 
     @Test
@@ -860,6 +989,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "MAKEBOOLEAN('yep')", Boolean.FALSE);
         validateBooleanResult(parser, "MAKEBOOLEAN('atrue')", Boolean.FALSE);
         validateBooleanResult(parser, "MAKEBOOLEAN('truefact')", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=MAKEBOOLEAN('tRuE')", Boolean.TRUE);
     }
 
     @Test
@@ -880,6 +1012,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateDateResult(parser, "MAKEDATE(4, 3, 2009, 13)", makeDate(4, 3, 2009, 13, 0,0));
         validateDateResult(parser, "MAKEDATE(4, 3, 2009, 13, 14)", makeDate(4, 3, 2009, 13, 14,0));
         validateDateResult(parser, "MAKEDATE(4, 3, 2009, 13, 14, 15)", makeDate(4, 3, 2009, 13, 14,15));
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ISNUMBER(N)", Boolean.TRUE);
     }
 
     @Test
@@ -974,6 +1109,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateArray(parser, "MATCH('Phone: (815) 555-1212 x100 (Work)', '[\\(](\\d{3})\\D*(\\d{3})\\D*(\\d{4})\\D*(\\d*)')",
                 "(815) 555-1212 x100",  // asString
                 "(815) 555-1212 x100", "815", "555", "1212", "100");  // group 0..n
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=MATCH(null, 'b')", Boolean.TRUE);
     }
 
     @Test
@@ -993,6 +1131,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "MAX(-4, -1)","-1");
         validateNumericResult(parser, "MAX(4, 4)","4");
         validateNumericResult(parser, "MAX(-1, -1)","-1");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=MAX(-1, -1)", Boolean.TRUE);
     }
 
     @Test
@@ -1020,6 +1161,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "MID('12345', 3, 2)","34");
         validateStringResult(parser, "MID('12345', 3, 3)","345");
         validateStringResult(parser, "MID('12345', 3, 4)","345");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=MID('12345', 3, 4)", Boolean.TRUE);
     }
 
     @Test
@@ -1039,6 +1183,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "MIN(-4, -1)","-4");
         validateNumericResult(parser, "MIN(4, 4)","4");
         validateNumericResult(parser, "MIN(-1, -1)","-1");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=MIN(-1, -1)", Boolean.TRUE);
     }
 
     @Test
@@ -1055,6 +1202,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "NAMECASE('RALPH IDEN')","Ralph Iden");
         validateStringResult(parser, "NAMECASE('Ralph Iden')","Ralph Iden");
         validateStringResult(parser, "NAMECASE('  RALPH\t\tW. IDEN  ')","  Ralph\t\tW. Iden  ");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=NAMECASE('ralph iden')", Boolean.TRUE);
     }
 
     @Test
@@ -1090,6 +1240,9 @@ public class FunctionToolboxTest extends UnitTestBase {
                 fail("Random number outside of range (50..99)");
             }
         }
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=RANDOM(100)", Boolean.TRUE);
     }
 
     @Test
@@ -1107,6 +1260,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "REPLACE('Mr. Ralph', null, 'Jeremy')","Mr. Ralph");
         validateStringResult(parser, "REPLACE('Mr. Ralph', 'Ralph', null)","Mr. Ralph");
         validateStringResult(parser, "REPLACE('Mr. Ralph', 'Ralph', 'Jeremy')","Mr. Jeremy");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=REPLACE('Mr. Ralph', 'Ralph', 'Jeremy')", Boolean.TRUE);
     }
 
     @Test
@@ -1128,6 +1284,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "REPLACEALL('acabc 000 abc', 'ab*c', '123')","123123 000 123");
         validateStringResult(parser, "REPLACEALL('acabc 000 abc', 'ab+c', '123')","ac123 000 123");
         validateStringResult(parser, "REPLACEALL('abbbcabc 000 abc', 'ab+c', '123')","123123 000 123");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=REPLACEALL('abbbcabc 000 abc', 'ab+c', '123')", Boolean.TRUE);
     }
 
     @Test
@@ -1149,6 +1308,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "REPLACEFIRST('acabc 000 abc', 'ab*c', '123')","123abc 000 abc");
         validateStringResult(parser, "REPLACEFIRST('acabc 000 abc', 'ab+c', '123')","ac123 000 abc");
         validateStringResult(parser, "REPLACEFIRST('abbbcabc 000 abc', 'ab+c', '123')","123abc 000 abc");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=REPLACEFIRST('abbbcabc 000 abc', 'ab+c', '123')", Boolean.TRUE);
     }
 
     @Test
@@ -1168,6 +1330,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "RIGHT('12345', 3)","345");
         validateStringResult(parser, "RIGHT('12', 5)","12");
         validateStringResult(parser, "RIGHT(LEFT('12345', 3), 2)","23");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=RIGHT('12', 5)", Boolean.TRUE);
     }
 
     @Test
@@ -1185,6 +1350,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "RIGHTOF('riden@myemail.org', '@')", "myemail.org");
         validateStringResult(parser, "RIGHTOF('riden@myemail.org', '<->')", "");
         validateStringResult(parser, "RIGHTOF('left<->right', '<->')", "right");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=RIGHTOF('riden@myemail.org', '@')", Boolean.TRUE);
     }
 
     @Test
@@ -1199,6 +1367,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "ROUND(123.454, 2)", "123.45");
         validateNumericResult(parser, "ROUND(-123.455, 2)", "-123.46");
         validateNumericResult(parser, "ROUND(-123.454, 2)", "-123.45");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=ROUND(-123.454, 2)", Boolean.TRUE);
     }
 
     @Test
@@ -1214,6 +1385,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "SIN(1)","0.01745");
         validateNumericResult(parser, "SIN(22)","0.37461");
         validateNumericResult(parser, "SIN(45)","0.70711");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=SIN(45)", Boolean.TRUE);
     }
 
     @Test
@@ -1240,6 +1414,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateArray(parser, "SPLIT('boo:and:foo', 'o', 5)","b", "b", "", ":and:f", "", "");
         validateArray(parser, "SPLIT('boo:and:foo', 'o', -2)","b", "b", "", ":and:f", "", "");
         validateArray(parser, "SPLIT('boo:and:foo', 'o', 0)","b", "b", "", ":and:f");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=SPLIT('boo:and:foo', 'o', 0)", Boolean.TRUE);
     }
 
     @Test
@@ -1254,6 +1431,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "SQR(0)", "0");
         validateNumericResult(parser, "SQR(9)", "81");
         validateNumericResult(parser, "SQR(-2)", "4");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=SQR(-2)", Boolean.TRUE);
     }
 
     @Test
@@ -1268,6 +1448,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "SQRT(null)", null);
         validateNumericResult(parser, "SQRT(0)", "0");
         validateNumericResult(parser, "SQRT(81)", "9");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=SQRT(81)", Boolean.TRUE);
    }
 
     @Test
@@ -1286,6 +1469,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateBooleanResult(parser, "STARTSWITH('Ralph', 'ra')", Boolean.FALSE);
         validateBooleanResult(parser, "STARTSWITH('Ralph', 'Ra')", Boolean.TRUE);
         validateBooleanResult(parser, "STARTSWITH('Ralph', Upper('ra'))", Boolean.FALSE);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=STARTSWITH('Ralph', Upper('ra'))", Boolean.TRUE);
     }
 
     @Test
@@ -1329,6 +1515,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "STR(1234.454, 7, 3)", "1234.454");
         validateStringResult(parser, "STR(-123.45, 7, 3)", "-123.450");
         validateStringResult(parser, "STR(-1234.45, 3, 3)", "-1234.450");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=STR(-1234.45, 3, 3)", Boolean.TRUE);
     }
 
     @Test
@@ -1349,6 +1538,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "STRING('R', 0)", "");
         validateStringResult(parser, "STRING('R', -10)", "");
         validateStringResult(parser, "STRING('RI', 3)", "RIRIRI");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=STRING('RI', 3)", Boolean.TRUE);
     }
 
     @Test
@@ -1364,6 +1556,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "TAN(1)", "0.01746");
         validateNumericResult(parser, "TAN(22)", "0.40403");
         validateNumericResult(parser, "TAN(45)", "1");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=TAN(45)", Boolean.TRUE);
     }
 
     @Test
@@ -1379,6 +1574,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "TRIM('')", "");
         validateStringResult(parser, "TRIM('  \t  Hello World  \t ')", "Hello World");
         validateStringResult(parser, "TRIM('*****Hello World*****', '*')", "Hello World");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=TRIM('')", Boolean.TRUE);
     }
 
     @Test
@@ -1394,6 +1592,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "TRIMLEFT('')", "");
         validateStringResult(parser, "TRIMLEFT('  \t  Hello World  \t ')", "Hello World  \t ");
         validateStringResult(parser, "TRIMLEFT('*****Hello World*****', '*')", "Hello World*****");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=TRIMLEFT('')", Boolean.TRUE);
     }
 
     @Test
@@ -1409,6 +1610,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "TRIMRIGHT('')", "");
         validateStringResult(parser, "TRIMRIGHT('  \t  Hello World  \t ')", "  \t  Hello World");
         validateStringResult(parser, "TRIMRIGHT('*****Hello World*****', '*')", "*****Hello World");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=TRIMRIGHT('')", Boolean.TRUE);
     }
 
     @Test
@@ -1422,6 +1626,9 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateStringResult(parser, "UPPER(null)", null);
         validateStringResult(parser, "UPPER('')", "");
         validateStringResult(parser, "UPPER('HellO, WORLD')", "HELLO, WORLD");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=UPPER('HellO, WORLD')", Boolean.TRUE);
     }
 
     @Test
@@ -1436,5 +1643,8 @@ public class FunctionToolboxTest extends UnitTestBase {
         validateNumericResult(parser, "VAL(null)", null);
         validateNumericResult(parser, "VAL('')", "0");
         validateNumericResult(parser, "VAL('123.45')", "123.45");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=VAL('123.45')", Boolean.TRUE);
     }
 }

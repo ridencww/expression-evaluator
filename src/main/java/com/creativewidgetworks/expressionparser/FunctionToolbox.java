@@ -319,7 +319,7 @@ public class FunctionToolbox {
      * average(null) -> null
      */
     public Value _AVERAGE(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = parser.listOfNullParameters(stack);
+        String nullParams = parser.listOfNullParameters(stack, function.getArgc());
         if (nullParams != null) {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }
@@ -461,7 +461,7 @@ public class FunctionToolbox {
      * DateAdd(date, 500, 'ms') -> '03/15/2008 12:00:01.500'
      */
     public Value _DATEADD(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = parser.listOfNullParameters(stack, stack.size() - function.getArgc());
+        String nullParams = parser.listOfNullParameters(stack, function.getArgc());
         if (nullParams != null) {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }
@@ -566,7 +566,7 @@ public class FunctionToolbox {
      * DateFormat(formatString, 3, 14, 2007, 12, 0, 0) -> '03/14/2007'
      */
     public Value _DATEFORMAT(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = parser.listOfNullParameters(stack, stack.size() - function.getArgc());
+        String nullParams = parser.listOfNullParameters(stack, function.getArgc());
         if (nullParams != null) {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }
@@ -755,7 +755,7 @@ public class FunctionToolbox {
      * format('(###) ###-####', 8155551212) -> '(815) 555-1212'
      */
     public Value _FORMAT(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = parser.listOfNullParameters(stack);
+        String nullParams = parser.listOfNullParameters(stack, function.getArgc());
         if (nullParams != null) {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }
@@ -1486,7 +1486,7 @@ public class FunctionToolbox {
      * random(10, 15) -> 13.2323  (range 10..15)
      */
     public Value _RANDOM(Token function, Stack<Token> stack) throws ParserException {
-        String nullParams = parser.listOfNullParameters(stack);
+        String nullParams = parser.listOfNullParameters(stack, function.getArgc());
         if (nullParams != null) {
             throw new ParserException(ParserException.formatMessage("error.null_parameters", nullParams), function.getRow(), function.getColumn());
         }

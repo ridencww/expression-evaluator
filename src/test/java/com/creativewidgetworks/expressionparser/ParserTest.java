@@ -139,6 +139,9 @@ public class ParserTest extends UnitTestBase {
         parser.getGlobalVariables().put("NEWVAR2", new Value("NEWVAR1", BigDecimal.TEN));
         validateStringResult(parser, "GetGlobal('NEWVAR1')", "Hello, world");
         validateNumericResult(parser, "GetGlobal('NEWVAR2')", "10");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=GetGlobal('NEWVAR2')", Boolean.TRUE);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -181,6 +184,9 @@ public class ParserTest extends UnitTestBase {
         validateExceptionThrown(parser, "NOW(A)", "The following parameter(s) cannot be null: 0", 1, 1);
         validateExceptionThrown(parser, "NOW(0,1)", "NOW expected 0..1 parameter(s), but got 2", 1, 4);
         validateExceptionThrown(parser, "NOW(3)", "NOW parameter 1 expected value to be in the range of 0..2, but was 3", 1, 4);
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=NOW(0)", Boolean.TRUE);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -217,6 +223,9 @@ public class ParserTest extends UnitTestBase {
 
         // Initialized variable
         validateNumericResult(parser, "A=3;PRECISION(A);1/6", "0.167");
+
+        // No exceptions thrown on assignment when checking for null parameters
+        validateBooleanResult(parser, "A=PRECISION(4)", Boolean.TRUE);
 
         // Restore default
         parser.setPrecision(oldPrecision);

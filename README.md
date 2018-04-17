@@ -128,6 +128,8 @@ Examples:
     
 ## Version History
 
+2.2.6
+
 2.2.5
 * Removed double call to getField() when resolving user fields.
 * Fixed issue where assigning from a function call would trigger false null parameter messages.

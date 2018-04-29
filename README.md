@@ -39,7 +39,7 @@ If you're using Maven for your project, add the following to your project's pom.
     <dependency>
       <groupId>com.creativewidgetworks</groupId>
       <artifactId>expression-evaluator</artifactId>
-      <version>2.1.0</version>
+      <version>2.2.5</version>
     </dependency>
 
 ## Data types

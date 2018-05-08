@@ -129,6 +129,8 @@ Examples:
 ## Version History
 
 2.2.6
+* Fixed offset for null parameters. Now, the first parameter is 1, not 0.
+* Defer throwing ParseExceptions on tenary statements unless it occurred on the selected path.
 
 2.2.5
 * Removed double call to getField() when resolving user fields.

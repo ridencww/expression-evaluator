@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import java.util.Stack;
 
-public class FunctionTest extends Assert {
+public class FunctionTest extends UnitTestBase {
 
     private Parser parser;
 
@@ -103,5 +103,16 @@ public class FunctionTest extends Assert {
         parser.addFunction(new Function("alpha", this, "_ALPHA", 0, 0));
         assertNotNull(parser.getFunction("alpha"));
         assertNotNull(parser.getFunction("ALPHA"));
+    }
+
+    @Test
+    public void testUnusedTenaryPathParametersNotChecked() throws Exception {
+        FunctionToolbox.register(parser);
+        validateStringResult(parser, "ISBLANK(null) ? 'Okay' : DATEFORMAT('yyyyMMdd', null)", "Okay");
+        validateStringResult(parser, "ISBLANK('X') ? DATEFORMAT('yyyyMMdd', null) : 'Okay'", "Okay");
+        validateExceptionThrown(parser, "ISBLANK(null) ? DATEFORMAT('yyyyMMdd', null) : 'Okay'",
+            "The following parameter(s) cannot be null: 2", 1, 17);
+        validateExceptionThrown(parser, "ISBLANK('X') ? 'Okay' : DATEFORMAT('yyyyMMdd', null)",
+            "The following parameter(s) cannot be null: 2", 1, 25);
     }
 }

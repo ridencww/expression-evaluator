@@ -3,6 +3,7 @@ package com.creativewidgetworks.expressionparser;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -45,6 +46,8 @@ public class Parser {
     private final Map<String, Value> variables = new TreeMap<>();
 
     private FieldInterface fieldInterface;
+
+    private boolean suppressParseExceptions;
 
     public Parser() {
         caseSensitive = false;
@@ -89,12 +92,12 @@ public class Parser {
 
         if (stack != null) {
             int offset = argCount == 0 ? 0 : stack.size() - argCount;
-            for (int i = offset; i < stack.size(); i++) {
+            for (int i = offset, p = 1; i < stack.size(); i++, p++) {
                 if (stack.elementAt(i).getValue().asObject() == null) {
                     if (sb.length() > 0) {
                         sb.append(", ");
                     }
-                    sb.append(i);
+                    sb.append(p);
                 }
             }
         }
@@ -551,6 +554,11 @@ public class Parser {
 
             lastToken = token;
 
+            // Suppress immediately throwing ParserExceptions when ternaries are involved
+            if (token.opEquals(Operator.TIF)) {
+                outputTokens.add(new Token(TokenType.NOTHROW, "?", token.getRow(), token.getColumn()));
+            }
+
             if (token.isNumber() || token.isString() || token.isConstant() || token.isField() || token.isIdentifer() || token.isProperty()) {
                 outputTokens.add(token);
                 if (!argStack.isEmpty()) {
@@ -665,7 +673,13 @@ public class Parser {
                 setStatusAndFail(booleanValue, "error.boolean_expected", booleanValue.getType());
             }
 
-            return booleanValue.asBoolean() ? trueValue : falseValue;
+            suppressParseExceptions = false;
+            Token tValue = booleanValue.asBoolean() ? trueValue : falseValue;
+            if (tValue.asObject() instanceof ParserException) {
+                throw (ParserException)tValue.asObject();
+            }
+
+            return tValue;
         }
 
         assertSufficientStack(token, stack, 2);
@@ -820,10 +834,23 @@ public class Parser {
     private Token processFunction(Token function, Stack<Token> stack) throws ParserException {
         Value value = null;
         String name = function.getText();
+        int orgStackSize = stack.size();
 
         Function f = getFunction(name);
         if (f != null) {
-            value = f.execute(function, stack);
+            try {
+                value = f.execute(function, stack);
+            } catch (ParserException ex) {
+                // Clean stack
+                int toRemove = function.getArgc() - (orgStackSize - stack.size());
+                for (int i = 0; i < toRemove; i++) {
+                    stack.pop();
+                }
+                if (!suppressParseExceptions) {
+                    throw ex;
+                }
+                return new Token(TokenType.VALUE, new Value().setValue(ex), function.getRow(), function.getColumn());
+            }
         } else {
             setStatusAndFail(function, "error.no_handler", name);
         }
@@ -838,6 +865,11 @@ public class Parser {
         Stack<Token> stack = new Stack<>();
 
         for (Token token : tokens) {
+            // Trigger suppression of parser exceptions when processing ternaries.
+            if (TokenType.NOTHROW.equals(token.getType())) {
+                suppressParseExceptions = true;
+                continue;
+            }
 
             if (token.isProperty()) {
                 Object obj = getProperty(token.getText());
@@ -1099,7 +1131,7 @@ public class Parser {
     }
 
     /*
-     * Sets a global variableif not found
+     * Sets a global variable or null if not found
      * setGlobal("DOW", "Wednesday") ->  Boolean.TRUE and global "DOW" is (created and) set to "Wednesday"
      */
     public Value _SETGLOBAL(Token function, Stack<Token> stack) throws ParserException {

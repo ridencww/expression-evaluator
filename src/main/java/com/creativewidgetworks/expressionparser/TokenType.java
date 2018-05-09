@@ -17,6 +17,7 @@ enum TokenType {
     EOS(";", false),
     WHITESPACE("[ \\t]+", false),
     NOMATCH("", false),
+    NOTHROW("", false), // Flag to suppress immediately throwing ParserExceptions
     VALUE("", false); // intermediate value during parse
 
     /*

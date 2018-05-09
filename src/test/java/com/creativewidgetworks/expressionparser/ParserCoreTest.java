@@ -348,7 +348,7 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
         stack.push(new Token(TokenType.VALUE, "", 1, 1));
         stack.push(new Token(TokenType.VALUE, "", 2, 1));
         assertNotNull(parser.listOfNullParameters(stack));
-        assertEquals("0, 1", parser.listOfNullParameters(stack));
+        assertEquals("1, 2", parser.listOfNullParameters(stack));
     }
 
     @Test

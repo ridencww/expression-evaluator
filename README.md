@@ -129,6 +129,7 @@ Examples:
 ## Version History
 
 2.2.7
+* Fixed issue with tenary statements containing references to empty arrays throwing exceptions.
 
 2.2.6
 * Fixed offset for null parameters. Now, the first parameter is 1, not 0.

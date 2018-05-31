@@ -976,27 +976,31 @@ public class Parser {
                 if (index != null) {
                     List<Value> array = var.getValue().getArray();
                     int len = (array == null) ? 0 : array.size() - 1;
-                    idx = index.getValue().asNumber().intValue();
-                    if (idx < 0 || idx > len) {
-                        setStatusAndFail(index, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));
-                    }
 
-                    val = new Value();
-                    val.set(var.getValue().getArray().get(idx));
-                    val.setName(valName);
-
-                    if (subIndex != null) {
-                        if (!ValueType.ARRAY.equals(val.getType())) {
-                            setStatusAndFail(var, "error.expected_array", val.getType());
-                        }
-
-                        array = val.getArray();
-                        len = (array == null) ? 0 : array.size() - 1;
-                        idx = subIndex.getValue().asNumber().intValue();
+                    // Don't throw exceptions when processing tenaries
+                    if (len >=0 || !suppressParseExceptions) {
+                        idx = index.getValue().asNumber().intValue();
                         if (idx < 0 || idx > len) {
-                            setStatusAndFail(subIndex, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));
+                            setStatusAndFail(index, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));
                         }
-                        val = val.getArray().get(idx);
+
+                        val = new Value();
+                        val.set(var.getValue().getArray().get(idx));
+                        val.setName(valName);
+
+                        if (subIndex != null) {
+                            if (!ValueType.ARRAY.equals(val.getType())) {
+                                setStatusAndFail(var, "error.expected_array", val.getType());
+                            }
+
+                            array = val.getArray();
+                            len = (array == null) ? 0 : array.size() - 1;
+                            idx = subIndex.getValue().asNumber().intValue();
+                            if (idx < 0 || idx > len) {
+                                setStatusAndFail(subIndex, "error.index_out_of_range", String.valueOf(idx), String.valueOf(len));
+                            }
+                            val = val.getArray().get(idx);
+                        }
                     }
                 }
 

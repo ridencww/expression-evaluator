@@ -32,7 +32,17 @@ public class FieldInterfaceTest extends Assert implements FieldInterface {
     @Override
     public Value getField(String name, boolean caseSensitive) {
         lastFieldRequested = name;
-        return name.equalsIgnoreCase("not_found") ? null : new Value(name, name + ":123");
+
+        Value value = null;
+        if ("foo".equalsIgnoreCase(name)) {
+            value = new Value("foo", ValueType.ARRAY);
+            value.addValueToArray(null);
+            value.getArray().clear();
+        } else {
+            value = name.equalsIgnoreCase("not_found") ? null : new Value(name, name + ":123");
+        }
+
+        return value;
     }
 
     /*----------------------------------------------------------------------------*/
@@ -75,6 +85,13 @@ public class FieldInterfaceTest extends Assert implements FieldInterface {
     public void testGetField_not_found() {
         assertEquals(ValueType.UNDEFINED, parser.eval("@not_found").getType());
         assertEquals("not_found", getLastFieldRequested());
+    }
+
+    @Test
+    public void testGetField_tenary_empty_array() {
+        FunctionToolbox.register(parser);
+        assertEquals("t", parser.eval("ARRAYLEN(@foo) == 0 ? 't' : @foo[0]").asString());
+        assertEquals("f", parser.eval("ARRAYLEN(@foo) != 0 ? @foo[0] : 'f'").asString());
     }
 
     @Test

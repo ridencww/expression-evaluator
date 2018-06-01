@@ -147,6 +147,8 @@ public class FunctionToolboxTest extends UnitTestBase {
 
         validateNumericResult(parser, "ARRAYLEN(null)", null);
         validateNumericResult(parser, "ARRAYLEN(V2)", "3");
+
+        validateNumericResult(parser, "ARRAYLEN(SPLIT(''))", "1");
         validateNumericResult(parser, "ARRAYLEN(SPLIT('00,10,11,100'))", "4");
 
         // No exceptions thrown on assignment when checking for null parameters

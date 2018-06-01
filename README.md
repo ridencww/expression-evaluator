@@ -39,7 +39,7 @@ If you're using Maven for your project, add the following to your project's pom.
     <dependency>
       <groupId>com.creativewidgetworks</groupId>
       <artifactId>expression-evaluator</artifactId>
-      <version>2.2.5</version>
+      <version>2.2.8</version>
     </dependency>
 
 ## Data types
@@ -127,6 +127,7 @@ Examples:
         RESULT: ABCDEF [string]
     
 ## Version History
+2.2.8
 
 2.2.7
 * Fixed issue with tenary statements containing references to empty arrays throwing exceptions.

@@ -65,7 +65,7 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
         // Really remove all and verify regex is not available
         parser.getConstants().clear();
-        TokenType.invalidatePattern();;
+        parser.invalidatePattern();;
         assertEquals("no regex", "~~no-constants-defined~~", parser.getConstantRegex());
     }
 
@@ -88,7 +88,7 @@ public class ParserCoreTest extends UnitTestBase implements FieldInterface {
 
         // Really remove all and verify regex is not available
         parser.getFunctions().clear();
-        TokenType.invalidatePattern();;
+        parser.invalidatePattern();;
         assertEquals("no regex", "~~no-functions-defined~~", parser.getFunctionRegex());
     }
 

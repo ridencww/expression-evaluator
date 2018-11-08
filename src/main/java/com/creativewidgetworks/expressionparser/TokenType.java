@@ -40,8 +40,6 @@ enum TokenType {
      *   @/metadata/number1/<sp>/<sp>@/metadata/number2/
      */
 
-    private static Pattern combinedPattern;
-
     private final String regex;
     private final Pattern pattern;
 
@@ -166,30 +164,4 @@ enum TokenType {
         return text;
     }
 
-    /*---------------------------------------------------------------------------------*/
-
-    /**
-     * Returns a regex that will be used to parse OPERATOR tokens
-     * @param parser instance using the TokenType
-     * @return String, regex expression
-     */
-    public static Pattern getPattern(Parser parser) {
-        if (combinedPattern == null) {
-            StringBuilder sb = new StringBuilder();
-            for (TokenType tokenType : TokenType.values()) {
-                sb.append(String.format("|(?<%s>%s)", tokenType.name(), tokenType.getRegex(parser)));
-            }
-
-            int options = parser.getCaseSensitive() ? Pattern.UNICODE_CASE : Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE;
-            options |= Pattern.UNICODE_CHARACTER_CLASS;
-            combinedPattern = Pattern.compile(sb.substring(1), options);
-        }
-        return combinedPattern;
-    }
-
-   /*---------------------------------------------------------------------------------*/
-
-   public static void invalidatePattern() {
-       combinedPattern = null;
-   }
 }

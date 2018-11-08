@@ -791,7 +791,7 @@ public class FunctionToolbox {
 
         // Create temp parser if one hasn't already been created
         if (tmpParser == null) {
-            tmpParser = new Parser();
+            tmpParser = new Parser(parser);
         }
 
         String variations = stack.pop().asString();

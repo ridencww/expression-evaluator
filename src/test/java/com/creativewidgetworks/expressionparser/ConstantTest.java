@@ -62,9 +62,9 @@ public class ConstantTest extends Assert {
 
     @Test
     public void test_add_invalidates_tokenType_pattern() {
-        String pattern = TokenType.getPattern(parser).pattern();
+        String pattern = parser.getPattern(parser).pattern();
         parser.addConstant("my-constant", BigDecimal.valueOf(Math.E));
-        assertTrue("should have constant regex", TokenType.getPattern(parser).pattern().contains("MY-CONSTANT"));
+        assertTrue("should have constant regex", parser.getPattern(parser).pattern().contains("MY-CONSTANT"));
     }
 
     @Test
@@ -80,9 +80,9 @@ public class ConstantTest extends Assert {
     @Test
     public void test_clear_invalidates_tokenType_pattern() {
         parser.addConstant("my-constant", BigDecimal.valueOf(Math.E));
-        assertTrue("should have constant regex", TokenType.getPattern(parser).pattern().contains("MY-CONSTANT"));
+        assertTrue("should have constant regex", parser.getPattern(parser).pattern().contains("MY-CONSTANT"));
         parser.clearConstants();
-        assertFalse("should not have constant regex", TokenType.getPattern(parser).pattern().contains("MY-CONSTANT"));
+        assertFalse("should not have constant regex", parser.getPattern(parser).pattern().contains("MY-CONSTANT"));
     }
 
     @Test

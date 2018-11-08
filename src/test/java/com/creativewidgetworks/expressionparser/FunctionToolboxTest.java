@@ -635,6 +635,29 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testFORMATBYLEN_preserve_patterns() throws Exception {
+        // Forces creation of expression regex pattern object
+        parser.eval("1 + 1");
+
+        // FormatByLen creates an internal parser instance for its use.
+        String variations = "0=:7=      ###-####:10=(###) ###-####:?='invalid'";
+        validateStringResult(parser, "FORMATBYLEN('1', '[0-9]*', \"" + variations + "\")", "invalid");
+
+        // Afterwards, the original pattern object in parser should remain - Do not use FORMATBYLEN for test due to token cacheing
+        validateBooleanResult(parser, "ISNUMBER('1')", Boolean.TRUE);
+    }
+
+    @Test
+    public void testFORMATBYLEN_inherits_parent_patterns() throws Exception {
+        // Forces creation of expression regex pattern object
+        parser.eval("1 + 1");
+
+        // FormatByLen creates an internal parser instance for its use.
+        String variations = "0=:7=      ###-####:10=(###) ###-####:?=ABS(-5)";
+        validateStringResult(parser, "FORMATBYLEN('1', '[0-9]*', \"" + variations + "\")", "5");
+    }
+
+    @Test
     public void testGUID() throws Exception {
         validatePattern(parser, "GUID");
 

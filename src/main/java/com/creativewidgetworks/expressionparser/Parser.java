@@ -6,6 +6,7 @@ import java.math.RoundingMode;
 import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Parser {
     // Internal VO class to hold a function's argument count
@@ -32,7 +33,8 @@ public class Parser {
 
     // RegEx tokenizer - package level for testing
     private boolean caseSensitive;
-    private final String expressionDelimiter;
+    private Pattern combinedPattern;
+    private String expressionDelimiter;
     final Map<String,List<Token>> tokenizedExpressions = new HashMap<>();
 
     // Status
@@ -40,11 +42,11 @@ public class Parser {
     private String lastExpression;
 
     // Containers for constants, functions, and variables
-    private final Map<String, BigDecimal> constants = new HashMap<>();
-    private final Map<String, Function> functions = new HashMap<>();
-    private final Map<String, Value> globals = new TreeMap<>();
-    private final Map<String, Value> variables = new TreeMap<>();
-
+    private Map<String, BigDecimal> constants = new HashMap<>();
+    private Map<String, Function> functions = new HashMap<>();
+    private Map<String, Value> globals = new TreeMap<>();
+    private Map<String, Value> variables = new TreeMap<>();
+    
     private FieldInterface fieldInterface;
 
     private boolean suppressParseExceptions;
@@ -54,6 +56,21 @@ public class Parser {
         expressionDelimiter = DEFAULT_SPLIT_CHARACTER;
         clearConstants();
         clearFunctions();
+    }
+
+    public Parser(Parser parser) {
+        this();
+        allowProperties = parser.allowProperties;
+        expressionDelimiter = parser.expressionDelimiter;
+        fieldInterface = parser.fieldInterface;
+        localTimeZone = parser.localTimeZone;
+        precision = parser.precision;
+        suppressParseExceptions = parser.suppressParseExceptions;
+        caseSensitive = parser.getCaseSensitive();
+        constants = parser.getConstants();
+        functions = parser.getFunctions();
+        globals = parser.getGlobalVariables();
+        variables = parser.getVariables();
     }
 
     /*----------------------------------------------------------------------------*/
@@ -110,20 +127,20 @@ public class Parser {
     public void addConstant(String name, BigDecimal value) {
         if (name != null) {
             constants.put(caseSensitive ? name : name.toUpperCase(), value);
-            TokenType.invalidatePattern();
+            invalidatePattern();
         }
     }
 
     public void clearConstant(String name) {
         constants.remove(caseSensitive ? name : name.toUpperCase());
-        TokenType.invalidatePattern();
+        invalidatePattern();
     }
 
     public void clearConstants() {
         constants.clear();
         addConstant("null", null);
         addConstant("pi", BigDecimal.valueOf(Math.PI));
-        TokenType.invalidatePattern();
+        invalidatePattern();
     }
 
     public BigDecimal getConstant(String name) {
@@ -181,13 +198,13 @@ public class Parser {
     public void addFunction(Function function) {
         if (function != null) {
             functions.put(caseSensitive ? function.getName() : function.getName().toUpperCase(), function);
-            TokenType.invalidatePattern();
+            invalidatePattern();
         }
     }
 
     public void clearFunction(String name) {
         functions.remove(caseSensitive ? name : name.toUpperCase());
-        TokenType.invalidatePattern();
+        invalidatePattern();
     }
 
     public void clearFunctions() {
@@ -199,8 +216,36 @@ public class Parser {
         addFunction(new Function("setGlobal", this, "_SETGLOBAL", 2, 2, ValueType.STRING));
         addFunction(new Function("now", this, "_NOW", 0, 1));
         addFunction(new Function("precision", this, "_PRECISION", 1, 1, ValueType.NUMBER));
-        TokenType.invalidatePattern();
+        invalidatePattern();
     }
+
+    /*---------------------------------------------------------------------------------*/
+
+    /**
+     * Returns a regex that will be used to parse OPERATOR tokens
+     * @param parser instance using the TokenType
+     * @return String, regex expression
+     */
+    public Pattern getPattern(Parser parser) {
+        if (combinedPattern == null) {
+            StringBuilder sb = new StringBuilder();
+            for (TokenType tokenType : TokenType.values()) {
+                sb.append(String.format("|(?<%s>%s)", tokenType.name(), tokenType.getRegex(parser)));
+            }
+
+            int options = parser.getCaseSensitive() ? Pattern.UNICODE_CASE : Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE;
+            options |= Pattern.UNICODE_CHARACTER_CLASS;
+            combinedPattern = Pattern.compile(sb.substring(1), options);
+        }
+        return combinedPattern;
+    }
+
+
+    public void invalidatePattern() {
+        combinedPattern = null;
+    }
+
+    /*---------------------------------------------------------------------------------*/
 
     public Function getFunction(String functionName) {
         return functionName == null ? null : functions.get(caseSensitive ? functionName : functionName.toUpperCase());
@@ -447,7 +492,7 @@ public class Parser {
 
         List<Token> tokens = new ArrayList<>();
 
-        Matcher matcher = TokenType.getPattern(this).matcher(input);
+        Matcher matcher = getPattern(this).matcher(input);
         while (matcher.find()) {
             if (wantWhitespace || matcher.group(TokenType.WHITESPACE.name()) == null) {
                 for (TokenType tokenType : TokenType.values()) {

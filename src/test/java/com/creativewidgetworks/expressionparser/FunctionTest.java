@@ -67,9 +67,9 @@ public class FunctionTest extends UnitTestBase {
 
     @Test
     public void test_add_invalidatss_tokenType_pattern() {
-        assertFalse("should not have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
+        assertFalse("should not have function regex", parser.getPattern(parser).pattern().contains("testme"));
         parser.addFunction(new Function("testme", this, "_ALPHA", 0, 0));
-        assertTrue("should have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
+        assertTrue("should have function regex", parser.getPattern(parser).pattern().contains("testme"));
     }
 
     @Test
@@ -85,9 +85,9 @@ public class FunctionTest extends UnitTestBase {
     @Test
     public void test_clear_invalidatss_tokenType_pattern() {
         parser.addFunction(new Function("testme", this, "_ALPHA", 0, 0));
-        assertTrue("should have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
+        assertTrue("should have function regex", parser.getPattern(parser).pattern().contains("testme"));
         parser.clearFunctions();
-        assertFalse("should not have function regex", TokenType.getPattern(parser).pattern().contains("testme"));
+        assertFalse("should not have function regex", parser.getPattern(parser).pattern().contains("testme"));
     }
 
     @Test

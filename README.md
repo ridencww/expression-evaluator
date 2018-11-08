@@ -129,6 +129,10 @@ Examples:
 ## Version History
 2.2.8
 
+2.2.8
+* Fixed issue with FormatByLen where the parser's added constants and functions were cleared.
+* Added copy constructor in Parser so sub-parsers like the one used in FormatByLen can inherit functions and other settings from parent parser. 
+
 2.2.7
 * Fixed issue with tenary statements containing references to empty arrays throwing exceptions.
 

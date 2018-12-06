@@ -128,6 +128,8 @@ Examples:
     
 ## Version History
 2.2.9
+* Refactored FORMATBYLEN to accommodate lack of "0=" template
+* Added DIGITSONLY function to strip off non-digit characters from a String 
 
 2.2.8
 * Fixed issue with FormatByLen where the parser's added constants and functions were cleared.
@@ -193,4 +195,3 @@ Examples:
 expression-parser is licensed under the [Modified BSD][1] license. Permission is granted to anyone to use this software for any purpose, including commercial applications.
 
 [1]: http://www.opensource.org/licenses/BSD-3-Clause
-

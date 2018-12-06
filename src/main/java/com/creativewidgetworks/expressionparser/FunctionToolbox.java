@@ -72,6 +72,7 @@ public class FunctionToolbox {
         parser.addFunction(new Function("DATEEOD", toolbox, "_DATEEOD", 1, 1, ValueType.DATE));
         parser.addFunction(new Function("DATEFORMAT", toolbox, "_DATEFORMAT", 2, 8, ValueType.STRING, ValueType.UNDEFINED, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER));
         parser.addFunction(new Function("DATEWITHIN", toolbox, "_DATEWITHIN", 3, 3, ValueType.DATE, ValueType.DATE, ValueType.NUMBER));
+        parser.addFunction(new Function("DIGITSONLY", toolbox, "_DIGITSONLY", 1, 1, ValueType.STRING));
         parser.addFunction(new Function("ENDSWITH", toolbox, "_ENDSWITH", 2, 2, ValueType.STRING, ValueType.STRING));
         parser.addFunction(new Function("EXP", toolbox, "_EXP", 1, 1, ValueType.NUMBER));
         parser.addFunction(new Function("FACTORIAL", toolbox, "_FACTORIAL", 1, 1, ValueType.NUMBER));
@@ -635,6 +636,23 @@ public class FunctionToolbox {
     }
 
     /*
+     * Strip non-digit characters from a string
+     * digitsOnly("(815) 555-1212") -> "8155551212"
+     */
+    public Value _DIGITSONLY(Token function, Stack<Token> stack) {
+        String str = stack.pop().asString();
+        StringBuilder sb = new StringBuilder();
+        if (str != null) {
+            for (int i = 0; i < str.length(); i++) {
+                if (Character.isDigit(str.charAt(i))) {
+                    sb.append(str.charAt(i));
+                }
+            }
+        }
+        return new Value(function.getText()).setValue(sb.toString());
+    }
+
+    /*
      * Tests to see if a string ends with a given string
      * endswith("Ralph", "I") -> false
      * endswith("Ralph", "ph") -> true
@@ -794,7 +812,16 @@ public class FunctionToolbox {
             tmpParser = new Parser(parser);
         }
 
-        String variations = stack.pop().asString();
+        // Parse variations into a map for later matching
+        Map<String, String> variations = new HashMap<>();
+        String variationsStr = stack.pop().asString();
+        if (variationsStr != null && variationsStr.trim().length() > 0) {
+            String[] rows = variationsStr.split(":");
+            for (String row : rows) {
+                String[] fields = row.split("=");
+                variations.put(fields[0], fields.length > 1 ? fields[1] : "");
+            }
+        }
 
         Token patternToken = stack.pop();
         String pattern = patternToken.asString();
@@ -813,22 +840,12 @@ public class FunctionToolbox {
             if (m1.find()) {
                 // Look for template variations based on number of chars matched
                 // e.g., 0=:4=####:7=###-####:?='(N/A)'
-                String key = m1.group(0).length() + "=";
-                int start = variations.indexOf(key);
-                int end = start;
-                if (start != -1) {
-                    end = variations.indexOf(MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER, start);
-                    if (end == -1) {
-                        // Case where this is the last choice in the string
-                        // and there isn't any trailing semicolon.
-                        end = variations.length();
-                    }
-
-                    String exp = variations.substring(start + key.length(), end);
-                    if (key.equals("0=") && exp.trim().length() > 0) {
-                        // If the match length is zero, run the substitution string
-                        // through an evaluator to allow more flexibility in what
-                        // to load for empty matches
+                String key = String.valueOf(m1.group(0).length());
+                String exp = variations.get(key);
+                if (exp != null) {
+                    // If the template expression doesn't contain "#" characters, assume this is
+                    // an expression and parse it to get the final template.
+                    if (exp.indexOf("#") == -1) {
                         Value tmp = tmpParser.eval(exp.replace('\'', '"'));
                         exp = tmp.asString();
                     }
@@ -844,21 +861,13 @@ public class FunctionToolbox {
                     }
 
                     value.setValue(sb.toString());
+                } else if (exp == null && key.equals("0")) {
+                    // No zero-length variation, set to empty string
+                    value.setValue("");
                 } else {
-                    // check for ?= and evaluate
-                    key = "?=";
-                    start = variations.indexOf(key);
-                    end = start;
-                    if (start != -1) {
-                        end = variations.indexOf(MATCHBYLEN_VARIATIONS_SEPARATOR_CHARACTER, start);
-                        if (end == -1) {
-                            // Case where this is the last choice in the string
-                            // and there isn't any trailing semicolon.
-                            end = variations.length();
-                        }
-
-                        // Pull off default, unmatched expression and evaluate it
-                        String exp = variations.substring(start + key.length(), end);
+                    exp = variations.get("?");
+                    if (exp != null) {
+                        // There is a default expression
                         Value tmp = tmpParser.eval(exp.replace('\'', '"'));
                         value.setValue(tmp.asString());
                     } else {

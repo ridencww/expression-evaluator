@@ -39,7 +39,7 @@ If you're using Maven for your project, add the following to your project's pom.
     <dependency>
       <groupId>com.creativewidgetworks</groupId>
       <artifactId>expression-evaluator</artifactId>
-      <version>2.2.8</version>
+      <version>2.2.9</version>
     </dependency>
 
 ## Data types
@@ -85,11 +85,11 @@ A string to be parsed can contain multiple expressions. In the example that foll
 ## Optional functions supplied by FunctionToolbox that can be bound to Parser  
  
     Functions   ABS ARCCOS ARCSIN ARCTAN ARRAYLEN AVERAGE CEILING CONTAINS CONTAINSALL CONTAINSANY
-                COS DATEADD DATEBETWEEN DATEBOD, DATEEOD DATEFORMAT DATEWITHIN ENDSWITH EXP FACTORIAL 
-                FIND FLOOR FORMAT FORMATBYLEN GUID HEX ISANYOF ISBLANK ISBOOLEAN ISDATE ISNONEOF 
-                ISNULL ISNUMBER LEFT LEFTOF LEN LOG LOG10 LOWER MAKEBOOLEAN MAKEDATE MATCH MAX MID MIN
-                NAMECASE RANDOM  REPLACE REPLACEALL REPLACEFIRST RIGHT RIGHTOF ROUND SIN SPLIT SQR SQRT 
-                STARTSWITH STR STRING TAN TRIM TRIMLEFT TRIMRIGHT UPPER VAL
+                COS DATEADD DATEBETWEEN DATEBOD, DATEEOD DATEFORMAT DATEWITHIN DIGITSONLY ENDSWITH 
+                EXP FACTORIAL FIND FLOOR FORMAT FORMATBYLEN GUID HEX ISANYOF ISBLANK ISBOOLEAN ISDATE
+                ISNONEOF ISNULL ISNUMBER LEFT LEFTOF LEN LOG LOG10 LOWER MAKEBOOLEAN MAKEDATE MATCH 
+                MAX MID MIN NAMECASE RANDOM  REPLACE REPLACEALL REPLACEFIRST RIGHT RIGHTOF ROUND SIN 
+                SPLIT SQR SQRT STARTSWITH STR STRING TAN TRIM TRIMLEFT TRIMRIGHT UPPER VAL
    
 ## Usage
 
@@ -127,7 +127,9 @@ Examples:
         RESULT: ABCDEF [string]
     
 ## Version History
-2.2.8
+2.2.9
+* Refactored FORMATBYLEN to accommodate lack of "0=" template
+* Added DIGITSONLY function to strip off non-digit characters from a String 
 
 2.2.8
 * Fixed issue with FormatByLen where the parser's added constants and functions were cleared.
@@ -193,4 +195,3 @@ Examples:
 expression-parser is licensed under the [Modified BSD][1] license. Permission is granted to anyone to use this software for any purpose, including commercial applications.
 
 [1]: http://www.opensource.org/licenses/BSD-3-Clause
-

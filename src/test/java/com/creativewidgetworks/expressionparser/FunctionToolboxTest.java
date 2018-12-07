@@ -465,6 +465,19 @@ public class FunctionToolboxTest extends UnitTestBase {
     }
 
     @Test
+    public void testDIGITSONLY() throws Exception {
+        validatePattern(parser, "DIGITSONLY");
+
+        validateExceptionThrown(parser, "DIGITSONLY()", "DIGITSONLY expected 1 parameter(s), but got 0", 1, 11);
+        validateExceptionThrown(parser, "DIGITSONLY('test', 'test')", "DIGITSONLY expected 1 parameter(s), but got 2", 1, 11);
+        validateExceptionThrown(parser, "DIGITSONLY(123)", "DIGITSONLY parameter 1 expected type STRING, but was NUMBER", 1, 11);
+
+        validateStringResult(parser, "DIGITSONLY('12345')", "12345");
+        validateStringResult(parser, "DIGITSONLY('*12-34-5*')", "12345");
+        validateStringResult(parser, "DIGITSONLY('ABCDEF')", "");
+    }
+
+    @Test
     public void testENDSWITH() throws Exception {
         validatePattern(parser, "ENDSWITH");
 
@@ -602,6 +615,10 @@ public class FunctionToolboxTest extends UnitTestBase {
 
         // No match - > empty
         variations = "0=:7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
+        validateStringResult(parser, "FORMATBYLEN('', '[0-9]*', \"" + variations + "\")", "");
+
+        // No match - > empty and no zero length pattern
+        variations = "7=      ###-####:10=(###) ###-####:?='Ralph' + ' ' + 'Iden'";
         validateStringResult(parser, "FORMATBYLEN('', '[0-9]*', \"" + variations + "\")", "");
 
         // Match pattern of length 7

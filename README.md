@@ -39,7 +39,7 @@ If you're using Maven for your project, add the following to your project's pom.
     <dependency>
       <groupId>com.creativewidgetworks</groupId>
       <artifactId>expression-evaluator</artifactId>
-      <version>2.2.9</version>
+      <version>2.3.0</version>
     </dependency>
 
 ## Data types
@@ -127,6 +127,9 @@ Examples:
         RESULT: ABCDEF [string]
     
 ## Version History
+2.3.0
+
+
 2.2.9
 * Refactored FORMATBYLEN to accommodate lack of "0=" template
 * Added DIGITSONLY function to strip off non-digit characters from a String 

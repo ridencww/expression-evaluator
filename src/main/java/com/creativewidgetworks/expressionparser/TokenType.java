@@ -12,7 +12,7 @@ enum TokenType {
     FUNCTION("~~dynamically-generated~~", false),
     IDENTIFIER("[_A-Za-z][_A-Za-z0-9]*", false),
     FIELD("@([@]{0,2}[\\.\\->_/:A-Za-z0-9]+)", true), // @name  @name_first @name:first @name/first
-    PROPERTY("\\$\\{(.*)}", true), // ${id}
+    PROPERTY("\\$\\{(.*)\\}", true), // ${id}
     NEWLINE("\n", false),
     EOS(";", false),
     WHITESPACE("[ \\t]+", false),

@@ -650,4 +650,17 @@ public class ParserTest extends UnitTestBase {
         validateTokensTextOnly(tokens, "Clearance 13' 2\"");
     }
 
+    /*----------------------------------------------------------------------------*/
+
+    /*
+     * It has been reported that Android 9.x/Java 1.7 throws a PatternSyntaxException. A
+     * modified regex for PROPERTY was suggested and this and the other tests assert that
+     * the parser is still working as expected.
+     */
+    @Test
+    public void testIssue15_PatternSyntaxException() throws Exception {
+        Value result = new Parser().eval("4/67");
+        assertEquals("0.0597", result.asString());
+   }
+
 }

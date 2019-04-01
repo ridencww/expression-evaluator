@@ -654,13 +654,28 @@ public class ParserTest extends UnitTestBase {
 
     /*
      * It has been reported that Android 9.x/Java 1.7 throws a PatternSyntaxException. A
-     * modified regex for PROPERTY was suggested and this and the other tests assert that
-     * the parser is still working as expected.
+     * modified RegEx for PROPERTY was provided by samlu and this and the other tests assert
+     * that the parser is still working as expected.
+     *
+     * This test passes without the RegEx under Java 7 on a Windows development machine, so the
+     * issue may be related to Android. However, samlu's modified RegEx works on both platforms.
      */
     @Test
     public void testIssue15_PatternSyntaxException() throws Exception {
         Value result = new Parser().eval("4/67");
         assertEquals("0.0597", result.asString());
    }
+
+    /*----------------------------------------------------------------------------*/
+
+    /*
+     * eval("SetGlobal('a', 123.45); aa=GetGlobal('a'); aa+1") does not work as
+     * expected. Test change by samlu to Parser._GETGLOBAL.
+     */
+    @Test
+    public void testIssue16_ExpressionUsingGlobalVariable() throws Exception {
+        Value result = new Parser().eval("SetGlobal('a', 123.45); aa=GetGlobal('a'); aa+1");
+        assertEquals("124.45", result.asString());
+    }
 
 }

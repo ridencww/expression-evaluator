@@ -1175,7 +1175,7 @@ public class Parser {
     public Value _GETGLOBAL(Token function, Stack<Token> stack) throws ParserException {
         String name = stack.pop().asString();
         Value value = new Value(function.getText());
-        value.set(globals.get(name == null ? "~nofind~" : name));
+        value.set(getGlobalVariable(name == null ? "~nofind~" : name));
         return value;
     }
 

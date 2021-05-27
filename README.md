@@ -128,7 +128,10 @@ Examples:
     
 ## Version History
 2.3.0
-
+* Bug fixes
+* Issue 15: PatternSyntaxException when compiling PROPERTY regex
+* Issue 17: Evaluating expressions containing global variables could fail
+* Issue 18: Strange behavior with AND/and when setCaseSensitive(true)
 
 2.2.9
 * Refactored FORMATBYLEN to accommodate lack of "0=" template

@@ -662,8 +662,7 @@ public class ParserTest extends UnitTestBase {
      */
     @Test
     public void testIssue15_PatternSyntaxException() throws Exception {
-        Value result = new Parser().eval("4/67");
-        assertEquals("0.0597", result.asString());
+        validateNumericResult(parser, "4/67", "0.0597");
    }
 
     /*----------------------------------------------------------------------------*/
@@ -673,9 +672,36 @@ public class ParserTest extends UnitTestBase {
      * expected. Test change by samlu to Parser._GETGLOBAL.
      */
     @Test
-    public void testIssue16_ExpressionUsingGlobalVariable() throws Exception {
-        Value result = new Parser().eval("SetGlobal('a', 123.45); aa=GetGlobal('a'); aa+1");
-        assertEquals("124.45", result.asString());
+    public void testIssue17_ExpressionUsingGlobalVariable() throws Exception {
+        validateNumericResult(parser, "SetGlobal('a', 123.45); aa=GetGlobal('a'); aa+1", "124.45");
     }
+
+    /*----------------------------------------------------------------------------*/
+
+    /*
+     * strange behavior when setCaseSensitive(true) - reported by samlu
+     */
+    @Test
+    public void testIssue18_ExpressionUsingGlobalVariable() throws Exception {
+        Parser parser = new Parser();
+        parser.setCaseSensitive(true);
+        parser.addVariable("c1", new Value().setValue(true));
+        parser.addVariable("c2", new Value().setValue(true));
+
+        validateBooleanResult(parser, "c1 and c2", Boolean.TRUE);
+    }
+
+    @Test
+    public void testIssue18_AND_treated_like_identifer() throws Exception {
+        Parser parser = new Parser();
+        parser.setCaseSensitive(true);
+        parser.addVariable("c1", new Value().setValue(true));
+        parser.addVariable("c2", new Value().setValue(true));
+
+        // "AND" is considered an identifer and not an operator (like A B C)
+        validateExceptionThrown(parser, "c1 AND c2", "Syntax error",1, 1);
+    }
+
+
 
 }

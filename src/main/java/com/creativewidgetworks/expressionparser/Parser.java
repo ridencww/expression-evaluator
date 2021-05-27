@@ -604,12 +604,12 @@ public class Parser {
                 outputTokens.add(new Token(TokenType.NOTHROW, "?", token.getRow(), token.getColumn()));
             }
 
-            if (token.isNumber() || token.isString() || token.isConstant() || token.isField() || token.isIdentifer() || token.isProperty()) {
+            if (!token.isOperator() &&
+                (token.isNumber() || token.isString() || token.isConstant() || token.isField() || token.isIdentifer() || token.isProperty())) {
                 outputTokens.add(token);
                 if (!argStack.isEmpty()) {
                     argStack.peek().haveArgs = true;
                 }
-
             } else if (token.isFunction()) {
                 stack.push(token);
                 if (!argStack.isEmpty()) {
@@ -940,10 +940,10 @@ public class Parser {
                 stack.push(token);
             } else if (token.isIdentifer()) {
                 // Retrieve the value referenced by the identifier or create an empty placeholder
-                Value value = variables.get(token.getText().toUpperCase());
+                Value value = variables.get(caseSensitive ? token.getText() : token.getText().toUpperCase());
                 if (value == null) {
                     value = new Value();
-                    variables.put(token.getText().toUpperCase(), value);
+                    variables.put(caseSensitive ? token.getText() : token.getText().toUpperCase(), value);
                 }
                 token.getValue().set(value);
                 stack.push(token);
@@ -986,6 +986,10 @@ public class Parser {
                 if (result != null) {
                     stack.push(result);
                 }
+
+
+
+
             } else if (token.getText().equals(Operator.LBRACKET.getText())) {
                 Token index = null;
                 Token subIndex = null;

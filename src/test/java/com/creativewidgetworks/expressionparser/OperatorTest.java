@@ -13,7 +13,7 @@ public class OperatorTest extends Assert {
         Token token = new Token(TokenType.OPERATOR, "AND", 1, 1);
         assertNotNull(Operator.find(token, true));
         token.setText("and");
-        assertNull(Operator.find(token, true));
+        assertNotNull(Operator.find(token, true));
     }
 
     @Test
@@ -21,7 +21,7 @@ public class OperatorTest extends Assert {
         Token token = new Token(TokenType.OPERATOR, "AND", 1, 1);
         assertNotNull(Operator.find(token, false));
         token.setText("and");
-        assertNotNull(Operator.find(token, false));
+        assertNotNull(Operator.find(token, true));
     }
 
     @Test

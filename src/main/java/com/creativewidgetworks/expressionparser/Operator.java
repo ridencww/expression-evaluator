@@ -80,9 +80,15 @@ enum Operator {
         this.regex = regex;
     }
 
+    /*
+     * If caseSensitive is TRUE, entire operator case must match:
+     * TRUE:  and AND (match) And (no match)
+     * FALSE: and AND (match) And (match)
+     *
+     */
     public static Operator find(Token token, boolean caseSensitive) {
-        String key = (token == null || token.getText() == null) ? "" : caseSensitive ? token.getText() : token.getText().toUpperCase();
-        return caseSensitive ? caseSensitiveMap.get(key) : caseInsensitiveMap.get(key);
+        String key = (token == null || token.getText() == null) ? "" : token.getText().toUpperCase();
+        return caseInsensitiveMap.get(key);
     }
 
     public boolean inSet(Operator... operators) {
